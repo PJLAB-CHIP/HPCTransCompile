@@ -1,0 +1,26 @@
+{
+    "cuda2cpu_en":[
+        "You are integrating a deep learning model using CUDA operators into a distributed system where some nodes do not have GPU support. Please convert the provided CUDA operators to CPU operators to ensure consistency and performance throughout the system.",
+        "Suppose your deep learning application is trained in a CUDA-enabled environment. Now, you need to port the application to an environment that doesn't support GPUs. Convert the CUDA operators provided to CPU operators to maintain application functionality in an environment without GPUs.",
+        "Given a performance-sensitive application that includes CUDA operators, you want to run in an environment without a GPU. Please convert the CUDA operators provided to an efficient CPU implementation with as little performance penalty as possible.",
+        "Consider a deep learning model using any deep learning framework (e.g. TensorFlow, PyTorch, etc.) that includes CUDA operators. Replace the CUDA operator in the model with the corresponding CPU operator to run in an environment without a GPU.",
+        "Your deep learning application performs well on a small GPU cluster, but now you need to deploy it to a large CPU cluster. Convert existing CUDA operators to functionally identical CPU operators and ensure the scalability of your application in large-scale environments.",
+        "In an environment without GPU support, you want to reason about deep learning models with a large number of inputs. Please convert existing CUDA operators to corresponding CPU operators and take advantage of batch processing and parallelism to improve inference performance on the CPU.",
+        "Your deep learning model is trained in an environment that supports CUDA, and now you need to port it to an environment without GPUs. Please convert the CUDA operators to equivalent operators running on the CPU to ensure the portability of the model across different environments.",
+        "Your deep learning application is trained in an environment with GPU support, but now you need to perform inference in an environment without GPUs. Please convert CUDA operators to CPU operators and optimize for performance to achieve the best execution efficiency on the CPU.",
+        "You have a deep learning model trained in PyTorch, which includes CUDA operators. Please convert these CUDA operators to equivalent CPU operators that can run in an environment without a GPU, whether using TensorFlow, MXNet, or any other deep learning framework.",
+        "Given a CUDA operator, convert it to an equivalent CPU operator. Please ensure both performance and correctness, and maximize the execution efficiency on the CPU as much as possible."
+    ],
+    "cuda2cpu_ch":[
+        "你正在将一个使用 CUDA 算子的深度学习模型集成到一个分布式系统中，其中某些节点没有 GPU 支持。请将提供的 CUDA 算子转换为 CPU 算子，以确保整个系统的一致性和性能",
+        "假设你的深度学习应用程序在一个支持 CUDA 的环境中得到了训练。现在，你需要将该应用程序移植到不支持 GPU 的环境中。请将提供的 CUDA 算子转换为 CPU 算子，以实现在没有 GPU 的环境中保持应用程序功能。",
+        "给定一个包含 CUDA 算子的性能敏感应用程序，你想要在没有 GPU 的环境中运行。请将提供的 CUDA 算子转换为高效的 CPU 实现，并尽可能地减少性能损失。",
+        "考虑一个深度学习模型，使用任何深度学习框架（例如 TensorFlow、PyTorch等），其中包含了 CUDA 算子。请将模型中的 CUDA 算子替换为对应的 CPU 算子，以实现在没有 GPU 的环境中运行。",
+        "你的深度学习应用程序在一个小规模的GPU集群上执行得很好，但现在你需要将其部署到一个大规模的CPU集群。请将现有的 CUDA 算子转换为功能相同的 CPU 算子，并确保应用程序在大规模环境中的可伸缩性。",
+        "在一个没有GPU支持的环境中，你希望对具有大量输入的深度学习模型进行推理。请将现有的 CUDA 算子转换为相应的 CPU 算子，并利用批处理和并行性，以提高在CPU上的推理性能。",
+        "你的深度学习模型在一个支持CUDA的环境中训练，现在你需要将其移植到一个没有 GPU 的环境。请将 CUDA 算子转换为在 CPU 上运行的等效算子，以确保模型在不同环境中的可移植性。",
+        "你的深度学习应用在一个GPU支持的环境中训练，但你现在需要在没有 GPU 的环境中进行推理。请将 CUDA 算子转换为 CPU 算子，并在性能方面进行优化，以便在CPU上获得最佳执行效率。",
+        "你有一个训练在PyTorch中的深度学习模型，其中包含了 CUDA 算子。请将这些 CUDA 算子转换为在没有 GPU 的环境中运行的等效 CPU 算子，无论是使用TensorFlow、MXNet还是其他深度学习框架。",
+        "给定一个 CUDA 算子，将其转换为等效的 CPU 算子。请注意性能和正确性，并尽可能最大化 CPU 上的执行效率。"
+    ]
+}
