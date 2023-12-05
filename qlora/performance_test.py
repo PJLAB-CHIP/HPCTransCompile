@@ -88,27 +88,19 @@ def load_model_on_gpus(checkpoint_path: Union[str, os.PathLike], num_gpus: int =
 
     return model
 
-# model_path = "./llama2-13b-orca-8k-3319"
 # model_path = "../model/CodeLlama-7b-hf"
-# model_path = "../model/PolyCoder-2.7B"
 # model_path = "./save_model/CodeLlama-7b-hf-10000"
-# model_path = "../model/chatglm3-6b"
-# model_path = "../model/toxic-bert"
-# model_path = "../model/mt5-base"
 model_path = "./save_model/CodeLlama-7b-hf-1000"
 
-model = AutoModelForCausalLM.from_pretrained(model_path)
+model = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    torch_dtype=torch.bfloat16,
+    device_map={"":0}
+    )
 # model = AutoModel.from_pretrained(model_path)
 model = model.eval()
-# print('model:', model)
-
-"""多卡加速推理"""
-# model = load_model_on_gpus(model_path,num_gpus=8)
-# model = DataParallel(model)
-# device_ids = [0, 1, 2, 3]
-
-
 tokenizer = AutoTokenizer.from_pretrained(model_path)
+
 # sequence = 'The following are multiple choice questions (with answers) about  abstract algebra.\n\nLet p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.\nA. 8\nB. 2\nC. 24\nD. 120\nAnswer:'
 # sequence = 'Write a function to add two numpy arraies in C++\n\n### Response: '
 # sequence = 'Write a cuda operator to implement matrix multiplication\n\n### Response: '
@@ -116,13 +108,13 @@ tokenizer = AutoTokenizer.from_pretrained(model_path)
 # sequence = 'What is the meaning of life?\n\n### Response: '
 sequence = 'Given a performance-sensitive application that includes CUDA operators, you want to run in an environment without a GPU. Please convert the CUDA operators provided to an efficient CPU implementation with as little performance penalty as possible.\n\n### Input:\n#if (((__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ >= 4)) || \\\n     (__CUDACC_VER_MAJOR__ > 11))\n#define TVM_ENABLE_L2_PREFETCH 1\n#else\n#define TVM_ENABLE_L2_PREFETCH 0\n#endif\n\n#ifdef _WIN32\n  using uint = unsigned int;\n  using uchar = unsigned char;\n  using ushort = unsigned short;\n  using int64_t = long long;\n  using uint64_t = unsigned long long;\n#else\n  #define uint unsigned int\n  #define uchar unsigned char\n  #define ushort unsigned short\n  #define int64_t long long\n  #define uint64_t unsigned long long\n#endif\nextern \"C\" __global__ void __launch_bounds__(1024) default_function_kernel(float* __restrict__ T_divide, float* __restrict__ tarray);\nextern \"C\" __global__ void __launch_bounds__(1024) default_function_kernel(float* __restrict__ T_divide, float* __restrict__ tarray) {\n  if (((((int64_t)((int)blockIdx.x)) * (int64_t)32) + (((int64_t)((int)threadIdx.x)) >> (int64_t)5)) < (int64_t)1225) {\n    T_divide[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))] = (tarray[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))] / tarray[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))]);\n  }\n}\n\n### Response: '
 
-# sequence = 'Attention is All you'
+
 tokens = tokenizer.tokenize(sequence)
 # print('Tokens:', tokens)
-input_ids = tokenizer.encode(sequence, return_tensors="pt")
+input_ids = tokenizer.encode(sequence, return_tensors="pt").to('cuda')
 
 with torch.no_grad():
-    outputs = model.generate(input_ids=input_ids, max_length=1000)
+    outputs = model.generate(input_ids=input_ids, max_length=200)
 
 # for output in outputs:
 #     print(tokenizer.decode(output))
