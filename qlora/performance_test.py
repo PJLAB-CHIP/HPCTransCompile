@@ -114,7 +114,7 @@ tokens = tokenizer.tokenize(sequence)
 input_ids = tokenizer.encode(sequence, return_tensors="pt").to('cuda')
 
 with torch.no_grad():
-    outputs = model.generate(input_ids=input_ids, max_length=200)
+    outputs = model.generate(input_ids=input_ids, max_length=1000, num_beams=4)
 
 # for output in outputs:
 #     print(tokenizer.decode(output))
