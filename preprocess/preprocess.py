@@ -23,10 +23,12 @@ for raw_data in raw_datas:
     input = raw_data['cuda_code']
     output = raw_data['c_code']
     instruction = random.choice(cuda2cpu_en)
+    op_name = raw_data['op_name']
     hpc_data.append({
         "instruction":instruction,
         "input":input,
-        "output":output
+        "output":output,
+        "op_name":op_name
     })
 
 print('len(hpc_data):', len(hpc_data))
