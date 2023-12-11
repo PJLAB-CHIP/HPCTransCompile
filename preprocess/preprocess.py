@@ -3,13 +3,14 @@ import random
 import numpy as np
 import os
 import logging
+import argparse
 
 
 instruction_path = "./instruction/instruction_v1.0.json"
 raw_data_path = "./raw_data/raw_data_v1.0.json"
 hpc_data = []
-VERSION_INFO = 'test'
-DATASET_INFO = {}
+VERSION_INFO = 'v1.4'
+WITH_IR_INPUT_TEMPLATE = "### IR Code:\n\n{}\n\n### CUDA Code:\n{}\n\n"
 
 
 def check_output_path(folder_path):
@@ -47,17 +48,12 @@ def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
     train_num = (int)(len(op_dict.keys())*SAMPLING_RATIO)  # 训练集算子数
     op_name_list = list(op_dict.keys())
     random.shuffle(op_name_list)
-    # for item in op_dict[op_name_list[0]]:
-    #     print(item['output'])
     # print('op_name:', op_name_list)
     # print('op_dict.keys():', op_dict.keys())
-
     train_dataset_op = op_name_list[:train_num]
     test_dataset_op = op_name_list[train_num:]
     logging.info('train_dataset_op: %s', train_dataset_op)
     logging.info('test_dataset_op: %s', test_dataset_op)
-    # print('train_dataset_op:', train_dataset_op)
-    # print('test_dataset_op:', test_dataset_op)
     train_dataset = []
     test_dataset = []
     for train_op in train_dataset_op:
@@ -67,12 +63,18 @@ def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
     return train_dataset,test_dataset
 
 if __name__ == "__main__":
+    """数据集日志信息LOG"""
     check_output_path(f'./data/hpc_{VERSION_INFO}')
     logging.basicConfig(filename=os.path.join(f'./data/hpc_{VERSION_INFO}','info.log'), level=logging.INFO, filemode='w+')  # 日志信息
     logging.info('VERSION_INFO: %s', VERSION_INFO)
     logging.info('instruction_path: %s', instruction_path)
     logging.info('raw_data_path: %s', raw_data_path)
-    logging.info('Describe: %s', '根据算子名对数据集进行划分')
+    logging.info('Describe: %s', '根据算子名对数据集进行划分，同时包含算子的IR信息')
+    """命令行解析参数信息"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--use_ir',type=bool,default=False)
+    parser.add_argument('--SAMPLING_RATIO',default=0.95)
+    args = parser.parse_args()  # 解析命令行参数
 
     with open(instruction_path, 'r') as file:
         instructions = json.load(file)
@@ -82,13 +84,19 @@ if __name__ == "__main__":
 
     cuda2cpu_en = instructions["cuda2cpu_en"]
 
-    print('instructions.keys():', instructions.keys())
-    print('len(raw_datas):', len(raw_datas))
+    # print('instructions.keys():', instructions.keys())
+    # print('len(raw_datas):', len(raw_datas))
 
     for raw_data in raw_datas:
-        input = raw_data['cuda_code']
-        output = raw_data['c_code']
         instruction = random.choice(cuda2cpu_en)
+        """是否使用IR信息"""
+        if not args.use_ir:
+            input = raw_data['cuda_code']
+        else:
+            input = WITH_IR_INPUT_TEMPLATE.format(raw_data['ir_code'],raw_data['cuda_code'])
+            ir_info = random.choice(instructions["ir_info_en"])
+            instruction += ir_info
+        output = raw_data['c_code']
         op_name = raw_data['op_name']
         hpc_data.append({
             "instruction":instruction,
@@ -97,16 +105,10 @@ if __name__ == "__main__":
             "op_name":op_name
         })
 
-    print('len(hpc_data):', len(hpc_data))
+    # print('len(hpc_data):', len(hpc_data))
 
     # 划分训练集&测试集
-    SAMPLING_RATIO = 0.95
-    # random.shuffle(hpc_data)
-    # train_num = (int)(len(hpc_data)*SAMPLING_RATIO)
-    # train_dataset = hpc_data[:train_num]
-    # test_dataset = hpc_data[train_num:]
-
-    train_dataset, test_dataset = dataset_partition(hpc_data,sampling_ratio=SAMPLING_RATIO,divide_method='by_name')
+    train_dataset, test_dataset = dataset_partition(hpc_data,sampling_ratio=args.SAMPLING_RATIO,divide_method='by_name')
 
     print('len(train_dataset):', len(train_dataset))
     print('len(test_dataset):', len(test_dataset))

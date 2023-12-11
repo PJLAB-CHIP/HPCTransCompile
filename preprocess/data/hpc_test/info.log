@@ -1,6 +1,6 @@
 INFO:root:VERSION_INFO: test
 INFO:root:instruction_path: ./instruction/instruction_v1.0.json
 INFO:root:raw_data_path: ./raw_data/raw_data_v1.0.json
-INFO:root:Describe: 根据算子名对数据集进行划分
-INFO:root:train_dataset_op: ['left_shift', 'round', 'fixed_point_multiply', 'tanh', 'identity', 'ceil', 'log2', 'atanh', 'equal', 'minimum', 'concatenate', 'acos', 'log10', 'divide', 'tan', 'reshape_1', 'tensordot', 'asin', 'greater', 'const_vector_np_full', 'log', 'floor', 'const_vector_np_arange', 'sinh', 'not_equal', 'atan', 'less_equal', 'cos', 'fast_erf', 'sign', 'sigmoid', 'floor_divide', 'reshape', 'fast_tanh', 'reinterpret', 'tile', 'expand_dims', 'floor_mod', 'max', 'stack', 'erf', 'maximum', 'rsqrt', 'flip', 'sqrt', 'greater_equal', 'elemwise_sum', 'exp', 'cosh', 'min', 'prod', 'full_like', 'shape', 'multiply', 'isnan', 'const_vector_np_zeros', 'reshape_2', 'fast_exp', 'const_vector_np_ones', 'asinh', 'sin', 'negative']
-INFO:root:test_dataset_op: ['repeat', 'power', 'clip', 'mod']
+INFO:root:Describe: 根据算子名对数据集进行划分，同时包含算子的IR信息
+INFO:root:train_dataset_op: ['asin', 'not_equal', 'tile', 'log10', 'log', 'atanh', 'exp', 'cosh', 'floor_mod', 'fast_exp', 'reshape_2', 'round', 'floor', 'fast_tanh', 'log2', 'less_equal', 'max', 'atan', 'reshape', 'shape', 'stack', 'acos', 'equal', 'identity', 'reshape_1', 'fast_erf', 'greater_equal', 'greater', 'negative', 'power', 'elemwise_sum', 'maximum', 'cos', 'const_vector_np_arange', 'clip', 'tanh', 'mod', 'prod', 'fixed_point_multiply', 'sigmoid', 'ceil', 'full_like', 'const_vector_np_ones', 'minimum', 'reinterpret', 'divide', 'sign', 'isnan', 'erf', 'const_vector_np_full', 'flip', 'expand_dims', 'concatenate', 'left_shift', 'min', 'repeat', 'const_vector_np_zeros', 'asinh', 'multiply', 'sin', 'floor_divide', 'sinh']
+INFO:root:test_dataset_op: ['tensordot', 'rsqrt', 'sqrt', 'tan']
