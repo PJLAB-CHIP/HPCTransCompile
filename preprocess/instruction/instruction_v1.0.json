@@ -23,10 +23,15 @@
         "你有一个训练在PyTorch中的深度学习模型，其中包含了 CUDA 算子。请将这些 CUDA 算子转换为在没有 GPU 的环境中运行的等效 CPU 算子，无论是使用TensorFlow、MXNet还是其他深度学习框架。",
         "给定一个 CUDA 算子，将其转换为等效的 CPU 算子。请注意性能和正确性，并尽可能最大化 CPU 上的执行效率。"
     ],
+    "ir_info_en":[
+        "IR information corresponding to the CUDA code will also be provided."
+    ],
     "cpu2cuda_en":[
-
+        "Design a CUDA operator to parallelize the given CPU element-wise operation, aiming to improve overall performance. Ensure that the operator appropriately handles boundary cases and maximizes the parallel computing potential of the GPU.",
+        "Please generate CUDA code to transform the given CPU operator into a high-performance CUDA implementation. Optimize the parallelism of the computation, effectively utilizing the computational resources of the GPU."
     ],
     "cpu2cuda_ch":[
-        
+        "设计一个 CUDA 算子，将给定的 CPU element-wise操作并行化，以提高整体性能。确保算子适当处理边界情况，最大限度地发挥 GPU 的并行计算潜力。",
+        "请生成 CUDA 代码，以将给定的 CPU 算子转换为高性能的 CUDA 实现。优化运算的并行性，有效利用 GPU 的计算资源。"
     ]
 }
