@@ -237,7 +237,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     group_by_length: bool = field(default=True, metadata={
         "help": 'Group sequences into batches with same length. Saves memory and speeds up training considerably.'})
     save_strategy: str = field(default='steps', metadata={"help": 'When to save checkpoints'})
-    save_steps: int = field(default=500, metadata={"help": 'How often to save a model'})
+    save_steps: int = field(default=50, metadata={"help": 'How often to save a model'})
     save_total_limit: int = field(default=40,
                                   metadata={"help": 'How many checkpoints to save before the oldest is overwritten'})
 
@@ -362,7 +362,6 @@ def get_accelerate_model(args, checkpoint_dir):
         trust_remote_code=args.trust_remote_code,
         use_auth_token=args.use_auth_token
     )
-    model = model.float()
     # model = AutoModelForCausalLM.from_pretrained(
     #     args.model_name_or_path,
     #     cache_dir=args.cache_dir,

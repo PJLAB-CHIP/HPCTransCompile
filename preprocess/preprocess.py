@@ -9,7 +9,7 @@ import argparse
 instruction_path = "./instruction/instruction_v1.0.json"
 raw_data_path = "./raw_data/raw_data_v1.0.json"
 hpc_data = []
-VERSION_INFO = 'v1.4'
+# VERSION_INFO = 'v1.5_without_ir'
 WITH_IR_INPUT_TEMPLATE = "### IR Code:\n\n{}\n\n### CUDA Code:\n{}\n\n"
 
 
@@ -47,6 +47,10 @@ def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
             op_dict[op['op_name']].append(op)
     train_num = (int)(len(op_dict.keys())*SAMPLING_RATIO)  # 训练集算子数
     op_name_list = list(op_dict.keys())
+
+    # 设置随机种子
+    random_seed = 42
+    random.seed(random_seed)
     random.shuffle(op_name_list)
     # print('op_name:', op_name_list)
     # print('op_dict.keys():', op_dict.keys())
@@ -63,18 +67,21 @@ def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
     return train_dataset,test_dataset
 
 if __name__ == "__main__":
+    """命令行解析参数信息"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--use_ir',type=bool,default=False)
+    parser.add_argument('--SAMPLING_RATIO',type=float,default=0.95)
+    parser.add_argument('--VERSION_INFO',type=str)
+    args = parser.parse_args()  # 解析命令行参数
+    VERSION_INFO = args.VERSION_INFO
+
     """数据集日志信息LOG"""
     check_output_path(f'./data/hpc_{VERSION_INFO}')
     logging.basicConfig(filename=os.path.join(f'./data/hpc_{VERSION_INFO}','info.log'), level=logging.INFO, filemode='w+')  # 日志信息
     logging.info('VERSION_INFO: %s', VERSION_INFO)
     logging.info('instruction_path: %s', instruction_path)
     logging.info('raw_data_path: %s', raw_data_path)
-    logging.info('Describe: %s', '根据算子名对数据集进行划分，同时包含算子的IR信息')
-    """命令行解析参数信息"""
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--use_ir',type=bool,default=False)
-    parser.add_argument('--SAMPLING_RATIO',default=0.95)
-    args = parser.parse_args()  # 解析命令行参数
+    logging.info('Describe: %s', '根据算子名对数据集进行划分,同时包含算子的IR信息(设置随机种子,与没有IR进行对比)')
 
     with open(instruction_path, 'r') as file:
         instructions = json.load(file)
@@ -86,7 +93,8 @@ if __name__ == "__main__":
 
     # print('instructions.keys():', instructions.keys())
     # print('len(raw_datas):', len(raw_datas))
-
+    # args.use_ir = False
+    print('args.use_ir:', args.use_ir)
     for raw_data in raw_datas:
         instruction = random.choice(cuda2cpu_en)
         """是否使用IR信息"""

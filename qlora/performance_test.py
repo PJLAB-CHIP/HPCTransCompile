@@ -1,3 +1,4 @@
+from re import split
 from sympy import sequence
 from transformers import (
     AutoTokenizer,
@@ -10,114 +11,153 @@ from transformers import (
     pipeline
 )
 import torch
-from torch.nn import DataParallel
-from torch.nn import Module
-import numpy as np
-import pandas as pd
 import os
-from typing import Dict, Tuple, Union, Optional
+import json
+import tqdm
+import argparse
+import logging
 
+"""命令行解析参数信息"""
+parser = argparse.ArgumentParser()
+parser.add_argument('--model_name',type=str,help='foundation model')
+parser.add_argument('--train_data_version',type=str)
+parser.add_argument('--test_data_version',type=str)
+parser.add_argument('--ckpt',type=int)
+parser.add_argument('--device',type=int,default=0)
+parser.add_argument('--use_lora_model',type=bool,default=False)
+args = parser.parse_args()  # 解析命令行参数
 
-def calculate_param_count():
+# MODEL_PATH = "./save_model/CodeLlama-7b-hf-500-v1.2"
+# EVAL_DATA_PATH = "../preprocess/data/hpc_test_v1.0.json"
+# EVAL_PROMPT = "{}\n\n### Input:\n{}\n\n### Response: "
+if args.use_lora_model:
+    MODEL_PATH = f"./save_model/{args.model_name}-{args.ckpt}-{args.train_data_version}"
+else:
+    MODEL_PATH = f"../../model/{args.model_name}"
+EVAL_DATA_PATH = f"../preprocess/data/hpc_{args.test_data_version}/hpc_test_{args.test_data_version}.json"
+EVAL_PROMPT = "{}\n\n### Input:\n{}\n\n### Response: "
+
+def load_eval():
+    with open(EVAL_DATA_PATH, 'r') as file:
+        eval_datas = json.load(file)
+    # print('len(eval_data):', len(eval_data))
+    sequences_info = []
+    for index,eval_data in enumerate(eval_datas):
+        # print(eval_data)
+        sequence_info = {}
+        sequence = EVAL_PROMPT.format(eval_data['instruction'],eval_data['input'])
+        sequence_info["sequence"] = sequence
+        sequence_info["gt"] = eval_data['output']
+        sequence_info["op_name"] = eval_data['op_name']+"_{}".format(index)
+        sequences_info.append(sequence_info)
+    return sequences_info
+
+def show_model_attribute(model):
     """
-    计算模型参数量
+    显示模型属性
     """
-    # Embedding层
-    embedding_params = 32016 * 4096
-
-    # LlamaModel
-    llama_model_params = 0
-    for layer in range(32):
-        llama_model_params += 4096 * 4096 * 4  # LlamaAttention
-        llama_model_params += 4096 * 4096 * 2  # LlamaAttention (rotary embedding)
-        llama_model_params += 4096 * 11008 * 3  # LlamaMLP
-
-    # Linear层（lm_head）
-    linear_params = 4096 * 32016
-
-    # 总参数数量
-    total_params = embedding_params + llama_model_params + linear_params
-
-    print("Total Parameters: {:,}".format(total_params))
-
-
-def auto_configure_device_map(num_gpus: int) -> Dict[str, int]:
-    # transformer.word_embeddings 占用1层
-    # transformer.final_layernorm 和 lm_head 占用1层
-    # transformer.layers 占用 28 层
-    # 总共30层分配到num_gpus张卡上
-    num_trans_layers = 28
-    per_gpu_layers = 30 / num_gpus
-
-    # bugfix: 在linux中调用torch.embedding传入的weight,input不在同一device上,导致RuntimeError
-    # windows下 model.device 会被设置成 transformer.word_embeddings.device
-    # linux下 model.device 会被设置成 lm_head.device
-    # 在调用chat或者stream_chat时,input_ids会被放到model.device上
-    # 如果transformer.word_embeddings.device和model.device不同,则会导致RuntimeError
-    # 因此这里将transformer.word_embeddings,transformer.final_layernorm,lm_head都放到第一张卡上
-    device_map = {'transformer.word_embeddings': 0,
-                  'transformer.final_layernorm': 0, 'lm_head': 0}
-
-    used = 2
-    gpu_target = 0
-    for i in range(num_trans_layers):
-        if used >= per_gpu_layers:
-            gpu_target += 1
-            used = 0
-        assert gpu_target < num_gpus
-        device_map[f'transformer.layers.{i}'] = gpu_target
-        used += 1
-
-    return device_map
-
-
-def load_model_on_gpus(checkpoint_path: Union[str, os.PathLike], num_gpus: int = 2,
-                       device_map: Optional[Dict[str, int]] = None, **kwargs) -> Module:
-    if num_gpus < 2 and device_map is None:
-        model = AutoModelForCausalLM.from_pretrained(checkpoint_path, trust_remote_code=True, **kwargs).half().cuda()
-    else:
-        from accelerate import dispatch_model
-
-        model = AutoModelForCausalLM.from_pretrained(checkpoint_path, trust_remote_code=True, **kwargs).half()
-
-        if device_map is None:
-            device_map = auto_configure_device_map(num_gpus)
-        print('device_map:', device_map)
-
-        model = dispatch_model(model, device_map=device_map)
-
-    return model
-
-# model_path = "../model/CodeLlama-7b-hf"
-# model_path = "./save_model/CodeLlama-7b-hf-10000"
-model_path = "./save_model/CodeLlama-7b-hf-1000"
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_path,
-    torch_dtype=torch.bfloat16,
-    device_map={"":0}
+    # print('model:', model)
+    """
+    LlamaForCausalLM(
+    (model): LlamaModel(
+        (embed_tokens): Embedding(32016, 5120)
+        (layers): ModuleList(
+        (0-39): 40 x LlamaDecoderLayer(
+            (self_attn): LlamaAttention(
+            (q_proj): Linear(in_features=5120, out_features=5120, bias=False)
+            (k_proj): Linear(in_features=5120, out_features=5120, bias=False)
+            (v_proj): Linear(in_features=5120, out_features=5120, bias=False)
+            (o_proj): Linear(in_features=5120, out_features=5120, bias=False)
+            (rotary_emb): LlamaRotaryEmbedding()
+            )
+            (mlp): LlamaMLP(
+            (gate_proj): Linear(in_features=5120, out_features=13824, bias=False)
+            (up_proj): Linear(in_features=5120, out_features=13824, bias=False)
+            (down_proj): Linear(in_features=13824, out_features=5120, bias=False)
+            (act_fn): SiLUActivation()
+            )
+            (input_layernorm): LlamaRMSNorm()
+            (post_attention_layernorm): LlamaRMSNorm()
+        )
+        )
+        (norm): LlamaRMSNorm()
     )
-# model = AutoModel.from_pretrained(model_path)
-model = model.eval()
-tokenizer = AutoTokenizer.from_pretrained(model_path)
+    (lm_head): Linear(in_features=5120, out_features=32016, bias=False)
+    )
+    """
+    # print('model.state_dict().keys():', model.state_dict().keys())
+    print('model parameter matrices num:', len(model.state_dict().keys()))
+    """
+    1. embedding层
+    'model.embed_tokens.weight' torch.Size([32016, 5120])
+    2. transformer层 0-39
+    'model.layers.0.self_attn.q_proj.weight', torch.Size([5120, 5120])
+    'model.layers.0.self_attn.k_proj.weight', torch.Size([5120, 5120])
+    'model.layers.0.self_attn.v_proj.weight', torch.Size([5120, 5120])
+    'model.layers.0.self_attn.o_proj.weight', torch.Size([5120, 5120])
+    'model.layers.0.mlp.gate_proj.weight', torch.Size([13824, 5120])
+    'model.layers.0.mlp.up_proj.weight', torch.Size([13824, 5120])
+    'model.layers.0.mlp.down_proj.weight', torch.Size([5120, 13824])
+    'model.layers.0.input_layernorm.weight', torch.Size([5120])
+    'model.layers.0.post_attention_layernorm.weight' torch.Size([5120])
+    3. norm层
+    'model.norm.weight', torch.Size([5120])
+    'lm_head.weight' torch.Size([32016, 5120])
+    """
 
-# sequence = 'The following are multiple choice questions (with answers) about  abstract algebra.\n\nLet p = (1, 2, 5, 4)(2, 3) in S_5 . Find the index of <p> in S_5.\nA. 8\nB. 2\nC. 24\nD. 120\nAnswer:'
-# sequence = 'Write a function to add two numpy arraies in C++\n\n### Response: '
-# sequence = 'Write a cuda operator to implement matrix multiplication\n\n### Response: '
-# sequence = 'Design a program that can translate a given C language operator into an equivalent CUDA operator. CUDA operators are parallel computing code written for GPUs, so consideration should be given to parallelism and GPU architecture.\n\n### Input:\nTVM_DLL int32_t default_function(void* args, int32_t* arg_type_ids, int32_t num_args, void* out_ret_value, int32_t* out_ret_tcode, void* resource_handle) {\n    int32_t A_code = arg_type_ids[0];\n    void* A = (((TVMValue*)args)[0].v_handle);\n    void* A_1 = (((DLTensor*)A)[0].data);\n    void* default_function_A_shape = (((DLTensor*)A)[0].shape);\n    int32_t n = ((int32_t)((int64_t*)default_function_A_shape)[0]);\n    void* default_function_A_strides = (((DLTensor*)A)[0].strides);\n    int32_t stride = ((n == 1) ? 0 : ((default_function_A_strides == NULL) ? 1 : ((int32_t)((int64_t*)default_function_A_strides)[0])));\n    int32_t dev_id = (((DLTensor*)A)[0].device.device_id);\n    void* compute = TVMBackendAllocWorkspace(1, dev_id, ((uint64_t)4 * ((uint64_t)n)), 2, 32);\n    if (compute == NULL) {\n      return -1;\n    }\n    for (int32_t i0 = 0; i0 < n; ++i0) {\n      ((float*)compute)[i0] = cosf(((float*)A_1)[(i0 * stride)]);\n    }\n    if (TVMBackendFreeWorkspace(1, dev_id, compute) != 0) {\n      return -1;\n    }\n    return 0;\n  }\n\n### Response: '
-# sequence = 'What is the meaning of life?\n\n### Response: '
-sequence = 'Given a performance-sensitive application that includes CUDA operators, you want to run in an environment without a GPU. Please convert the CUDA operators provided to an efficient CPU implementation with as little performance penalty as possible.\n\n### Input:\n#if (((__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ >= 4)) || \\\n     (__CUDACC_VER_MAJOR__ > 11))\n#define TVM_ENABLE_L2_PREFETCH 1\n#else\n#define TVM_ENABLE_L2_PREFETCH 0\n#endif\n\n#ifdef _WIN32\n  using uint = unsigned int;\n  using uchar = unsigned char;\n  using ushort = unsigned short;\n  using int64_t = long long;\n  using uint64_t = unsigned long long;\n#else\n  #define uint unsigned int\n  #define uchar unsigned char\n  #define ushort unsigned short\n  #define int64_t long long\n  #define uint64_t unsigned long long\n#endif\nextern \"C\" __global__ void __launch_bounds__(1024) default_function_kernel(float* __restrict__ T_divide, float* __restrict__ tarray);\nextern \"C\" __global__ void __launch_bounds__(1024) default_function_kernel(float* __restrict__ T_divide, float* __restrict__ tarray) {\n  if (((((int64_t)((int)blockIdx.x)) * (int64_t)32) + (((int64_t)((int)threadIdx.x)) >> (int64_t)5)) < (int64_t)1225) {\n    T_divide[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))] = (tarray[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))] / tarray[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))]);\n  }\n}\n\n### Response: '
+def generate(sequences_info):
+    """1. 加载model和tokenizer"""
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_PATH,
+        torch_dtype=torch.bfloat16,
+        device_map={"":args.device}
+        )
+    # show_model_attribute(model)
+    # model = AutoModel.from_pretrained(MODEL_PATH)
+    model = model.eval()
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    """2. Generate"""
+    diff = []  # generate和gt不同的op
+    for sequence_info in tqdm.tqdm(sequences_info,total=len(sequences_info)):
+        # print(sequence_info)
+        tokens = tokenizer.tokenize(sequence_info["sequence"])
+        input_ids = tokenizer.encode(sequence_info["sequence"], return_tensors="pt").to(f'cuda:{args.device}')
+        with torch.no_grad():
+            outputs = model.generate(input_ids=input_ids, max_length=4000, num_beams=4)
+        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        """extra: 比较generate和gt是否相同"""
+        generate = generated_text.split("### Response:  ")[-1]
+        gt = sequence_info["gt"]
+        if generate != gt:
+            # print(sequence_info["op_name"])
+            diff.append(sequence_info["op_name"])
+        """3. 保存generate和对应的gt"""
+        if not os.path.exists(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}'):
+            os.mkdir(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}')
+            os.mkdir(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}/generate')
+            os.mkdir(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}/gt')
+            os.mkdir(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}/full_gen')
+        # with open("./evaluate/generate/{}_generate.c".format(sequence_info["op_name"]), 'w') as file:
+        # print('generate:', generate)
+        with open(os.path.join(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}','generate',"{}_generate.c".format(sequence_info["op_name"])),'w') as file:
+            file.write(generate)
+        with open(os.path.join(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}','gt',"{}_gt.c".format(sequence_info["op_name"])),'w') as file:
+            file.write(gt)
+        with open(os.path.join(f'./evaluate/{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}','full_gen',"{}_full_gen.c".format(sequence_info["op_name"])),'w') as file:
+            file.write(generated_text)
+    print('diff:', diff)
+    return diff
 
 
-tokens = tokenizer.tokenize(sequence)
-# print('Tokens:', tokens)
-input_ids = tokenizer.encode(sequence, return_tensors="pt").to('cuda')
 
-with torch.no_grad():
-    outputs = model.generate(input_ids=input_ids, max_length=1000, num_beams=4)
+if __name__ == "__main__":
 
-# for output in outputs:
-#     print(tokenizer.decode(output))
+    sequences_info = load_eval()  # 数据加载
+    diff_op = generate(sequences_info=sequences_info)
+    """数据集日志信息LOG"""
+    logging.basicConfig(filename=os.path.join(f'./evaluate/{args.model_name}-{args.train_data_version}-{args.test_data_version}','evaluate_model_info.log'), level=logging.INFO, filemode='w+')  # 日志信息
+    logging.info('MODEL_PATH: %s', MODEL_PATH)
+    logging.info('EVAL_DATA_PATH: %s', EVAL_DATA_PATH)
+    logging.info('EVAL_PROMPT: %s', EVAL_PROMPT)
+    logging.info('diff_op: %s', diff_op)
 
-generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-print(generated_text)
