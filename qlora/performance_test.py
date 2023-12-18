@@ -16,6 +16,7 @@ import json
 import tqdm
 import argparse
 import logging
+from utils import *
 
 """命令行解析参数信息"""
 parser = argparse.ArgumentParser()
@@ -82,7 +83,7 @@ def show_model_attribute(model):
         )
         (norm): LlamaRMSNorm()
     )
-    (lm_head): Linear(in_features=5120, out_features=32016, bias=False)
+    (lm_head): Linear(in_features=5120, out_features=32016, bias=False)  # needed for 16-bit
     )
     """
     # print('model.state_dict().keys():', model.state_dict().keys())
@@ -115,6 +116,8 @@ def generate(sequences_info):
     # show_model_attribute(model)
     # model = AutoModel.from_pretrained(MODEL_PATH)
     model = model.eval()
+    """计算模型参数量"""
+    model_param_num = cal_model_params(model)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     """2. Generate"""
     diff = []  # generate和gt不同的op

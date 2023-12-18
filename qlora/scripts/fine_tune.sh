@@ -13,8 +13,9 @@ python qlora.py \
     --model_name_or_path ../../model/CodeLlama-13b-hf \
     --learning_rate 0.0001 \
     --num_train_epochs 10 \
-    --bits 8 \
+    --bits 16 \
     --dataset_format alpaca \
     --output_dir ./output/hpc_v1.5_with_ir \
     --per_device_train_batch_size 5 \
-    --save_steps 100
+    --save_steps 100 \
+    --full_finetune True \

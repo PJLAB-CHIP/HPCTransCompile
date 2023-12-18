@@ -92,10 +92,14 @@ class ModelArguments:
         default=False,
         metadata={"help": "Enable unpickling of arbitrary code in AutoModelForCausalLM#from_pretrained."}
     )
-    use_auth_token: Optional[bool] = field(
+    token: Optional[bool] = field(
         default=False,
         metadata={"help": "Enables using Huggingface auth token from Git Credentials."}
     )
+    # use_auth_token: Optional[bool] = field(
+    #     default=False,
+    #     metadata={"help": "Enables using Huggingface auth token from Git Credentials."}
+    # )
 
 
 @dataclass
@@ -173,7 +177,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         metadata={"help": "Maximum source sequence length for mmlu."}
     )
     full_finetune: bool = field(
-        default=False,
+        default=True,
         metadata={"help": "Finetune the entire model without adapters."}
     )
     adam8bit: bool = field(
@@ -276,9 +280,16 @@ class GenerationArguments:
 
 
 def find_all_linear_names(args, model):
+    """
+    寻找模型中的所有线性层
+    """
+    # 根据from_pretrained时指定的加载策略形成特定的Linear层
+    # 设置full_finetune时Linear层为torch.nn.Linear
     cls = bnb.nn.Linear4bit if args.bits == 4 else (bnb.nn.Linear8bitLt if args.bits == 8 else torch.nn.Linear)
     lora_module_names = set()
     for name, module in model.named_modules():
+        # print('name:', name)
+        # print('type(module):', type(module))
         if isinstance(module, cls):
             names = name.split('.')
             lora_module_names.add(names[0] if len(names) == 1 else names[-1])
@@ -360,7 +371,7 @@ def get_accelerate_model(args, checkpoint_dir):
         ),
         torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
         trust_remote_code=args.trust_remote_code,
-        use_auth_token=args.use_auth_token
+        token=args.token
     )
     # model = AutoModelForCausalLM.from_pretrained(
     #     args.model_name_or_path,
@@ -380,7 +391,7 @@ def get_accelerate_model(args, checkpoint_dir):
     #     ),
     #     torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
     #     trust_remote_code=args.trust_remote_code,
-    #     use_auth_token=args.use_auth_token
+    #     token=args.token
     # )
     if compute_dtype == torch.float16 and args.bits == 4:
         if torch.cuda.is_bf16_supported():
@@ -405,7 +416,7 @@ def get_accelerate_model(args, checkpoint_dir):
         use_fast=False,  # Fast tokenizer giving issues.
         tokenizer_type='llama' if 'llama' in args.model_name_or_path else None,  # Needed for HF name change
         trust_remote_code=args.trust_remote_code,
-        use_auth_token=args.use_auth_token,
+        token=args.token,
     )
     if tokenizer._pad_token is None:
         smart_tokenizer_and_embedding_resize(
@@ -447,10 +458,23 @@ def get_accelerate_model(args, checkpoint_dir):
             )
             model = get_peft_model(model, config)
     else:
-        print(f'full finetune the model')
-        modules = find_all_linear_names(args, model)
+        print(f'full finetune the model...')
+        modules = find_all_linear_names(args, model)  # 可进行lora的全部Linear
+        config = LoraConfig(
+            r=args.lora_r,
+            lora_alpha=args.lora_alpha,
+            target_modules=modules,
+            lora_dropout=args.lora_dropout,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, config)
+        # print('model.state_dict().keys():', model.state_dict().keys())
 
     for name, module in model.named_modules():
+        # print('name:', name)
+        # print('type(module):', type(module))
+        """Lora Layer用bf16加载"""
         if isinstance(module, LoraLayer):
             if args.bf16:
                 module = module.to(torch.bfloat16)
@@ -814,7 +838,7 @@ def train():
     args = argparse.Namespace(
         **vars(model_args), **vars(data_args), **vars(training_args)
     )
-    print('args:', args)
+    # print('args:', args)
     # </editor-fold>
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)  # 获取checkpoint & 训练进度状态(True or False)
@@ -824,7 +848,7 @@ def train():
     model, tokenizer = get_accelerate_model(args, checkpoint_dir)  # 获取模型 & 分词器
 
     model.config.use_cache = False
-    print('loaded model')
+    print('loaded model...')
     set_seed(args.seed)  # 设置随机种子
 
     """处理数据集和collator
@@ -843,7 +867,7 @@ def train():
           train_on_source=False, predict_with_generate=False)}
     """
     data_module = make_data_module(tokenizer=tokenizer, args=args)
-    print('data_module:', data_module)
+    # print('data_module:', data_module)
 
     """Trainer"""
     trainer = Seq2SeqTrainer(
@@ -948,6 +972,9 @@ def train():
         logger.info("*** Train ***")
         # Note: `resume_from_checkpoint` not supported for adapter checkpoints by HF.
         # Currently adapter checkpoint is reloaded as expected but optimizer/scheduler states are not.
+        for name, param in model.named_parameters():
+            print(f"{name}: requires_grad={param.requires_grad}")
+            
         train_result = trainer.train()
         metrics = train_result.metrics
         trainer.log_metrics("train", metrics)

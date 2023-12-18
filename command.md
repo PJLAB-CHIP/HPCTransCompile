@@ -92,3 +92,10 @@ ls /usr/bin/g++*
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/g++-9 40
 update-alternatives --install /usr/bin/gcc gcc /usr/bin/g++-11 50
 update-alternatives --config g++
+
+
+# jupyter
+## notebook
+key: argon2:$argon2id$v=19$m=10240,t=10,p=8$btava01DBnSNVA5VD6DDZw$D8uzlG51dMIqAp40Km/oxbB1VJnR9PUu3XYLUa942VA
+## lab
+
