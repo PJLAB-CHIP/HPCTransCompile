@@ -1,3 +1,4 @@
+from ast import arg
 import json
 import random
 import numpy as np
@@ -7,7 +8,7 @@ import argparse
 
 
 instruction_path = "./instruction/instruction_v1.0.json"
-raw_data_path = "./raw_data/raw_data_v1.0.json"
+# raw_data_path = "./raw_data/raw_data_v2.0.json"
 hpc_data = []
 # VERSION_INFO = 'v1.5_without_ir'
 WITH_IR_INPUT_TEMPLATE = "### IR Code:\n\n{}\n\n### CUDA Code:\n{}\n\n"
@@ -72,8 +73,10 @@ if __name__ == "__main__":
     parser.add_argument('--use_ir',type=bool,default=False)
     parser.add_argument('--SAMPLING_RATIO',type=float,default=0.95)
     parser.add_argument('--VERSION_INFO',type=str)
+    parser.add_argument('--raw_data_path', type=str)
     args = parser.parse_args()  # 解析命令行参数
     VERSION_INFO = args.VERSION_INFO
+    raw_data_path = args.raw_data_path
 
     """数据集日志信息LOG"""
     check_output_path(f'./data/hpc_{VERSION_INFO}')
