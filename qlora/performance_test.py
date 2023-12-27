@@ -25,7 +25,7 @@ parser.add_argument('--train_data_version',type=str)
 parser.add_argument('--test_data_version',type=str)
 parser.add_argument('--ckpt',type=int)
 parser.add_argument('--device',type=int,default=0)
-parser.add_argument('--use_lora_model',type=bool,default=False)
+parser.add_argument('--use_lora_model',type=bool,default=True)
 args = parser.parse_args()  # 解析命令行参数
 
 # MODEL_PATH = "./save_model/CodeLlama-7b-hf-500-v1.2"
@@ -117,7 +117,7 @@ def generate(sequences_info):
     # model = AutoModel.from_pretrained(MODEL_PATH)
     model = model.eval()
     """计算模型参数量"""
-    model_param_num = cal_model_params(model)
+    # model_param_num = cal_model_params(model)
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     """2. Generate"""
     diff = []  # generate和gt不同的op

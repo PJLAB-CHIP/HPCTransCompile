@@ -5,5 +5,5 @@
 
 python combine.py \
     --model_name CodeLlama-13b-hf \
-    --data_version v1.5_with_ir_full \
-    --ckpt 300
+    --data_version v2.0_without_ir \
+    --ckpt 500

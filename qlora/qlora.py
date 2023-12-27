@@ -177,7 +177,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         metadata={"help": "Maximum source sequence length for mmlu."}
     )
     full_finetune: bool = field(
-        default=True,
+        default=False,
         metadata={"help": "Finetune the entire model without adapters."}
     )
     adam8bit: bool = field(
@@ -373,6 +373,8 @@ def get_accelerate_model(args, checkpoint_dir):
         trust_remote_code=args.trust_remote_code,
         token=args.token
     )
+    for param in model.parameters():
+        print(f"Parameter: {param.shape}, Data Type: {param.dtype}")
     # model = AutoModelForCausalLM.from_pretrained(
     #     args.model_name_or_path,
     #     cache_dir=args.cache_dir,
@@ -828,7 +830,7 @@ def get_last_checkpoint(checkpoint_dir):
 
 
 def train():
-    # <editor-fold desc="Parameters">
+    """1. 初始化参数列表"""
     hfparser = transformers.HfArgumentParser((
         ModelArguments, DataArguments, TrainingArguments, GenerationArguments
     ))
@@ -839,7 +841,6 @@ def train():
         **vars(model_args), **vars(data_args), **vars(training_args)
     )
     # print('args:', args)
-    # </editor-fold>
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)  # 获取checkpoint & 训练进度状态(True or False)
     if completed_training:
@@ -1014,5 +1015,5 @@ def train():
 
 
 if __name__ == "__main__":
-    print('sys.argv:', sys.argv)
+    print('sys.argv:', sys.argv)  # 获取命令行参数
     train()

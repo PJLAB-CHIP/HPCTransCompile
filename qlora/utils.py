@@ -10,5 +10,5 @@ def cal_model_params(model):
         for i in range(layer_matrix.ndim):
             layer_param_num *= layer_matrix.shape[i]
         model_param_num += layer_param_num
-    print('model_param_num:', model_param_num)
+    # print('model_param_num:', model_param_num)
     return model_param_num
