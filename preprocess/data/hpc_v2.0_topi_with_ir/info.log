@@ -1,0 +1,6 @@
+INFO:root:VERSION_INFO: v2.0_topi_with_ir
+INFO:root:instruction_path: ./instruction/instruction_v1.0.json
+INFO:root:raw_data_path: ./raw_data/raw_data_v2.0_topi.json
+INFO:root:Describe: 根据算子名对数据集进行划分,同时包含算子的IR信息.仅包含topi算子
+INFO:root:train_dataset_op: ['acos', 'sum[9__8__16__40]', 'asin', 'sinh', 'log2', 'log10', 'round', 'asinh', 'sum[3__40__8__28]', 'shape', 'floor', 'negative', 'log', 'fast_exp', 'atan', 'sign', 'sin', 'max', 'atanh', 'isnan', 'flip', 'rsqrt', 'sqrt', 'prod', 'fast_tanh', 'exp', 'tanh', 'sigmoid', 'sum[2__24__12__24]', 'sum[4__16__16__12]', 'tan', 'min', 'sum[10__32__8__40]', 'sum', 'cos', 'ceil', 'erf', 'fast_erf']
+INFO:root:test_dataset_op: ['sum[7__20__12__36]', 'cosh']

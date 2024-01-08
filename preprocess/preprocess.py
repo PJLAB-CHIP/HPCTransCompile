@@ -1,18 +1,13 @@
-from ast import arg
+from ast import arg, parse
 import json
 import random
 import numpy as np
 import os
 import logging
 import argparse
+from utils import CONFIG
 
-
-instruction_path = "./instruction/instruction_v1.0.json"
-# raw_data_path = "./raw_data/raw_data_v2.0.json"
 hpc_data = []
-# VERSION_INFO = 'v1.5_without_ir'
-WITH_IR_INPUT_TEMPLATE = "### IR Code:\n\n{}\n\n### CUDA Code:\n{}\n\n"
-
 
 def check_output_path(folder_path):
     if not os.path.exists(folder_path):
@@ -74,39 +69,51 @@ if __name__ == "__main__":
     parser.add_argument('--SAMPLING_RATIO',type=float,default=0.95)
     parser.add_argument('--VERSION_INFO',type=str)
     parser.add_argument('--raw_data_path', type=str)
+    parser.add_argument('--describe')
+    parser.add_argument('--use_alpaca',type=bool)
+    parser.add_argument('--alpaca_path',type=str)
     args = parser.parse_args()  # 解析命令行参数
+    print('args:', args)
     VERSION_INFO = args.VERSION_INFO
-    raw_data_path = args.raw_data_path
+    raw_data_path = CONFIG.raw_data_path
 
     """数据集日志信息LOG"""
     check_output_path(f'./data/hpc_{VERSION_INFO}')
     logging.basicConfig(filename=os.path.join(f'./data/hpc_{VERSION_INFO}','info.log'), level=logging.INFO, filemode='w+')  # 日志信息
     logging.info('VERSION_INFO: %s', VERSION_INFO)
-    logging.info('instruction_path: %s', instruction_path)
+    logging.info('instruction_path: %s', CONFIG.instruction_path)
     logging.info('raw_data_path: %s', raw_data_path)
-    logging.info('Describe: %s', '根据算子名对数据集进行划分,同时包含算子的IR信息(设置随机种子,与没有IR进行对比)')
+    logging.info('Describe: %s', args.describe)
 
-    with open(instruction_path, 'r') as file:
+    """加载instruction"""
+    with open(CONFIG.instruction_path, 'r') as file:
         instructions = json.load(file)
 
-    with open(raw_data_path, 'r') as file:
-        raw_datas = json.load(file)
+    """加载原始数据集"""
+    if isinstance(raw_data_path,str):
+        with open(raw_data_path, 'r') as file:
+            raw_datas = json.load(file)
+    elif isinstance(raw_data_path,list):
+        raw_datas = []
+        for _path in raw_data_path:
+            with open(_path, 'r') as file:
+                raw_datas.extend(json.load(file))
 
     cuda2cpu_en = instructions["cuda2cpu_en"]
-
-    # print('instructions.keys():', instructions.keys())
-    # print('len(raw_datas):', len(raw_datas))
     # args.use_ir = False
     print('args.use_ir:', args.use_ir)
+
+    """为每条raw data生成对应的prompt"""
     for raw_data in raw_datas:
         instruction = random.choice(cuda2cpu_en)
         """是否使用IR信息"""
         if not args.use_ir:
             input = raw_data['cuda_code']
         else:
-            input = WITH_IR_INPUT_TEMPLATE.format(raw_data['ir_code'],raw_data['cuda_code'])
+            input = CONFIG.WITH_IR_INPUT_TEMPLATE.format(raw_data['ir_code'],raw_data['cuda_code'])
             ir_info = random.choice(instructions["ir_info_en"])
             instruction += ir_info
+        
         output = raw_data['c_code']
         op_name = raw_data['op_name']
         hpc_data.append({
@@ -116,7 +123,18 @@ if __name__ == "__main__":
             "op_name":op_name
         })
 
-    # print('len(hpc_data):', len(hpc_data))
+    """[optional] 加入alpaca数据集"""
+    with open(args.alpaca_path,'r') as file:
+        alpaca_data = json.load(file)
+        for _item in alpaca_data:
+            hpc_data.append({
+                "instruction":_item['instruction'],
+                "input":_item['input'],
+                "output":_item['output'],
+                "op_name":'alpaca'
+            })
+
+    print('len(hpc_data):', len(hpc_data))
 
     # 划分训练集&测试集
     train_dataset, test_dataset = dataset_partition(hpc_data,sampling_ratio=args.SAMPLING_RATIO,divide_method='by_name')

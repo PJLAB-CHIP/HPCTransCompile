@@ -1,0 +1,4 @@
+INFO:root:VERSION_INFO: v2.0_mixed
+INFO:root:instruction_path: ./instruction/instruction_v1.0.json
+INFO:root:raw_data_path: ['./raw_data/raw_data_v2.0_mixed.json', './raw_data/alpaca_data.json']
+INFO:root:Describe: 根据算子名对数据集进行划分,同时包含算子的IR信息,包含topi算子和alpaca数据集
