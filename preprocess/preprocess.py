@@ -5,7 +5,7 @@ import numpy as np
 import os
 import logging
 import argparse
-from utils import CONFIG
+from utils import CONFIG, extract_func_implementation
 
 hpc_data = []
 
@@ -33,7 +33,6 @@ def dataset_partition_shuffle(hpc_data,SAMPLING_RATIO=0.95):
     return train_dataset,test_dataset
 
 def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
-    # TODO: 按算子划分训练
     op_dict = {}
     for op in hpc_data:
         if op['op_name'] in op_dict:
@@ -43,13 +42,10 @@ def dataset_partition_by_name(hpc_data,SAMPLING_RATIO=0.95):
             op_dict[op['op_name']].append(op)
     train_num = (int)(len(op_dict.keys())*SAMPLING_RATIO)  # 训练集算子数
     op_name_list = list(op_dict.keys())
-
     # 设置随机种子
     random_seed = 42
     random.seed(random_seed)
     random.shuffle(op_name_list)
-    # print('op_name:', op_name_list)
-    # print('op_dict.keys():', op_dict.keys())
     train_dataset_op = op_name_list[:train_num]
     test_dataset_op = op_name_list[train_num:]
     logging.info('train_dataset_op: %s', train_dataset_op)
@@ -70,8 +66,9 @@ if __name__ == "__main__":
     parser.add_argument('--VERSION_INFO',type=str)
     parser.add_argument('--raw_data_path', type=str)
     parser.add_argument('--describe')
-    parser.add_argument('--use_alpaca',type=bool)
+    parser.add_argument('--use_alpaca',type=bool,default=False)
     parser.add_argument('--alpaca_path',type=str)
+    parser.add_argument('--extract_func_implementation',type=bool,default=False)
     args = parser.parse_args()  # 解析命令行参数
     print('args:', args)
     VERSION_INFO = args.VERSION_INFO
@@ -100,7 +97,6 @@ if __name__ == "__main__":
                 raw_datas.extend(json.load(file))
 
     cuda2cpu_en = instructions["cuda2cpu_en"]
-    # args.use_ir = False
     print('args.use_ir:', args.use_ir)
 
     """为每条raw data生成对应的prompt"""
@@ -114,7 +110,10 @@ if __name__ == "__main__":
             ir_info = random.choice(instructions["ir_info_en"])
             instruction += ir_info
         
-        output = raw_data['c_code']
+        if args.extract_func_implementation:
+            output = extract_func_implementation(raw_data['c_code'])
+        else:
+            output = raw_data['c_code']
         op_name = raw_data['op_name']
         hpc_data.append({
             "instruction":instruction,
@@ -124,15 +123,16 @@ if __name__ == "__main__":
         })
 
     """[optional] 加入alpaca数据集"""
-    with open(args.alpaca_path,'r') as file:
-        alpaca_data = json.load(file)
-        for _item in alpaca_data:
-            hpc_data.append({
-                "instruction":_item['instruction'],
-                "input":_item['input'],
-                "output":_item['output'],
-                "op_name":'alpaca'
-            })
+    if args.use_alpaca:
+        with open(args.alpaca_path,'r') as file:
+            alpaca_data = json.load(file)
+            for _item in alpaca_data:
+                hpc_data.append({
+                    "instruction":_item['instruction'],
+                    "input":_item['input'],
+                    "output":_item['output'],
+                    "op_name":'alpaca'
+                })
 
     print('len(hpc_data):', len(hpc_data))
 
