@@ -1,6 +1,0 @@
-INFO:root:VERSION_INFO: v1.4
-INFO:root:instruction_path: ./instruction/instruction_v1.0.json
-INFO:root:raw_data_path: ./raw_data/raw_data_v1.0.json
-INFO:root:Describe: 根据算子名对数据集进行划分，同时包含算子的IR信息
-INFO:root:train_dataset_op: ['concatenate', 'log2', 'shape', 'cosh', 'cos', 'greater_equal', 'round', 'floor_mod', 'floor_divide', 'multiply', 'const_vector_np_full', 'fast_exp', 'tanh', 'expand_dims', 'const_vector_np_zeros', 'exp', 'flip', 'sign', 'sigmoid', 'floor', 'reshape_1', 'left_shift', 'min', 'reshape_2', 'const_vector_np_ones', 'tile', 'prod', 'sqrt', 'minimum', 'asinh', 'rsqrt', 'log', 'sin', 'asin', 'reshape', 'ceil', 'atan', 'log10', 'less_equal', 'identity', 'fast_erf', 'elemwise_sum', 'fixed_point_multiply', 'greater', 'full_like', 'acos', 'atanh', 'divide', 'max', 'const_vector_np_arange', 'mod', 'clip', 'equal', 'stack', 'isnan', 'repeat', 'erf', 'fast_tanh', 'maximum', 'power', 'not_equal', 'tensordot']
-INFO:root:test_dataset_op: ['tan', 'reinterpret', 'sinh', 'negative']

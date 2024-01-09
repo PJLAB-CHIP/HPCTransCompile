@@ -1,5 +1,6 @@
 from ast import Tuple
 from re import split
+import defusedxml
 from sympy import sequence
 from transformers import (
     AutoTokenizer,
@@ -17,6 +18,7 @@ from utils import *
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import torch.nn.functional as F
 
 """命令行解析参数信息"""
 parser = argparse.ArgumentParser()
@@ -25,21 +27,34 @@ parser.add_argument('--train_data_version',type=str)
 parser.add_argument('--test_data_version',type=str)
 parser.add_argument('--ckpt',type=int)
 parser.add_argument('--device',type=int,default=0)
-parser.add_argument('--use_lora_model',type=bool,default=False)
+parser.add_argument('--use_lora_model',type=bool,default=False,help='使用fine-tune后的模型还是基座模型')
+parser.add_argument('--use_alpaca_prompt',type=bool,default=True,help='是否使用ALPACA的默认prompt')
 parser.add_argument('--bits',type=int,default=8)
+parser.add_argument('--max_length',type=int,default=3000)
 args = parser.parse_args()  # 解析命令行参数
 
 print('args:', args)
 
-# MODEL_PATH = "./save_model/CodeLlama-7b-hf-500-v1.2"
-# EVAL_DATA_PATH = "../preprocess/data/hpc_test_v1.0.json"
-# EVAL_PROMPT = "{}\n\n### Input:\n{}\n\n### Response: "
 if args.use_lora_model:
     MODEL_PATH = f"./save_model/{args.model_name}-{args.ckpt}-{args.train_data_version}"
 else:
     MODEL_PATH = f"../../model/{args.model_name}"
 EVAL_DATA_PATH = f"../preprocess/data/hpc_{args.test_data_version}/hpc_test_{args.test_data_version}.json"
 EVAL_PROMPT = "{}\n\n### Input:\n{}\n\n### Response: "
+MODEL_IDENTIFY = f'{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}'
+
+ALPACA_PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{}\n\n### Input:\n{}\n\n### Response: "
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{}\n\n### Response: "
+    ),
+}
 
 def load_eval():
     """
@@ -47,12 +62,13 @@ def load_eval():
     """
     with open(EVAL_DATA_PATH, 'r') as file:
         eval_datas = json.load(file)
-    # print('len(eval_data):', len(eval_data))
     sequences_info = []
     for index,eval_data in enumerate(eval_datas):
-        # print(eval_data)
         sequence_info = {}
-        sequence = EVAL_PROMPT.format(eval_data['instruction'],eval_data['input'])
+        if args.use_alpaca_prompt:
+            sequence = ALPACA_PROMPT_DICT['prompt_input'].format(eval_data['instruction'],eval_data['input'])
+        else:
+            sequence = EVAL_PROMPT.format(eval_data['instruction'],eval_data['input'])
         sequence_info["sequence"] = sequence
         sequence_info["gt"] = eval_data['output']
         sequence_info["op_name"] = eval_data['op_name']+"_{}".format(index)
@@ -60,48 +76,59 @@ def load_eval():
     return sequences_info
 
 
-def show_attention_matrix(attention_tuple: Tuple, input_token_num: int, generate_token_num: int):
+def show_attention_matrix(attention_tuple: Tuple, input_token_num: int, generate_token_num: int, op_name: str):
+    def draw_matrix(matrix, mode='layer',**kwargs):
+        plt.imshow(matrix)
+        # 添加颜色条
+        cbar = plt.colorbar()
+        # 添加颜色条标签
+        cbar.set_label('Colorbar Label')
+        if mode == 'layer':
+            i = kwargs['layer_num']
+            plt.title(f'{op_name}:attention_layer_{i}')
+            plt.savefig(f'./pictures/{MODEL_IDENTIFY}/{op_name}/attention_layer_{i}')
+        elif mode == 'mean':
+            plt.title(f'{op_name}:attention_layer_mean')
+            plt.savefig(f'./pictures/{MODEL_IDENTIFY}/{op_name}/attention_layer_mean')
+        elif mode == 'sum&softmax':
+            plt.title(f'{op_name}:attention_layer_sum&softmax')
+            plt.savefig(f'./pictures/{MODEL_IDENTIFY}/{op_name}/attention_layer_sum&softmax')
+        cbar.remove()
+    
     attention_list = []
     for lines in attention_tuple:
         attention_list.append(lines[0][0].cpu().float())
         # print('--len(lines):', len(lines))
         # for line in lines:
         #     print('----len(line):', len(line))
-
     print('len(attention_list):', len(attention_list))
-    # for _item in attention_list:
-    #     print('_item.shape:', _item.shape)
 
     total_token_num = input_token_num + generate_token_num  # 总token数
     dim_0 = attention_list[0].shape[0]
     attention_matrix = torch.zeros(dim_0,total_token_num,total_token_num)
-    for i,_item in enumerate(attention_list):
-        print('_item.shape:', _item.shape)
-        print(i,i+_item.shape[1],i+_item.shape[2])
-        attention_matrix[:,i:i+_item.shape[1],:_item.shape[2]] = _item
 
-    # TODO: 热力图展示需要再完善
+    cur_row = 0 # 当前需要写入的行
+    for i,_item in enumerate(attention_list):
+        # print('_item.shape:', _item.shape)
+        # print(i,i+_item.shape[1],i+_item.shape[2])
+        attention_matrix[:,cur_row:cur_row+_item.shape[1],:_item.shape[2]] = _item
+        cur_row += _item.shape[1]
+
     print('attention_matrix.shape:', attention_matrix.shape)
     """展示模型inference计算生成的attention矩阵"""
+    """PART1 每个layer的attention"""
+    if not os.path.exists(f'./pictures/{MODEL_IDENTIFY}'):
+        os.mkdir(f'./pictures/{MODEL_IDENTIFY}')
+    if not os.path.exists(f'./pictures/{MODEL_IDENTIFY}/{op_name}'):
+        os.mkdir(f'./pictures/{MODEL_IDENTIFY}/{op_name}')
+    for i,sub_matrix in enumerate(attention_matrix):
+        draw_matrix(sub_matrix,mode='layer',layer_num=i)
+    """PART2 求所有层的mean和sum-->sotfmax"""
     sum_matrix = torch.sum(attention_matrix,dim=0)
-    plt.imshow(sum_matrix)
-    plt.title('cos&sin postional embedding')
-    # 添加颜色条
-    cbar = plt.colorbar()
-    # 添加颜色条标签
-    cbar.set_label('Colorbar Label')
-    plt.savefig('./pictures/sum/PositionalEmbedding')
-
-    """对每个通道分别绘制attention热力图"""
-    # for i,sub_matrix in enumerate(attention_matrix):
-    #     plt.imshow(sub_matrix)
-    #     plt.title('cos&sin postional embedding')
-    #     # 添加颜色条
-    #     cbar = plt.colorbar()
-    #     # 添加颜色条标签
-    #     cbar.set_label('Colorbar Label')
-    #     plt.savefig(f'./pictures/temp/PositionalEmbedding_{i}')
-    #     cbar.remove()
+    sum_matrix = F.softmax(sum_matrix,dim=1)
+    mean_matrix = torch.mean(attention_matrix,dim=0)
+    draw_matrix(sum_matrix,mode='sum&softmax')
+    draw_matrix(mean_matrix,mode='mean')
 
 def generate(sequences_info):
     """1. 加载model和tokenizer"""
@@ -133,8 +160,7 @@ def generate(sequences_info):
     # model = AutoModel.from_pretrained(MODEL_PATH)
     # model = model.eval()
     """计算模型参数量"""
-    # model_param_num = cal_model_params(model)
-
+    cal_model_params(model)
     """2. Generate"""
     diff = []  # generate和gt不同的op
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
@@ -142,6 +168,7 @@ def generate(sequences_info):
         # print(sequence_info)
         """2.1. 对输入进行编码&inference"""
         tokens = tokenizer.tokenize(sequence_info["sequence"])
+        sequence_info["sequence"] = "def matrix_mul(a, b, c):"  # TODO: del
         input_ids = tokenizer.encode(sequence_info["sequence"], return_tensors="pt").to(f'cuda:{args.device}')
         print('len(input_ids):', len(input_ids[0]))
         with torch.no_grad():
@@ -149,20 +176,18 @@ def generate(sequences_info):
                 input_ids=input_ids, 
                 generation_config = GenerationConfig(
                     return_dict_in_generate = True,
-                    output_attentions = True
+                    output_attentions = True,
+                    output_scores = True
                 ),
-                max_length=3000, 
+                max_length=args.max_length, 
                 num_beams=3,
                 )
-
         """2.2. 对输出进行解码,提取输出序列和attention矩阵"""
         generated_text = tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
         attention_tuple = outputs.attentions
         print('attention_tuple.shape:', len(attention_tuple))
-        show_attention_matrix(attention_tuple,len(input_ids[0]),len(attention_tuple))
+        show_attention_matrix(attention_tuple,len(input_ids[0]),len(attention_tuple),sequence_info["op_name"]) # 绘制attention热力图
         # generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-
         """extra: 比较generate和gt是否相同"""
         generate = generated_text.split("### Response:  ")[-1]
         gt = sequence_info["gt"]
@@ -189,7 +214,6 @@ def generate(sequences_info):
 
 
 if __name__ == "__main__":
-
     sequences_info = load_eval()  # 数据加载
     diff_op = generate(sequences_info=sequences_info)
     """数据集日志信息LOG"""
