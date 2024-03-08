@@ -1,6 +1,0 @@
-INFO:root:VERSION_INFO: v1.5_without_ir
-INFO:root:instruction_path: ./instruction/instruction_v1.0.json
-INFO:root:raw_data_path: ./raw_data/raw_data_v1.0.json
-INFO:root:Describe: 根据算子名对数据集进行划分,同时不包含算子的IR信息(设置随机种子,与有IR进行对比)
-INFO:root:train_dataset_op: ['not_equal', 'divide', 'reshape_2', 'prod', 'ceil', 'const_vector_np_full', 'less_equal', 'rsqrt', 'floor', 'equal', 'erf', 'sigmoid', 'round', 'log10', 'isnan', 'floor_mod', 'min', 'const_vector_np_zeros', 'const_vector_np_ones', 'mod', 'log', 'max', 'fast_erf', 'tanh', 'identity', 'elemwise_sum', 'stack', 'tile', 'negative', 'maximum', 'asinh', 'sinh', 'log2', 'floor_divide', 'exp', 'cosh', 'full_like', 'reshape_1', 'left_shift', 'reinterpret', 'greater_equal', 'expand_dims', 'fast_exp', 'power', 'concatenate', 'tan', 'shape', 'multiply', 'fast_tanh', 'greater', 'cos', 'acos', 'repeat', 'sqrt', 'atan', 'sign', 'minimum', 'reshape', 'atanh', 'const_vector_np_arange', 'clip', 'tensordot']
-INFO:root:test_dataset_op: ['flip', 'sin', 'asin', 'fixed_point_multiply']
