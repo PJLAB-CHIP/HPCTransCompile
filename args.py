@@ -7,7 +7,7 @@ class ModelArguments:
         default='meta-llama/Llama-2-7b'
     )
     max_seq_len: int = field(
-        default=4096
+        default=6144
     )
     source_max_len: int = field(
         default=2048
@@ -58,6 +58,11 @@ class TrainingArguments:
     device_map: str = field(
         default='cuda',
         metadata={'help':'which device is used'}
+    )
+
+    use_lora: bool = field(
+        default=False,
+        metadata={'help':'whether to use lora'}
     )
 
     full_finetune: bool = field(

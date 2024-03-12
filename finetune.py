@@ -151,6 +151,13 @@ def get_accelerate_model(args):
                 bnb_4bit_compute_dtype=torch.bfloat16
             ),
         ) 
+    else:
+        model = LlamaForCausalLM.from_pretrained(
+        pretrained_model_name_or_path = args.model_name_or_path,
+        device_map=args.device_map,
+        )
+    
+    if args.use_lora:
         model = prepare_model_for_kbit_training(model) # wraps the entire protocol for preparing a model before running a training.
         config = LoraConfig(
             r = 8,
@@ -161,14 +168,10 @@ def get_accelerate_model(args):
             task_type = "CAUSAL_LM",
         ) # target_modules控制在哪些层加LORA
         model = get_peft_model(model,config) # LlamaForCausalLM --> PeftModelForCausalLM
-    else:
-        model = LlamaForCausalLM.from_pretrained(
-        pretrained_model_name_or_path = args.model_name_or_path,
-        device_map=args.device_map,
-        )
 
 
     checkpoint_dir,completed_training = get_last_checkpoint(args.output_dir)
+    print('checkpoint_dir:', checkpoint_dir)
     # TODO: 从checkpoint加载模型
     if not completed_training:
         pass
@@ -176,7 +179,9 @@ def get_accelerate_model(args):
         pretrained_model_name_or_path = args.model_name_or_path,
         padding_side = 'left'
     )
+    print('vars(tokenizer):', vars(tokenizer))
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.max_seq_len = args.max_seq_len
     return model,tokenizer
 
 def get_last_checkpoint(checkpoint_dir):
