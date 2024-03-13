@@ -1,0 +1,9 @@
+INFO:root:MODEL_PATH: ./save_model/CodeLlama-13b-hf-400-v3.0_topi_without_ir_by_name_simplify
+INFO:root:EVAL_DATA_PATH: ./preprocess/data/hpc_v3.0_topi_without_ir_by_name_simplify/hpc_test_v3.0_topi_without_ir_by_name_simplify.json
+INFO:root:EVAL_PROMPT: {}
+
+### Input:
+{}
+
+### Response: 
+INFO:root:diff_op: ['acosh_47', 'acosh_73', 'cos_41', 'greater_72', 'cos_11', 'cos_40', 'acosh_81', 'greater_68', 'cos_17', 'greater_32', 'greater_64', 'greater_77', 'greater_1', 'acosh_13', 'cos_45', 'acosh_31', 'greater_26', 'greater_62', 'greater_10', 'greater_18', 'greater_29', 'greater_22', 'acosh_48', 'greater_44', 'greater_60', 'cos_76', 'cos_12', 'acosh_38', 'greater_63', 'greater_58', 'greater_27', 'acosh_20', 'greater_61', 'greater_74', 'acosh_34', 'greater_15', 'cos_51', 'greater_4', 'greater_16', 'acosh_54', 'greater_28', 'greater_78', 'acosh_57', 'acosh_9', 'acosh_79', 'acosh_14', 'cos_52', 'cos_25', 'cos_53', 'cos_5', 'greater_67', 'acosh_21', 'greater_39', 'greater_69', 'acosh_23', 'greater_82', 'greater_37', 'greater_43', 'acosh_3', 'acosh_30', 'greater_80', 'greater_33', 'acosh_0', 'greater_71', 'greater_42', 'cos_66', 'acosh_56', 'acosh_36', 'greater_6', 'greater_7', 'acosh_24', 'greater_59', 'acosh_19']
