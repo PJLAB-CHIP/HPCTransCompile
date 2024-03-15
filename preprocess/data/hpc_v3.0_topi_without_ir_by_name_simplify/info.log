@@ -1,0 +1,9 @@
+INFO:root:VERSION_INFO: v3.0_topi_without_ir_by_name_simplify
+INFO:root:instruction_path: ./instruction/instruction_v1.0.json
+INFO:root:raw_data_path: ['./raw_data/raw_data_v3.0_topi.json']
+INFO:root:Describe: {'foundation_model': 'CodeLlama-13b-hf', 'dataset_version': 'raw_data_v3.0_topi.json', 'simplify': True, 'extract_func_implementation': False}
+INFO:root:divide method: by_name
+INFO:root:train_dataset_op: ['rsqrt', 'negative', 'log2', 'fast_erf', 'atan', 'minimum', 'sigmoid', 'erf', 'sinh', 'isnan', 'tan', 'min', 'fast_exp', 'asinh', 'floor_mod', 'floor_divide', 'exp', 'round', 'add', 'acos', 'less_equal', 'log10', 'all', 'power', 'greater_equal', 'sqrt', 'sin', 'max', 'ndarray_size', 'less', 'mod', 'divide', 'tanh', 'maximum', 'fast_tanh', 'subtract', 'not_equal', 'asin', 'sign', 'equal', 'atanh', 'flip', 'ceil', 'cosh', 'floor', 'identity', 'log', 'multiply']
+INFO:root:test_dataset_op: ['acosh', 'cos', 'greater']
+INFO:root:train_dataset_num: 1288
+INFO:root:test_dataset_num: 83
