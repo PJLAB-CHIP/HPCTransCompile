@@ -23,10 +23,10 @@ python performance_test.py \
     --model_name CodeLlama-13b-hf \
     --train_data_version v3.0_topi_without_ir_by_name_simplify \
     --test_data_version v3.0_topi_without_ir_by_name_simplify \
-    --ckpt 600 \
+    --ckpt 400 \
     --device 2 \
-    --max_length 2000 \
-    --extra_length 100 \
+    --max_length 4096 \
+    --extra_length 500 \
     --use_lora_model True \
     --quantize_model False \
     --bits 8 \
