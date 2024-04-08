@@ -43,9 +43,11 @@ from torch.nn.utils.rnn import pad_sequence
 import copy
 import subprocess
 from torch import optim
+import wandb
 
-# os.environ['WANDB_API_KEY'] = 'cfb5ba8f1bb02b39b518c24874b8579617459db3'
+os.environ['WANDB_API_KEY'] = 'cfb5ba8f1bb02b39b518c24874b8579617459db3'
 # os.environ['WANDB_MODE'] = 'offline'
+wandb.init(project="LLM4HPCTransCompile")
 
 IGNORE_INDEX = -100
 
@@ -217,7 +219,7 @@ def train():
     train_data,val_data = get_data_module(args)
     # print('train_data:', train_data)
     # print('val_data:', val_data)
-    # optimizer = optim.SGD(model.parameters(),lr=args.learning_rate)
+    optimizer = optim.SGD(model.parameters(),lr=args.learning_rate)
     trainer = transformers.Trainer(
         model=model,
         train_dataset=train_data,

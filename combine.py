@@ -38,7 +38,7 @@ if __name__ == "__main__":
     parser.add_argument('--ckpt',type=int)
     args = parser.parse_args()  # 解析命令行参数
 
-    foundation_model_path = os.path.join('../../model',args.model_name)
+    foundation_model_path = os.path.join('../model',args.model_name)
     save_model_path = os.path.join('./save_model',f'{args.model_name}-{args.ckpt}-{args.data_version}')
     lora_path = os.path.join('./output',f'hpc_{args.data_version}',f'checkpoint-{args.ckpt}')
     # lora_path = os.path.join('./output',f'checkpoint-{args.ckpt}')

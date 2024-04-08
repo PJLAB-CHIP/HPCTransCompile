@@ -2,7 +2,7 @@ import json
 import os
 from os.path import join,exists
 
-FOLDER_NAME = 'CodeLlama-13b-hf-400-v3.0_topi_without_ir_by_name_simplify-v3.0_topi_without_ir_by_name_simplify_3_12'
+FOLDER_NAME = 'CodeLlama-13b-hf-400-v3.0_topi_without_ir_by_name_simplify-v3.0_topi_without_ir_by_name_simplify_3_15'
 PREFIX = '// tvm target: c -keys=cpu \n#define TVM_EXPORTS\n#include \"tvm/runtime/c_runtime_api.h\"\n#include \"tvm/runtime/c_backend_api.h\"\n#include <math.h>\n#include <stdbool.h>\n#ifdef __cplusplus\nextern \"C\"\n#endif\n'
 SUFFIX = '\n\n// CodegenC: NOTE: Auto-generated entry function\n#ifdef __cplusplus\nextern \"C\"\n#endif\nTVM_DLL int32_t __tvm_main__(void* args, int* arg_type_ids, int num_args, void* out_ret_value, int* out_ret_tcode, void* resource_handle) {\n  return default_function(args, arg_type_ids, num_args, out_ret_value, out_ret_tcode, resource_handle);\n}\n'
 

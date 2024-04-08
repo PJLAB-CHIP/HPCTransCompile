@@ -44,8 +44,8 @@ print('args:', args)
 if args.use_lora_model:
     MODEL_PATH = f"./save_model/{args.model_name}-{args.ckpt}-{args.train_data_version}"
 else:
-    MODEL_PATH = f"../../model/{args.model_name}"
-EVAL_DATA_PATH = f"../preprocess/data/hpc_{args.test_data_version}/hpc_test_{args.test_data_version}.json"
+    MODEL_PATH = f"../model/{args.model_name}"
+EVAL_DATA_PATH = f"./preprocess/data/hpc_{args.test_data_version}/hpc_test_{args.test_data_version}.json"
 MODEL_IDENTIFY = f'{args.model_name}-{args.ckpt}-{args.train_data_version}-{args.test_data_version}'
 
 # prompt模板
@@ -153,13 +153,20 @@ def cal_codebleu(prediction,reference):
 def generate(sequences_info):
     """1. 加载model和tokenizer"""
     device_map = f"cuda:{args.device}"
-    model = LlamaForCausalLM.from_pretrained(
-        MODEL_PATH,
-        torch_dtype=torch.bfloat16,
-        device_map=device_map,
-        attn_implementation="eager",
-        load_in_4bit= args.quantize_model and args.bits==4,
-        load_in_8bit= args.quantize_model and args.bits==8,
+    if args.quantize_model:
+        model = LlamaForCausalLM.from_pretrained(
+            MODEL_PATH,
+            torch_dtype=torch.bfloat16,
+            device_map=device_map,
+            attn_implementation="eager",
+            load_in_4bit= args.quantize_model and args.bits==4,
+            load_in_8bit= args.quantize_model and args.bits==8,
+            )
+    else:
+        model = LlamaForCausalLM.from_pretrained(
+            MODEL_PATH,
+            torch_dtype=torch.bfloat16,
+            device_map=device_map,
         )
     model = model.eval()
     """计算模型参数量"""
@@ -171,6 +178,7 @@ def generate(sequences_info):
         padding_side='left'
     )
     
+    average_codebleu = 0
     random.shuffle(sequences_info)
     for sequence_info in tqdm.tqdm(sequences_info,total=len(sequences_info)):
         """2.1. 对输入进行编码&inference"""
@@ -202,6 +210,7 @@ def generate(sequences_info):
         generate = generated_text.lstrip(sequence_info['sequence'])
         gt = sequence_info["gt"]
         score = cal_codebleu(generate,gt)
+        average_codebleu += score['codebleu']
         
         # 检查路径信息
         if not os.path.exists(f'./evaluate/{MODEL_IDENTIFY}'):
@@ -223,7 +232,9 @@ def generate(sequences_info):
             file.write(gt)
         with open(os.path.join(f'./evaluate/{MODEL_IDENTIFY}','full_gen',"{}_full_gen.c".format(sequence_info["op_name"])),'w') as file:
             file.write(generated_text)
-    print('diff:', diff)
+    with open(os.path.join('evaluate',MODEL_IDENTIFY,'codebleu.txt'),'a') as file:
+        file.write('average_codebleu:{}\n'.format(average_codebleu/len(sequences_info)))
+        file.write('diff:{}\n'.format(diff))
     return diff
 
 

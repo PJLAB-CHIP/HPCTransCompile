@@ -2,9 +2,12 @@ import re
 import json
 
 class CONFIG:
+    # preprocess.py
     raw_data_path = ['./raw_data/raw_data_v2.0_nn.json','./raw_data/raw_data_v2.0_topi.json']
     WITH_IR_INPUT_TEMPLATE = "### IR Code:\n\n{}\n\n### CUDA Code:\n{}\n\n"
     instruction_path = "./instruction/instruction_v1.0.json"
+    # format_conversion.py
+    codexglue_data_path = '/code/LLM4HPCTransCompile/preprocess/raw_data/hpc_CodeXGLUE_java_cs'
 
 # TVM_DLL int32_t default_function
 def extract_func_implementation(raw_code:str):

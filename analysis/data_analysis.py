@@ -9,34 +9,44 @@ from transformers import(
 import matplotlib.pyplot as plt
 
 class CONFIG:
-    data_path = '/code/LLM4HPCTransCompile/preprocess/data/hpc_v3.0_topi_without_ir_by_name_simplify/hpc_data_v3.0_topi_without_ir_by_name_simplify.json'
+    data_path = '/code/LLM4HPCTransCompile/preprocess/data/hpc_v3.0_topi_without_ir_by_name_simplify/hpc_train_v3.0_topi_without_ir_by_name_simplify.json'
     model_path = '/code/model/CodeLlama-13b-hf'
 
 def data_fix():
+    random.seed(42)
     with open(CONFIG.data_path,'rb') as file:
         data = json.load(file)
+    
+    # print(data[random.randint(0,len(data))]['input'])
+    # print('---------------------')
+    # print(data[random.randint(0,len(data))]['output'])
 
-    # step1
+    # # step1
     # for item in data:
     #     item['input'] = item['input'][:item['input'].rfind(',')] + '\n'
     #     item['output'] = item['output'][:item['output'].rfind(',')] + '\n'
 
-    # step2
+    # # step2
     # for item in data:
     #     last_comma_index = item['output'].rfind("return 0;\n}") + len("return 0;\n}")
     #     # print(last_comma_index)
     #     # print(item['output'][last_comma_index])
     #     item['output'] = item['output'][:last_comma_index] + item['output'][last_comma_index+1:]
 
-    for item in data:
-        item['input'] = item['input'].replace('},','}')
-        item['output'] = item['output'].replace('},','}')
+    # for item in data:
+    #     item['input'] = item['input'].replace('},','}')
+    #     item['output'] = item['output'].replace('},','}')
+
+    print(data[random.randint(0,len(data))]['input'])
+    print('---------------------')
+    print(data[random.randint(0,len(data))]['output'])
     
-    with open(CONFIG.data_path,'w') as file:
-        json.dump(data,file,indent=4)
+    # with open(CONFIG.data_path,'w') as file:
+    #     json.dump(data,file,indent=4)
 
 if __name__ == '__main__':
-    # data_fix()
+    data_fix()
+    exit(1)
 
     with open(CONFIG.data_path,'rb') as file:
         data = json.load(file)
