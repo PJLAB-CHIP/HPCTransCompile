@@ -1,0 +1,103 @@
+
+    Task: Translate the given CUDA code to its equivalent high-performance CPU C code.
+    Context: You are provided with a CUDA code snippet that needs to be translated into CPU C code. The translation should preserve the same functionality as much as possible. Focus on translating the CUDA-specific parallel constructs into constructs supported by the CPU, such as using OpenMP for parallelism. The resulting CPU C code should be complete and ready to compile.
+
+    Example 1:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(18) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 18) + ((int)threadIdx.x))] = atanf(data[((((int)blockIdx.x) * 18) + ((int)threadIdx.x))]);
+}
+
+
+    Input Tensor Shape: [[17, 12, 7, 9]]
+    Output C Code: void default_function_kernel(float* compute, float* data) {
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_i2_fused = 0; i0_i1_fused_i2_fused < 1428; ++i0_i1_fused_i2_fused) {
+    for (int32_t i3_s = 0; i3_s < 9; ++i3_s) {
+      compute[((i0_i1_fused_i2_fused * 9) + i3_s)] = atanf(data[((i0_i1_fused_i2_fused * 9) + i3_s)]);
+    }
+  }
+}
+
+
+    //|End-of-Code|
+
+    Example 2:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(4) default_function_kernel(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 4) + ((int)threadIdx.x))] = acosf(ph_0[((((int)blockIdx.x) * 4) + ((int)threadIdx.x))]);
+}
+
+extern "C" __global__ void __launch_bounds__(32) default_function_kernel_1(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = asinhf(__cosf(ph_0[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]));
+}
+
+extern "C" __global__ void __launch_bounds__(8) default_function_kernel_2(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 8) + ((int)threadIdx.x))] = __sinf(ph_0[((((int)blockIdx.x) * 8) + ((int)threadIdx.x))]);
+}
+
+extern "C" __global__ void __launch_bounds__(32) default_function_kernel_3(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = atanf(ph_0[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]);
+}
+
+
+    Input Tensor Shape: [[19, 17, 15]]
+    Output C Code: void default_function_kernel(float* compute, float* compute_1, float* compute_2, float* compute_3, float* ph_0) {
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_i2_fused = 0; i0_i1_fused_i2_fused < 4845; ++i0_i1_fused_i2_fused) {
+    compute[i0_i1_fused_i2_fused] = acosf(ph_0[i0_i1_fused_i2_fused]);
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_i2_fused_1 = 0; i0_i1_fused_i2_fused_1 < 4845; ++i0_i1_fused_i2_fused_1) {
+    compute_1[i0_i1_fused_i2_fused_1] = asinhf(cosf(ph_0[i0_i1_fused_i2_fused_1]));
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_i2_fused_2 = 0; i0_i1_fused_i2_fused_2 < 4845; ++i0_i1_fused_i2_fused_2) {
+    compute_2[i0_i1_fused_i2_fused_2] = sinf(ph_0[i0_i1_fused_i2_fused_2]);
+  }
+  #pragma omp parallel for
+  for (int32_t i0 = 0; i0 < 19; ++i0) {
+    for (int32_t i1 = 0; i1 < 17; ++i1) {
+      for (int32_t i2 = 0; i2 < 15; ++i2) {
+        compute_3[(((i0 * 255) + (i1 * 15)) + i2)] = atanf(ph_0[(((i0 * 255) + (i1 * 15)) + i2)]);
+      }
+    }
+  }
+}
+
+
+    //|End-of-Code|
+
+    Now translate the following CUDA code to its equivalent high-performance CPU C code:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(40) default_function_kernel_2(float* __restrict__ T_batch_matmul_NN, float* __restrict__ ph_0, float* __restrict__ ph_6) {
+  float T_batch_matmul_NN_local[2];
+  __shared__ float ph_6_shared[50];
+  for (int b_c_inner_init = 0; b_c_inner_init < 2; ++b_c_inner_init) {
+    T_batch_matmul_NN_local[b_c_inner_init] = 0.000000e+00f;
+  }
+  for (int ax0_ax1_fused_ax2_fused_outer_outer = 0; ax0_ax1_fused_ax2_fused_outer_outer < 2; ++ax0_ax1_fused_ax2_fused_outer_outer) {
+    if (((ax0_ax1_fused_ax2_fused_outer_outer * 4) + (((int)threadIdx.x) / 10)) < 5) {
+      ph_6_shared[((ax0_ax1_fused_ax2_fused_outer_outer * 40) + ((int)threadIdx.x))] = ph_6[(((((int)blockIdx.x) * 50) + (ax0_ax1_fused_ax2_fused_outer_outer * 40)) + ((int)threadIdx.x))];
+    }
+  }
+  __syncthreads();
+  for (int k_inner = 0; k_inner < 5; ++k_inner) {
+    for (int b_c_inner = 0; b_c_inner < 2; ++b_c_inner) {
+      T_batch_matmul_NN_local[b_c_inner] = (T_batch_matmul_NN_local[b_c_inner] + (ph_0[((((((int)blockIdx.x) * 80) + (b_c_inner * 40)) + ((((int)threadIdx.x) / 5) * 5)) + k_inner)] * ph_6_shared[(((b_c_inner * 25) + (k_inner * 5)) + (((int)threadIdx.x) % 5))]));
+    }
+  }
+  for (int b_inner = 0; b_inner < 2; ++b_inner) {
+    T_batch_matmul_NN[(((((int)blockIdx.x) * 80) + (b_inner * 40)) + ((int)threadIdx.x))] = T_batch_matmul_NN_local[b_inner];
+  }
+}
+
+extern "C" __global__ void __launch_bounds__(32) default_function_kernel(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = asinhf(fmodf(ph_0[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))], ceilf(ph_0[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))])));
+}
+
+extern "C" __global__ void __launch_bounds__(32) default_function_kernel_1(float* __restrict__ compute, float* __restrict__ ph_0) {
+  compute[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = atanf(ph_0[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]);
+}
+
+
+    Input Tensor Shape: [[20, 8, 8]]
+    Print only a single C function implementation, ending with the comment '|End-of-Code|'.
+    

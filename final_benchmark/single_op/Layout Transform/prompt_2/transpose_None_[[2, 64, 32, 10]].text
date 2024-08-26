@@ -1,0 +1,8 @@
+
+    extern "C" __global__ void __launch_bounds__(1024) default_function_kernel(float* __restrict__ A, float* __restrict__ T_transpose) {
+  T_transpose[((((int)blockIdx.x) * 1024) + ((int)threadIdx.x))] = A[(((((((int)blockIdx.x) / 20) * 20480) + ((((int)threadIdx.x) & 63) * 320)) + ((((int)blockIdx.x) % 20) * 16)) + (((int)threadIdx.x) >> 6))];
+}
+
+
+    Translate the above CUDA code to CPU C code, the input tensor shape is [[2, 64, 32, 10]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
+    

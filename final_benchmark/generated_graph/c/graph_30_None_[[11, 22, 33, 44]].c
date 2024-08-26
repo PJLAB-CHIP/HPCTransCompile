@@ -1,0 +1,11 @@
+void default_function_kernel(float* compute, float* ph) {
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused = 0; i0_i1_fused < 8; ++i0_i1_fused) {
+    for (int32_t i2 = 0; i2 < 6; ++i2) {
+      for (int32_t i3_inner = 0; i3_inner < 8; ++i3_inner) {
+        compute[(((i0_i1_fused * 48) + (i2 * 8)) + i3_inner)] = expf(roundf(log10f(ph[((((((i0_i1_fused >> 2) * 31944) + ((i0_i1_fused & 3) * 1452)) + (i2 * 44)) + i3_inner) + 149194)])));
+      }
+    }
+  }
+}
+
