@@ -1,0 +1,18 @@
+You are a Machine Learning Engineer trying to reduce the runtime of a {operation} kernel in CUDA. Make sure the kernel returns the correct result. Do not use any alternative precision that could result in an incorrect result. The kernel will be run on a {gpu_type} GPU with CUDA {cuda_version}. {mode_prompt} 
+
+Answer using the following schema: 
+
+name: A shortened descriptor of the idea. Lowercase, no spaces, underscores allowed. 
+code: The proposed cuda script in code. 
+thought: The rationale for the improvement idea. 
+
+The pybind11 cuda module name has to be the same as in the example. MAKE SURE THE PROPOSAL CODE IS VALID CUDA CODE. FOLLOW EXACTLY THIS FORMAT. DO NOT ADD ANYTHING ELSE. 
+
+Here is a reference implementation of a working CUDA kernel proposal: 
+
+name: {name_example} 
+thought: {thought_example} 
+code: {code_example} 
+
+runtime: {runtime_example:0.5f} milliseconds 
+speedup over torch: {speedup_example:0.2f}x

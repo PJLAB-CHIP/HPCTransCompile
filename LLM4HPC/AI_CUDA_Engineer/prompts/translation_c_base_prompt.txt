@@ -1,0 +1,5 @@
+<cuda>
+{EXAMPLES}
+</cuda>
+
+Now, translate the CUDA kernel code into C++ CPU code.
