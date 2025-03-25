@@ -1,0 +1,31 @@
+import torch
+from torch.utils.cpp_extension import load_inline,load
+# Python 不允许模块名以数字开头。如果文件名为 1_Square_matrix_multiplication_.py，
+# 需重命名为合法的模块名，比如 Square_matrix_multiplication_.py
+from Square_matrix_multiplication_ import Model,get_inputs
+
+# 将cuda_path修改为自己编写的.cu
+cuda_path = '/code/LLM4HPCTransCompile/OpSample/1_Square_matrix_multiplication_.cu'
+
+TEST_TIMES = 100
+
+def eval(eval_module,torch_model):
+    for i in range(TEST_TIMES):
+        inputs = get_inputs()
+        inputs = [tensor.to('cuda') for tensor in inputs]
+        torch_result = torch_model(*inputs)
+        cuda_result = eval_module.forward(*inputs)
+        if torch.equal(torch_result,cuda_result):
+            continue
+        else:
+            print('Not Pass!')
+    print('Pass!')
+
+if __name__ == '__main__':
+    eval_module = load(
+        name='test',
+        sources=[cuda_path],
+        verbose=True
+    )
+    model = Model()
+    eval(eval_module,model)
