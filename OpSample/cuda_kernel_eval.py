@@ -2,7 +2,7 @@ import torch
 from torch.utils.cpp_extension import load_inline,load
 # Python 不允许模块名以数字开头。如果文件名为 1_Square_matrix_multiplication_.py，
 # 需重命名为合法的模块名，比如 Square_matrix_multiplication_.py
-from Square_matrix_multiplication_ import Model,get_inputs
+from Square_matrix_multiplication_ import Model,get_inputs,get_init_inputs
 
 # 将cuda_path修改为自己编写的.cu
 cuda_path = '/code/LLM4HPCTransCompile/OpSample/1_Square_matrix_multiplication_.cu'
@@ -27,5 +27,6 @@ if __name__ == '__main__':
         sources=[cuda_path],
         verbose=True
     )
-    model = Model()
+    init_inputs = get_init_inputs()
+    model = Model(*init_inputs)
     eval(eval_module,model)
