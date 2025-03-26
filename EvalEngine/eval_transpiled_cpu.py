@@ -102,17 +102,9 @@ def fetch_ref_arch_from_problem_id(dataset, problem_id: int, dataset_src: str) -
     Fetch reference architecture from problem directory
     Either from Hugging Face or Local Dataset
     """
-    if dataset_src == "huggingface":
-        curr_problem_row = dataset.filter(lambda x: x["problem_id"] == problem_id, num_proc=1, desc=None)
-        ref_arch_src = curr_problem_row["code"][0]
-        problem_name = curr_problem_row["name"][0]
-    
-    elif dataset_src == "local":
-        problem_idx_in_dataset = problem_id - 1 # due to dataset list being 0-indexed locally
-        ref_arch_path = dataset[problem_idx_in_dataset]
-
-        problem_name = os.path.basename(ref_arch_path)
-        ref_arch_src = read_file(ref_arch_path)
+    ref_arch_path = dataset[problem_id]
+    problem_name = os.path.basename(ref_arch_path)
+    ref_arch_src = read_file(ref_arch_path)
 
     # verify
         # Extract problem number from problem name (e.g. "1" from "1_Square_matrix_multiplication_.py")
@@ -121,17 +113,15 @@ def fetch_ref_arch_from_problem_id(dataset, problem_id: int, dataset_src: str) -
     
     return ref_arch_src
 
+def parse_cpu_kernel_id(file_name):
+        file_id = file_name.split("_")[0]
+        return int(file_id)
 
 def fetch_kernel_from_disk(run_dir: str, level: int, problem_id: int, sample_id: int) -> str | None:
     """
     Fetch kernel file from disk, to load cpu kernel test case, just ret the kernel file full path
     """
     level_path = os.path.join(run_dir, "level" + str(level))
-
-    def parse_cpu_kernel_id(file_name):
-        file_id = file_name.split("_")[0]
-        print("@@@@@@---> hit file_id: ", int(file_id))
-        return int(file_id)
 
     # get cpu kernel string
     kernel_files = [f for f in os.listdir(level_path) \
@@ -194,11 +184,11 @@ def run_and_check_correctness_cpu(
             set_seed(trial_seed) # type: ignore
             model = nn_model_instance.cpu()
             output = model(*inputs, fn=module_fn)
-            print("original method output: ", output, output.shape)
+            # print("original method output: ", output, output.shape)
 
             try:
                 output_new = model(*inputs, fn=custom_fn)
-                print("custom method output: ", output_new, output_new.shape)
+                # print("custom method output: ", output_new, output_new.shape)
                 if output.shape != output_new.shape:
                     metadata = register_and_format_exception(
                         "correctness_issue",
@@ -282,26 +272,28 @@ def time_execution_with_cpu(
         device = torch.cpu.current_device()
     
     # Warm ups
-    for _ in range(num_warmup):
-        nn_module_instance(*args, fn=kernel_fn)
+    with torch.no_grad():
+        for _ in range(num_warmup):
+            nn_module_instance(*args, fn=kernel_fn)
 
     print(
         f"[Profiling] Using device: {device} , warm up {num_warmup}, trials {num_trials}"
     )
     elapsed_times = []
 
-    # Actual trials
-    for trial in range(num_trials):
-        # create event marker default is not interprocess
-        start_time = time.perf_counter()
-        nn_module_instance(*args, fn=kernel_fn)
-        end_time = time.perf_counter()
+    with torch.no_grad():
+        # Actual trials
+        for trial in range(num_trials):
+            # create event marker default is not interprocess
+            start_time = time.perf_counter()
+            nn_module_instance(*args, fn=kernel_fn)
+            end_time = time.perf_counter()
 
-        # Calculate the elapsed time in milliseconds
-        elapsed_time_ms = (end_time - start_time) * 1000
-        if verbose:
-            print(f"Trial {trial + 1}: {elapsed_time_ms:.3g} ms")
-        elapsed_times.append(elapsed_time_ms)
+            # Calculate the elapsed time in milliseconds
+            elapsed_time_ms = (end_time - start_time) * 1000
+            if verbose:
+                print(f"Trial {trial + 1}: {elapsed_time_ms:.3g} ms")
+            elapsed_times.append(elapsed_time_ms)
 
     return elapsed_times
 
@@ -429,8 +421,6 @@ def eval_kernel_against_ref_cpu(
     metadata["hardware"] = "cpu"
     metadata["device"] = str(device)  # for debugging
 
-    print("?????????????enter the original model load", custom_model_src)
-
     # this is where compilation happens
     try:
         custom_module = load_custom_module(custom_model_src)
@@ -478,8 +468,6 @@ def eval_kernel_against_ref_cpu(
             compiled=True, correctness=False, metadata=metadata
         )
 
-    print("@@@@@@-----> Finish correctness check\n")
-
     # Measure Performance [Optional] | conditioned on compilation + correctness + no exception so far
     if measure_performance:
         try:
@@ -487,22 +475,22 @@ def eval_kernel_against_ref_cpu(
                 if verbose:
                     print("[Eval] Measuring Performance as Sample is Correct")
 
-                set_seed(seed_num)
-                inputs = get_inputs()
-                inputs = [
-                    x.cpu() if isinstance(x, torch.Tensor) else x
-                    for x in inputs
-                ]
-
-                elapsed_times = time_execution_with_cpu(
-                    original_model,
-                    custom_module.forward, # type: ignore
-                    *inputs,
-                    num_trials=num_perf_trials,
-                    verbose=verbose,
-                    device=device,
-                )
-                runtime_stats = get_timing_stats_cpu(elapsed_times, device=device)
+                with torch.no_grad():
+                    set_seed(seed_num)
+                    inputs = get_inputs()
+                    inputs = [
+                        x.cpu() if isinstance(x, torch.Tensor) else x
+                        for x in inputs
+                    ]
+                    elapsed_times = time_execution_with_cpu(
+                        original_model,
+                        custom_module.forward, # type: ignore
+                        *inputs,
+                        num_trials=num_perf_trials,
+                        verbose=verbose,
+                        device=device,
+                    )
+                    runtime_stats = get_timing_stats_cpu(elapsed_times, device=device)
 
                 if verbose:
                     print(f"[Eval] Performance Stats: {runtime_stats}")
@@ -514,7 +502,6 @@ def eval_kernel_against_ref_cpu(
             kernel_exec_result.metadata["error_during_performance"] = e
 
     cpu_graceful_eval_cleanup(context, device)
-    print("@@@@@@-----> Finish all test check\n")
     return kernel_exec_result
 
 
@@ -751,7 +738,7 @@ def add_to_eval_results_file(problem_id: int, sample_id: int, eval_result: Kerne
 #         add_to_eval_results_file(1, 0, example_eval_result, eval_file_path)
 
 KERNEL_BENCH_PATH = "/code/LLM4HPCTransCompile/EvalEngine/torch_functionals"
-def construct_problem_dataset_from_problem_dir(problem_dir: str) -> list[str]:
+def construct_problem_dataset_from_problem_dir(problem_dir: str):
     """
     Construct a list of relative paths to all the python files in the problem directory
     Sorted by the numerical prefix of the filenames
@@ -766,13 +753,36 @@ def construct_problem_dataset_from_problem_dir(problem_dir: str) -> list[str]:
 
     # Sort the DATASET based on the numerical prefix of the filenames
     DATASET.sort(key=lambda x: int(os.path.basename(x).split("_")[0]))
-    return DATASET
+
+    DATASET_DICT = {}   # problem_id -> file_path
+    for file_path in DATASET:
+        file_name = file_path.split("/")[-1]
+        problem_id = int(file_name.split("_")[0])
+        DATASET_DICT[problem_id] = file_path
+    return DATASET_DICT
 
 
-def construct_kernelbench_dataset(level: int) -> list[str]:
+def construct_kernelbench_dataset(level: int):
     return construct_problem_dataset_from_problem_dir(
         os.path.join(KERNEL_BENCH_PATH, f"level{level}")
     )
+
+# def retrive_problem_ids(curr_level_dataset):
+#     valid_prob_ids = []
+#     for _, sample_path in curr_level_dataset:
+#         sample_name = sample_path.split("/")[-1]
+#         prob_id = int(sample_name.split("_")[0])
+#         valid_prob_ids.append(prob_id)
+#     return valid_prob_ids
+
+
+def fetch_valid_cpp_ids(run_dir, level):
+    level_path = os.path.join(run_dir, "level" + str(level))
+
+    # get cpu kernel string
+    kernel_files = [f for f in os.listdir(level_path) if f.endswith(".cpp")]
+    valid_kernel_ids = [parse_cpu_kernel_id(f) for f in kernel_files]
+    return valid_kernel_ids
 
 @pydra.main(base=EvalConfig)
 def main(config: EvalConfig):
@@ -791,24 +801,27 @@ def main(config: EvalConfig):
 
     curr_level_dataset = construct_kernelbench_dataset(config.level) # type: ignore
     num_problems_in_level = len(curr_level_dataset)
+    curr_level_problem_ids = [idx for idx in curr_level_dataset.keys()]
 
     if config.subset == (None, None):
-        problem_id_range = range(1, num_problems_in_level)
+        problem_id_range = curr_level_problem_ids
     else:
-        assert config.subset[0] >= 1 and config.subset[1] <= num_problems_in_level, f"Subset range {config.subset} out of range for Level {config.level}" # type: ignore
-        problem_id_range = range(config.subset[0], config.subset[1]) # type: ignore
-
-    print(f"Evaluating 1 sample each for level {config.level} problems: {problem_id_range}")
+        subset_ids = list(range(config.subset[0], config.subset[1])) # type: ignore
+        interset_ids = list(set(curr_level_problem_ids) & set(subset_ids))
+        problem_id_range = interset_ids # type: ignore
 
     run_dir = os.path.join(config.runs_dir, config.run_name) # type: ignore
-    eval_file_path = os.path.join(run_dir, f"eval_results.json")
-    print(num_problems_in_level, run_dir, eval_file_path)
+    eval_file_path = os.path.join(run_dir, f"{config.level}_eval_results.json")
 
-    # To Debug
-    # single_eval_example(config, curr_level_dataset, run_dir, eval_file_path)
+    valid_cpp_ids = fetch_valid_cpp_ids(run_dir, config.level)
+    problem_id_range = sorted(list(set(problem_id_range) & set(valid_cpp_ids)))
+    assert len(problem_id_range) > 0
+
+    print(num_problems_in_level, run_dir, eval_file_path)
+    print(f"Evaluating 1 sample each for level {config.level} problems: {problem_id_range}")
 
     total_work = []
-    for problem_id in range(problem_id_range.start, problem_id_range.stop + 1): # end index is inclusive
+    for problem_id in problem_id_range:
         sample_id = 0 # only evaluate 1 sample for now
         if not check_if_eval_exists_local(problem_id, sample_id, eval_file_path):
             total_work.append((problem_id, sample_id))
