@@ -52,7 +52,7 @@ def load_cuda_module(kernel_path):
     return cuda_module
 
 if __name__ == "__main__":
-    cuda_path = '/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.cu'
+    cuda_path = '/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1.cu'
     functional_path = "/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.py"
 
     ref_src = load_ref_src(functional_path)
