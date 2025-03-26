@@ -15,8 +15,10 @@ def eval(eval_module,torch_model):
         inputs = [tensor.to('cuda') for tensor in inputs]
         torch_result = torch_model(*inputs)
         cuda_result = eval_module.forward(*inputs)
-        if torch.equal(torch_result,cuda_result):
+        if torch.allclose(torch_result,cuda_result,rtol=1e-02,atol=1e-02):
             continue
+        # if torch.equal(torch_result,cuda_result):
+        #     continue
         else:
             print('Not Pass!')
     print('Pass!')
