@@ -70,9 +70,10 @@ class EvalConfig(Config):
 
         # Eval settings
         self.num_correct_trials = 5
-        self.num_perf_trials = 100
+        self.num_perf_trials = 30
         self.timeout = 180 # in seconds
         self.measure_performance = True
+        self.compile_timeout= 60
         
         # Eval Flow setting
         # To speedup evaluation, you can start building the kernel on CPU on disk as cache
@@ -80,7 +81,7 @@ class EvalConfig(Config):
         self.num_cpu_workers = 20 # number of parallel process to to parallelize the build on CPUs
         
         # Directory to build kernels for evaluation
-        self.kernel_eval_build_dir = os.path.join(REPO_TOP_DIR, "cache")
+        self.kernel_eval_build_dir = os.path.join(self.runs_dir, "cache")
 
         # number of CPUs to do batch evaluation, cpu kernel may use multi-cpu cores to speed up?
         self.num_cpu_devices = 1
@@ -353,10 +354,13 @@ def load_original_model_and_inputs(
 
 def load_custom_module(custom_kernel_file):
     task_name = custom_kernel_file.split("/")[-1].split(".")[0]
+    pid_str = task_name.split("_")[0]
     task_name = "_".join(task_name.split("_")[1:])   # Remove problem ID
+    task_name = task_name + "_" + pid_str
     if task_name == "":
         task_name = "task"
     print(task_name)
+
     cpu_module = load(
         name=task_name,
         sources=[custom_kernel_file],
@@ -504,6 +508,19 @@ def eval_kernel_against_ref_cpu(
     cpu_graceful_eval_cleanup(context, device)
     return kernel_exec_result
 
+def compile_single_sample(work_args: WorkArgs, configs: EvalConfig, dataset, run_dir: str):
+    problem_id, sample_id, device = (
+        work_args.problem_id,
+        work_args.sample_id,
+        work_args.device,
+    )
+    # fetch kernel from disk
+    kernel_src = fetch_kernel_from_disk(run_dir, configs.level, problem_id, sample_id) # type: ignore
+    assert kernel_src is not None, f"Kernel not found for problem {problem_id} sample {sample_id}"
+
+    custom_module = load_custom_module(kernel_src)
+    assert hasattr(custom_module, "forward")
+    return None
 
 def evaluate_single_sample(work_args: WorkArgs, configs: EvalConfig, dataset, run_dir: str) -> KernelExecResult | None:
     """
@@ -548,31 +565,6 @@ def evaluate_single_sample(work_args: WorkArgs, configs: EvalConfig, dataset, ru
         eval_result = KernelExecResult(compiled=False, correctness=False, 
                                             metadata=metadata)
         return eval_result
-    
-# def cuda_single_eval_wrapper(curr_work: WorkArgs, configs: dict, dataset, run_dir: str):
-#     """
-#     Wrapper to handle timeout and keyboard interrupt
-#     """
-
-#     with mp.Pool(1) as pool:
-#         try:
-#             result = pool.apply_async(
-#                 evaluate_single_sample,
-#                 args=(curr_work, configs, dataset, run_dir),
-#             ).get(timeout=configs.timeout)
-#         except KeyboardInterrupt:
-#             print(
-#                 "\n [Terminate] Caught KeyboardInterrupt, terminating workers..."
-#             )
-#             pool.terminate()
-#             pool.join()
-#             raise
-#         except mp.TimeoutError as e:
-#             print(f"[WARNING] Evaluation TIMED OUT for Problem ID: {curr_work.problem_id}, Sample ID: {curr_work.sample_id}")
-
-#         print(f"[Eval Result] Problem ID: {curr_work.problem_id}, Sample ID: {curr_work.sample_id}: {result}")
-#         return result
-
 
 def remove_cache_dir(cache_dir: str, run_name: str, problem_id, sample_id):
     """
@@ -587,6 +579,79 @@ def remove_cache_dir(cache_dir: str, run_name: str, problem_id, sample_id):
             print(f"\n[INFO] Removed cached folder for Problem ID: {problem_id}, Sample ID: {sample_id}")
         except Exception as e:
             print(f"\n[WARNING] Failed to remove cache directory {cache_dir}: {str(e)}")
+
+def batch_compile(
+    total_work: list[tuple[int, int]],
+    config: EvalConfig,
+    curr_level_dataset,
+    run_dir: str,
+    compile_file_path: str,
+):
+    """
+    Batch evaluation across CPUs, do batch_size of work one on each cpu all at once
+    We put in time out for each batch, consider trying again with larger time out if it didn't finish building.
+    Cache directory is removed if evaluation times out or fails
+    """
+    # construct a list of work args
+    batch_size = 20
+
+    with tqdm(total=len(total_work), desc="Processing batches") as pbar:
+
+        while len(total_work) > 0:
+            curr_work_batch = total_work[:batch_size]
+            total_work = total_work[batch_size:]  # pop the first batch_size elements
+            print(
+                f"[Curr Batch] {len(curr_work_batch)} tasks over {batch_size} CPUs; [Total Work left] {len(total_work)}"
+            )
+            assert len(curr_work_batch) <= batch_size, f"Current batch size {len(curr_work_batch)} is greater than the number of CPUs {batch_size}"
+
+            with mp.Pool(batch_size) as pool:
+                work_args = [(WorkArgs(problem_id=p_id, sample_id=s_idx, device=torch.device("cpu"),), config, curr_level_dataset, run_dir,)
+                                for i, (p_id, s_idx) in enumerate(curr_work_batch)]
+                start_time = time.time()
+                async_results = []
+                for work_arg in work_args:
+                    async_results.append(pool.apply_async(compile_single_sample, work_arg))
+
+                # Collect results with a batch timeout
+                compile_results = []
+                batch_compile_timeout = config.compile_timeout
+    
+                for i, async_result in enumerate(async_results):
+                    problem_id, sample_id = curr_work_batch[i]
+
+                    try:
+                        elapsed_time = time.time() - start_time
+                        remaining_time = max(0, batch_compile_timeout - elapsed_time)
+                        result = async_result.get(timeout=remaining_time)
+                        compile_results.append((problem_id, sample_id, "pass"))
+                    except mp.TimeoutError:
+                        print(f"[WARNING] Compilation TIMED OUT for Problem ID: {problem_id}, Sample ID: {sample_id}")
+
+                        compile_results.append((problem_id, sample_id, "Compilation Timeout"))
+                        remove_cache_dir(config.kernel_eval_build_dir, config.run_name, problem_id, sample_id) # type: ignore
+                    except Exception as e:
+                        print(f"[ERROR] Compilation FAILED for Problem ID: {problem_id}, Sample ID: {sample_id}: {str(e)}")
+
+                        compile_results.append((problem_id, sample_id, str(e)))
+                        remove_cache_dir(config.kernel_eval_build_dir, config.run_name, problem_id, sample_id) # type: ignore
+        
+                end_time = time.time()
+                for problem_id, sample_id, result in compile_results:
+                    print("-" * 128)
+                    print(f"[Compilation Result] Problem ID: {problem_id}, Sample ID: {sample_id}")
+                    print(result)
+                    
+                    if result == "pass":
+                         kernel_result = KernelExecResult(compiled=True, correctness=False)
+                         add_to_eval_results_file(problem_id, sample_id, kernel_result, compile_file_path)
+                    else:
+                        metadata = {"other_error": f"error: {result}", "hardware": "cpu", "device": "cpu"} # for debugging
+                        kernel_result = KernelExecResult(compiled=False, correctness=False, metadata=metadata)
+                        add_to_eval_results_file(problem_id, sample_id, kernel_result, compile_file_path)
+                print("-" * 128)
+                print(f"[Curr batch] Compilation took {end_time - start_time:.2f} seconds")
+                pbar.update(len(curr_work_batch))
 
 
 def batch_eval(
@@ -603,6 +668,7 @@ def batch_eval(
     """
     # construct a list of work args
     batch_size = config.num_cpu_devices
+    batch_size = 1
 
     with tqdm(total=len(total_work), desc="Processing batches") as pbar:
 
@@ -614,15 +680,15 @@ def batch_eval(
             )
             assert len(curr_work_batch) <= batch_size, f"Current batch size {len(curr_work_batch)} is greater than the number of CPUs {batch_size}"
 
+            ##########################-------------- Original load & correctness check & perf measurement ------------------##########################
+            # will load cached compiled .so
             with mp.Pool(batch_size) as pool:
-
                 work_args = [
                     (
                         WorkArgs(
                             problem_id=p_id,
                             sample_id=s_idx,
                             device=torch.device("cpu"),
-                            # device=torch.device(f"cuda:{i%batch_size}"),
                         ),
                         config,
                         curr_level_dataset,
@@ -655,38 +721,39 @@ def batch_eval(
                         print(
                             f"[WARNING] Evaluation TIMED OUT for Problem ID: {problem_id}, Sample ID: {sample_id}"
                         )
-                        results.append((problem_id, sample_id, None))
-                    
+                        metadata = {"other_error": f"error: Evaluation TIMED OUT", "hardware": "cpu", "device": "cpu"} # for debugging
+                        fail_result = KernelExecResult(compiled=True, correctness=False, metadata=metadata)
+                        results.append((problem_id, sample_id, fail_result))
                         remove_cache_dir(config.kernel_eval_build_dir, config.run_name, problem_id, sample_id) # type: ignore
                     except Exception as e:
                         print(
                             f"[ERROR] Evaluation FAILED for Problem ID: {problem_id}, Sample ID: {sample_id}: {str(e)}"
                         )
-                        results.append((problem_id, sample_id, None))
+                        metadata = {"other_error": f"error: {str(e)}", "hardware": "cpu", "device": "cpu"} # for debugging
+                        fail_result = KernelExecResult(compiled=True, correctness=False, metadata=metadata)
+                        results.append((problem_id, sample_id, fail_result))
                         remove_cache_dir(config.kernel_eval_build_dir, config.run_name, problem_id, sample_id) # type: ignore
-
                 end_time = time.time()
 
-                # current batch summary
-                for problem_id, sample_id, result in results:
-                    print("-" * 128)
-                    print(
-                        f"[Eval Result] Problem ID: {problem_id}, Sample ID: {sample_id}"
-                    )
-                    print(result)
-
-                    # add all the batch results here to avoid file race condition
-                    # add to eval result if valid result
-                    if result is not None:
-                        print(f"Adding Eval Result to file for problem {problem_id} sample {sample_id}")
-                        add_to_eval_results_file(problem_id, sample_id, result, eval_file_path)
-
+            # current batch summary
+            for problem_id, sample_id, result in results:
                 print("-" * 128)
                 print(
-                    f"[Curr batch] Evaluation took {end_time - start_time:.2f} seconds"
+                    f"[Eval Result] Problem ID: {problem_id}, Sample ID: {sample_id}"
                 )
+                print(result)
 
-                pbar.update(len(curr_work_batch))
+                # add all the batch results here to avoid file race condition
+                # add to eval result if valid result
+                if result is not None:
+                    print(f"Adding Eval Result to file for problem {problem_id} sample {sample_id}")
+                    add_to_eval_results_file(problem_id, sample_id, result, eval_file_path)
+
+            print("-" * 128)
+            print(
+                f"[Curr batch] Evaluation took {end_time - start_time:.2f} seconds"
+            )
+            pbar.update(len(curr_work_batch))
 
 def check_if_eval_exists_local(problem_id: int, sample_id: int, eval_file_path: str) -> bool:
     """
@@ -697,6 +764,13 @@ def check_if_eval_exists_local(problem_id: int, sample_id: int, eval_file_path: 
             eval_results = json.load(f)
         return str(problem_id) in eval_results
     return False
+
+def check_compile_pass(problem_id: int, sample_id: int, compile_file_path: str) -> bool:
+    if os.path.exists(compile_file_path):
+        with open(compile_file_path, 'r') as f:
+            compile_res = json.load(f)        
+        return compile_res[str(problem_id)]["compiled"]
+    return True
 
 def add_to_eval_results_file(problem_id: int, sample_id: int, eval_result: KernelExecResult, eval_file_path: str):
     """
@@ -728,15 +802,6 @@ def add_to_eval_results_file(problem_id: int, sample_id: int, eval_result: Kerne
     with open(eval_file_path, "w") as f:
         json.dump(eval_results, f)
 
-# def single_eval_example(config: EvalConfig, curr_level_dataset: list[str], run_dir: str, eval_file_path ):
-#     device = torch.device("cuda:0")
-#     example_work = WorkArgs(problem_id=1, sample_id=0, device=device)
-#     # example_eval_result = evaluate_single_sample(example_work, config, curr_level_dataset, run_dir)
-#     example_eval_result = cuda_single_eval_wrapper(example_work, config, curr_level_dataset, run_dir)
-#     print(example_eval_result)
-#     if not check_if_eval_exists_local(1, 0, eval_file_path):
-#         add_to_eval_results_file(1, 0, example_eval_result, eval_file_path)
-
 KERNEL_BENCH_PATH = "/code/LLM4HPCTransCompile/EvalEngine/torch_functionals"
 def construct_problem_dataset_from_problem_dir(problem_dir: str):
     """
@@ -767,14 +832,6 @@ def construct_kernelbench_dataset(level: int):
         os.path.join(KERNEL_BENCH_PATH, f"level{level}")
     )
 
-# def retrive_problem_ids(curr_level_dataset):
-#     valid_prob_ids = []
-#     for _, sample_path in curr_level_dataset:
-#         sample_name = sample_path.split("/")[-1]
-#         prob_id = int(sample_name.split("_")[0])
-#         valid_prob_ids.append(prob_id)
-#     return valid_prob_ids
-
 
 def fetch_valid_cpp_ids(run_dir, level):
     level_path = os.path.join(run_dir, "level" + str(level))
@@ -784,6 +841,17 @@ def fetch_valid_cpp_ids(run_dir, level):
     valid_kernel_ids = [parse_cpu_kernel_id(f) for f in kernel_files]
     return valid_kernel_ids
 
+def add_compile_fail_in_eval(compile_file_path, eval_file_path):
+    if os.path.exists(compile_file_path) and os.path.exists(eval_file_path):
+        compile_fail_res ={}
+        with open(compile_file_path, 'r') as f:
+            compile_res = json.load(f)
+            for pid, res in compile_res.items():
+                if not res["compiled"]:
+                    problem_id = int(pid)
+                    kernel_res = KernelExecResult(compiled=False, correctness=False, metadata=res["metadata"])
+                    add_to_eval_results_file(problem_id, 0, kernel_res, eval_file_path)
+
 @pydra.main(base=EvalConfig)
 def main(config: EvalConfig):
     """
@@ -791,10 +859,6 @@ def main(config: EvalConfig):
     Store Eval Results in specified eval results file
     """
     print(f"Starting Batch Eval with config: {config}")
-    
-    # # Check if CUDA is available
-    # if not torch.cuda.is_available():
-    #     raise RuntimeError("CUDA device not available. Evaluation requires GPU.")
 
     if mp.get_start_method(allow_none=True) is None:
         mp.set_start_method("spawn")
@@ -812,27 +876,36 @@ def main(config: EvalConfig):
 
     run_dir = os.path.join(config.runs_dir, config.run_name) # type: ignore
     eval_file_path = os.path.join(run_dir, f"{config.level}_eval_results.json")
+    compile_file_path = os.path.join(run_dir, f"{config.level}_compile_result.json")
 
     valid_cpp_ids = fetch_valid_cpp_ids(run_dir, config.level)
     problem_id_range = sorted(list(set(problem_id_range) & set(valid_cpp_ids)))
     assert len(problem_id_range) > 0
 
-    print(num_problems_in_level, run_dir, eval_file_path)
-    print(f"Evaluating 1 sample each for level {config.level} problems: {problem_id_range}")
-
+    
     total_work = []
     for problem_id in problem_id_range:
         sample_id = 0 # only evaluate 1 sample for now
-        if not check_if_eval_exists_local(problem_id, sample_id, eval_file_path):
+        if not check_if_eval_exists_local(problem_id, sample_id, compile_file_path):
             total_work.append((problem_id, sample_id))
+    print(f"Start compilation on {len(total_work)} unevaluated samples in range: {problem_id_range}")
+    # Batch Compile all modules first
+    batch_compile(total_work, config, curr_level_dataset, run_dir, compile_file_path)
 
+    print(num_problems_in_level, run_dir, eval_file_path)
+    print(f"Evaluating 1 sample each for level {config.level} problems: {problem_id_range}")
+    total_work = []
+    for problem_id in problem_id_range:
+        sample_id = 0 # only evaluate 1 sample for now
+        if not check_if_eval_exists_local(problem_id, sample_id, eval_file_path) and \
+               check_compile_pass(problem_id, sample_id, compile_file_path):
+            total_work.append((problem_id, sample_id))
     print(f"Start evaluation on {len(total_work)} unevaluated samples in range: {problem_id_range}")
-    # # Build Cache on CPU as that is faster
-    # if config.build_cache:
-    #     compile.batch_compile(total_work, config.to_dict())
 
     # Batch Eval on CPUs
     batch_eval(total_work, config, curr_level_dataset, run_dir, eval_file_path)
+    # add compilation fail results in eval_file
+    add_compile_fail_in_eval(compile_file_path, eval_file_path)
 
 
 if __name__ == "__main__":
