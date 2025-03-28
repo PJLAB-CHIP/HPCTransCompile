@@ -7,7 +7,7 @@ from pydra import REQUIRED, Config
 
 import json
 from tqdm import tqdm
-from src import eval, utils
+# from src import eval, utils
 import torch
 import torch.nn as nn
 import os
@@ -15,9 +15,10 @@ import multiprocessing as mp
 import numpy as np
 from torch.utils.cpp_extension import load
 
-from datasets import load_dataset
-from src.eval import register_and_format_exception, KernelExecResult, check_metadata_serializable_all_types
-from src.utils import read_file
+# from datasets import load_dataset
+# from src.eval import register_and_format_exception, KernelExecResult, check_metadata_serializable_all_types
+# from src.utils import read_file
+from pydantic import BaseModel
 
 
 """
@@ -96,6 +97,85 @@ class WorkArgs:
     problem_id: int
     sample_id: int
     device: torch.device
+
+
+class KernelExecResult(BaseModel):
+    """
+    Single Kernel Execution
+    """
+
+    compiled: bool = False
+    correctness: bool = False
+    metadata: dict = {}
+    runtime: float = -1.0  # in us, only recorded if we decide to measure performance
+    runtime_stats: dict = {}  # only recorded if we decide to measure performance
+    torch_runtime : float = -1.0
+    torch_runtime_stats : dict = {}
+
+def check_metadata_serializable_all_types(metadata: dict):
+    """
+    Ensure metadata is JSON serializable,
+    if not, convert non-serializable values to strings recursively
+    """
+    def convert_to_serializable(obj):
+        if isinstance(obj, dict):
+            return {k: convert_to_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [convert_to_serializable(v) for v in obj]
+        elif isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        else:
+            return str(obj)
+
+    try:
+        json.dumps(metadata)
+        return metadata
+    except (TypeError, OverflowError) as e:
+        print(f"[WARNING] Metadata is not JSON serializable, error: {str(e)}")
+        # Convert non-serializable values to strings recursively
+        converted_metadata = convert_to_serializable(metadata)
+        print(
+            f"[WARNING] Metadata now converted to be JSON serializable: {converted_metadata}"
+        )
+        return converted_metadata
+
+
+def register_and_format_exception(
+    exception_type: str,
+    exception_msg: Exception | str,
+    metadata: dict,
+    verbose: bool = False,
+    truncate=False,
+    max_length=200,
+):
+    """
+    max_length characters
+
+    NOTE: I can't get torch truncate to work during exception handling so I have this for now
+    """
+    # Truncate exception message if too long
+    exception_str = str(exception_msg)
+    if truncate and len(exception_str) > max_length:
+        exception_str = exception_str[: max_length - 3] + "..."
+
+    if verbose:
+        print(f"[Exception {exception_type}] {exception_str} ")
+    metadata[exception_type] = exception_str
+
+    return metadata
+
+
+def read_file(file_path) -> str:
+    if not os.path.exists(file_path):
+        print(f"File {file_path} does not exist")
+        return ""
+    
+    try:
+        with open(file_path, "r") as file:
+            return file.read()
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return ""
 
 
 def fetch_ref_arch_from_problem_id(dataset, problem_id: int, dataset_src: str) -> str | None:
@@ -488,6 +568,23 @@ def eval_kernel_against_ref_cpu(
                     ]
                     elapsed_times = time_execution_with_cpu(
                         original_model,
+                        module_fn, # type: ignore
+                        *inputs,
+                        num_trials=num_perf_trials,
+                        verbose=verbose,
+                        device=device,
+                    )
+                    torch_runtime_stats = get_timing_stats_cpu(elapsed_times, device=device)
+
+                with torch.no_grad():
+                    set_seed(seed_num)
+                    inputs = get_inputs()
+                    inputs = [
+                        x.cpu() if isinstance(x, torch.Tensor) else x
+                        for x in inputs
+                    ]
+                    elapsed_times = time_execution_with_cpu(
+                        original_model,
                         custom_module.forward, # type: ignore
                         *inputs,
                         num_trials=num_perf_trials,
@@ -498,8 +595,11 @@ def eval_kernel_against_ref_cpu(
 
                 if verbose:
                     print(f"[Eval] Performance Stats: {runtime_stats}")
+                    print(f"[Eval] Performance Stats Torch: {runtime_stats}")
                 kernel_exec_result.runtime = runtime_stats["mean"]
                 kernel_exec_result.runtime_stats = runtime_stats
+                kernel_exec_result.torch_runtime = torch_runtime_stats["mean"]
+                kernel_exec_result.torch_runtime_stats = torch_runtime_stats
         except Exception as e:
             if verbose:
                 print(f"[Eval] Error in Measuring Performance: {e}")
@@ -793,6 +893,8 @@ def add_to_eval_results_file(problem_id: int, sample_id: int, eval_result: Kerne
         'metadata': check_metadata_serializable_all_types(eval_result.metadata),
         'runtime': eval_result.runtime,
         'runtime_stats': eval_result.runtime_stats,
+        'torch_runtime' : eval_result.torch_runtime,
+        'torch_runtime_stats' : eval_result.torch_runtime_stats
     }
     
     # Write updated results back to file
