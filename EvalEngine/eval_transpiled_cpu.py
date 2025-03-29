@@ -3,9 +3,10 @@ from dataclasses import dataclass
 import shutil
 import time
 import pydra
-from pydra import REQUIRED, Config
+# from pydra import REQUIRED, Config
 
 import json
+import argparse
 from tqdm import tqdm
 # from src import eval, utils
 import torch
@@ -39,10 +40,10 @@ REPO_TOP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 torch.set_printoptions(precision=4, threshold=10)
 
 
-class EvalConfig(Config):
+class EvalConfig():
     def __init__(self):
 
-        self.run_name = REQUIRED # name of the run to evaluate, aka, model generated results path
+        self.run_name = "TestDev" # name of the run to evaluate, aka, model generated results path
         # self.run_name = "QwenCoder_14b" #
 
         self.dataset_src = "local"
@@ -51,7 +52,7 @@ class EvalConfig(Config):
         self.dataset_name = "ScalingIntelligence/KernelBench"
 
         # Problem Specification
-        self.level = REQUIRED
+        self.level = 1
 
         # subset of problems to evaluate
         self.subset = (None, None) # (start_id, end_id), these are the logical index
@@ -954,13 +955,27 @@ def add_compile_fail_in_eval(compile_file_path, eval_file_path):
                     kernel_res = KernelExecResult(compiled=False, correctness=False, metadata=res["metadata"])
                     add_to_eval_results_file(problem_id, 0, kernel_res, eval_file_path)
 
-@pydra.main(base=EvalConfig)
-def main(config: EvalConfig):
+def parse_args():
+    parser = argparse.ArgumentParser(description='Evaluate transpiled CPU code.')
+    parser.add_argument('--run_name', type=str, required=True,
+                        help='Name of the run (e.g. TestDev)')
+    parser.add_argument('--level', type=int, required=True,
+                        help='Level number (e.g. 1)')
+    return parser.parse_args()
+
+# @pydra.main(base=EvalConfig)
+def main():
     """
     Batch Eval Samples from Particular Run
     Store Eval Results in specified eval results file
     """
-    print(f"Starting Batch Eval with config: {config}")
+
+    args = parse_args()
+    config = EvalConfig()
+    config.run_name = args.run_name
+    config.level = args.level
+
+    print(f"Starting Batch Eval with config: {config.run_name}, {config.level}")
 
     if mp.get_start_method(allow_none=True) is None:
         mp.set_start_method("spawn")
