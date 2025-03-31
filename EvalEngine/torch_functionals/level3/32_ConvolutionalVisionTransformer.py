@@ -7,9 +7,8 @@ def transformer_encoder_layer_fn(x, self_attn, linear1, linear2, norm1, norm2, n
     Functional version of nn.TransformerEncoderLayer.
     """
     # Self-attention part
-    attn_output, _ = F._scaled_dot_product_attention(
-        x, x, x, dropout_p=dropout, need_attn_weights=False
-    )
+    attn_output = self_attn(x)
+    print(attn_output.size())
     x = x + attn_output
     x = norm1(x)
 
@@ -20,16 +19,33 @@ def transformer_encoder_layer_fn(x, self_attn, linear1, linear2, norm1, norm2, n
 
     return x
 
-def module_fn(x, conv1_weight, conv1_bias, linear_proj_weight, linear_proj_bias, cls_token, fc_out_weight, fc_out_bias, 
-              transformer_layers_self_attn_in_proj_weight, transformer_layers_self_attn_in_proj_bias,
-              transformer_layers_self_attn_out_proj_weight, transformer_layers_self_attn_out_proj_bias,
-              transformer_layers_linear1_weight, transformer_layers_linear1_bias,
-              transformer_layers_linear2_weight, transformer_layers_linear2_bias,
-              transformer_layers_norm1_weight, transformer_layers_norm1_bias,
-              transformer_layers_norm2_weight, transformer_layers_norm2_bias,
+def module_fn(x, params,
               num_heads, num_layers=6, patch_size=4, embed_dim=512, mlp_ratio=4.0):
     B, C, H, W = x.shape
-    
+    conv1_weight = params["conv1_weight"]
+    conv1_bias = params["conv1_bias"]
+    linear_proj_weight = params["linear_proj_weight"]
+    linear_proj_bias = params["linear_proj_bias"]
+    cls_token = params["cls_token"]
+    transformer_layers_self_attn_in_proj_weight = params["transformer_layers_self_attn_in_proj_weight"]
+    transformer_layers_self_attn_in_proj_bias = params["transformer_layers_self_attn_in_proj_bias"]
+    transformer_layers_self_attn_out_proj_weight = params["transformer_layers_self_attn_out_proj_weight"]
+    transformer_layers_self_attn_out_proj_bias = params["transformer_layers_self_attn_out_proj_bias"]
+    transformer_layers_linear1_weight = params["transformer_layers_linear1_weight"]
+    transformer_layers_linear1_bias = params["transformer_layers_linear1_bias"]
+    transformer_layers_linear2_weight = params["transformer_layers_linear2_weight"]
+    transformer_layers_linear2_bias = params["transformer_layers_linear2_bias"]
+    transformer_layers_norm1_weight = params["transformer_layers_norm1_weight"]
+    transformer_layers_norm1_bias = params["transformer_layers_norm1_bias"]
+    transformer_layers_norm2_weight = params["transformer_layers_norm2_weight"]
+    transformer_layers_norm2_bias = params["transformer_layers_norm2_bias"]
+
+    transformer_layers_norm2_weight = params["transformer_layers_norm2_weight"]
+    transformer_layers_norm2_weight = params["transformer_layers_norm2_weight"]
+    transformer_layers_norm2_weight = params["transformer_layers_norm2_weight"]
+    fc_out_weight = params["fc_out_weight"] 
+    fc_out_bias = params["fc_out_bias"]
+
     # Convolutional patch embedding
     x = F.conv2d(x, conv1_weight, conv1_bias, stride=patch_size)
     x = x.flatten(1)  # (B, embed_dim * (H/patch_size) * (W/patch_size))
@@ -42,12 +58,12 @@ def module_fn(x, conv1_weight, conv1_bias, linear_proj_weight, linear_proj_bias,
     x = torch.cat((cls_tokens, x.unsqueeze(1)), dim=1)  # (B, 1+N, embed_dim)
 
     # Transformer layers
-    for i in range(num_layers):
+    for i in range(1):
         # Extract parameters for the current layer
         start_idx = i * embed_dim * 3
         end_idx = (i + 1) * embed_dim * 3
-        in_proj_weight = transformer_layers_self_attn_in_proj_weight[:, start_idx:end_idx]
-        in_proj_bias = transformer_layers_self_attn_in_proj_bias[start_idx:end_idx]
+        in_proj_weight = transformer_layers_self_attn_in_proj_weight[i]
+        in_proj_bias = transformer_layers_self_attn_in_proj_bias[i]
         out_proj_weight = transformer_layers_self_attn_out_proj_weight[i]
         out_proj_bias = transformer_layers_self_attn_out_proj_bias[i]
         linear1_weight = transformer_layers_linear1_weight[i]
@@ -62,7 +78,7 @@ def module_fn(x, conv1_weight, conv1_bias, linear_proj_weight, linear_proj_bias,
         # Define self-attention and linear layers as functions
         def self_attn(x):
             q, k, v = F.linear(x, in_proj_weight, in_proj_bias).chunk(3, dim=-1)
-            attn_output, _ = F._scaled_dot_product_attention(q, k, v, dropout_p=0.0)
+            attn_output = F.scaled_dot_product_attention(q, k, v, dropout_p=0.0)
             return F.linear(attn_output, out_proj_weight, out_proj_bias)
 
         def linear1(x):
@@ -78,7 +94,6 @@ def module_fn(x, conv1_weight, conv1_bias, linear_proj_weight, linear_proj_bias,
             return F.layer_norm(x, (embed_dim,), norm2_weight, norm2_bias)
 
         x = transformer_encoder_layer_fn(x, self_attn, linear1, linear2, norm1, norm2, num_heads)
-
     # Classify based on cls token
     x = x[:, 0]  # Get the cls token's output
     x = F.linear(x, fc_out_weight, fc_out_bias)  # (B, num_classes)
@@ -156,6 +171,27 @@ class Model(nn.Module):
 
         # Initialize parameters
         self._reset_parameters()
+        self.params = nn.ParameterDict()
+        self.params["conv1_weight"] = self.conv1_weight
+        self.params["conv1_bias"] = self.conv1_bias
+        self.params["linear_proj_weight"] = self.linear_proj_weight
+
+        self.params["linear_proj_bias"] = self.linear_proj_bias
+        self.params["cls_token"] = self.cls_token
+        self.params["transformer_layers_self_attn_in_proj_weight"] = self.transformer_layers_self_attn_in_proj_weight
+        self.params["transformer_layers_self_attn_in_proj_bias"] = self.transformer_layers_self_attn_in_proj_bias
+        self.params["transformer_layers_self_attn_out_proj_weight"] = self.transformer_layers_self_attn_out_proj_weight
+        self.params["transformer_layers_self_attn_out_proj_bias"] = self.transformer_layers_self_attn_out_proj_bias
+        self.params["transformer_layers_linear1_weight"] = self.transformer_layers_linear1_weight
+        self.params["transformer_layers_linear1_bias"] = self.transformer_layers_linear1_bias
+        self.params["transformer_layers_linear2_weight"] = self.transformer_layers_linear2_weight
+        self.params["transformer_layers_linear2_bias"] = self.transformer_layers_linear2_bias
+        self.params["transformer_layers_norm1_weight"] = self.transformer_layers_norm1_weight
+        self.params["transformer_layers_norm1_bias"] = self.transformer_layers_norm1_bias
+        self.params["transformer_layers_norm2_weight"] = self.transformer_layers_norm2_weight
+        self.params["transformer_layers_norm2_bias"] = self.transformer_layers_norm2_bias
+        self.params["fc_out_weight"] = self.fc_out_weight
+        self.params["fc_out_bias"] = self.fc_out_bias
 
     def _reset_parameters(self):
         nn.init.kaiming_uniform_(self.conv1_weight, mode='fan_in', nonlinearity='linear')
@@ -168,7 +204,7 @@ class Model(nn.Module):
             nn.init.zeros_(self.transformer_layers_self_attn_in_proj_bias[i])
             nn.init.xavier_uniform_(self.transformer_layers_self_attn_out_proj_weight[i])
             nn.init.zeros_(self.transformer_layers_self_attn_out_proj_bias[i])
-            nn.init.kaiming_uniform_(self.transformer_layers_linear1_weight[i], mode='fan_in', nonlinearity='gelu')
+            nn.init.kaiming_uniform_(self.transformer_layers_linear1_weight[i], mode='fan_in', nonlinearity='relu')
             nn.init.zeros_(self.transformer_layers_linear1_bias[i])
             nn.init.kaiming_uniform_(self.transformer_layers_linear2_weight[i], mode='fan_in', nonlinearity='linear')
             nn.init.zeros_(self.transformer_layers_linear2_bias[i])
@@ -182,22 +218,7 @@ class Model(nn.Module):
     def forward(self, x, fn=module_fn):
         return fn(
             x, 
-            self.conv1_weight, self.conv1_bias,
-            self.linear_proj_weight, self.linear_proj_bias,
-            self.cls_token,
-            self.fc_out_weight, self.fc_out_bias,
-            self.transformer_layers_self_attn_in_proj_weight,
-            self.transformer_layers_self_attn_in_proj_bias,
-            self.transformer_layers_self_attn_out_proj_weight,
-            self.transformer_layers_self_attn_out_proj_bias,
-            self.transformer_layers_linear1_weight,
-            self.transformer_layers_linear1_bias,
-            self.transformer_layers_linear2_weight,
-            self.transformer_layers_linear2_bias,
-            self.transformer_layers_norm1_weight,
-            self.transformer_layers_norm1_bias,
-            self.transformer_layers_norm2_weight,
-            self.transformer_layers_norm2_bias,
+            self.params,
             self.num_heads, self.num_layers, self.patch_size, self.embed_dim, self.mlp_ratio
         )
 

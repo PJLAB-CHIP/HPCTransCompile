@@ -1,8 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 
-def module_fn(x, conv_weight, conv_bias, norm_weight, norm_bias, groups, min_value, max_value, dropout_p, training):
+def module_fn(x, params, groups, min_value, max_value, dropout_p, training):
+    conv_weight = params["conv_weight"]
+    conv_bias = params["conv_bias"]
+    norm_weight = params["norm_weight"]
+    norm_bias = params["norm_bias"]
+
     x = F.conv3d(x, conv_weight, conv_bias)
     x = F.group_norm(x, groups, norm_weight, norm_bias)
     x = torch.min(x, torch.tensor(min_value))
@@ -34,8 +40,14 @@ class Model(nn.Module):
         nn.init.ones_(self.norm_weight)
         nn.init.zeros_(self.norm_bias)
 
+        self.params = nn.ParameterDict()
+        self.params["conv_weight"] = self.conv_weight
+        self.params["conv_bias"] = self.conv_bias
+        self.params["norm_weight"] = self.norm_weight
+        self.params["norm_bias"] = self.norm_bias
+
     def forward(self, x, fn=module_fn):
-        return fn(x, self.conv_weight, self.conv_bias, self.norm_weight, self.norm_bias, self.groups, self.min_value, self.max_value, self.dropout_p, self.training)
+        return fn(x, self.params, self.groups, self.min_value, self.max_value, self.dropout_p, False)
 
 batch_size = 128
 in_channels = 3
