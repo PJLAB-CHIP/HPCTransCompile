@@ -176,6 +176,7 @@ def module_fn(x, params, is_training):
             prefix = f'block{block_idx}_'
             use_res_connect = prefix + 'residual' in params
             x = inverted_residual_block_fn(x, params, prefix, use_res_connect)
+            
             block_idx += 1
 
     # Last layers
@@ -187,7 +188,6 @@ def module_fn(x, params, is_training):
                      params['bn_last_bias'], 
                      training=False)
     x = F.relu6(x, inplace=True)
-
     # Adaptive average pooling
     x = F.adaptive_avg_pool2d(x, (1, 1))
 
