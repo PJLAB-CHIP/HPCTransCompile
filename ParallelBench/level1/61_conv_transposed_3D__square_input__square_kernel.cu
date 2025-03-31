@@ -1,10 +1,10 @@
-```cpp
 #include <torch/extension.h>
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <vector>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 torch::Tensor forward_cuda(
     torch::Tensor input,

@@ -18,24 +18,36 @@ def inverted_residual_block_fn(x, params, prefix, use_res_connect):
     """
     Functional version of the inverted residual block.
     """
-    if prefix + 'conv1.weight' in params:
+    if prefix + 'conv1_weight' in params:
         # Pointwise convolution
-        x = F.conv2d(x, params[prefix + 'conv1.weight'], stride=1, padding=0)
-        x = F.batch_norm(x, params.get(prefix + 'bn1.weight'), params.get(prefix + 'bn1.bias'), 
-                         params.get(prefix + 'bn1.running_mean'), params.get(prefix + 'bn1.running_var'), training=False)
+        x = F.conv2d(x, params[prefix + 'conv1_weight'], stride=1, padding=0)
+        x = F.batch_norm(x, 
+                         params.get(prefix + 'bn1_running_mean'), 
+                         params.get(prefix + 'bn1_running_var'), 
+                         params.get(prefix + 'bn1_weight'), 
+                         params.get(prefix + 'bn1_bias'), 
+                         training=False)
         x = F.relu6(x, inplace=True)
 
     # Depthwise convolution
-    x = F.conv2d(x, params[prefix + 'conv2.weight'], stride=params[prefix + 'stride'], padding=1, 
+    x = F.conv2d(x, params[prefix + 'conv2_weight'], stride=params[prefix + 'stride'].item(), padding=1, 
                  groups=x.size(1))
-    x = F.batch_norm(x, params.get(prefix + 'bn2.weight'), params.get(prefix + 'bn2.bias'), 
-                     params.get(prefix + 'bn2.running_mean'), params.get(prefix + 'bn2.running_var'), training=False)
+    x = F.batch_norm(x, 
+                    params.get(prefix + 'bn2_running_mean'), 
+                    params.get(prefix + 'bn2_running_var'), 
+                    params.get(prefix + 'bn2_weight'), 
+                    params.get(prefix + 'bn2_bias'), 
+                    training=False)
     x = F.relu6(x, inplace=True)
 
     # Pointwise linear convolution
-    x = F.conv2d(x, params[prefix + 'conv3.weight'], stride=1, padding=0)
-    x = F.batch_norm(x, params.get(prefix + 'bn3.weight'), params.get(prefix + 'bn3.bias'), 
-                     params.get(prefix + 'bn3.running_mean'), params.get(prefix + 'bn3.running_var'), training=False)
+    x = F.conv2d(x, params[prefix + 'conv3_weight'], stride=1, padding=0)
+    x = F.batch_norm(x, 
+                    params.get(prefix + 'bn3_running_mean'), 
+                    params.get(prefix + 'bn3_running_var'), 
+                    params.get(prefix + 'bn3_weight'), 
+                    params.get(prefix + 'bn3_bias'), 
+                    training=False)
 
     if use_res_connect:
         return x + params[prefix + 'residual']
@@ -59,16 +71,16 @@ class Model(nn.Module):
             [6, 160, 3, 2],
             [6, 320, 1, 1],
         ]
+        self.params = nn.ParameterDict()
 
         # Parameters for the first layer
-        self.conv1_weight = nn.Parameter(torch.empty(32, 3, 3, 3))
-        self.bn1_weight = nn.Parameter(torch.empty(32))
-        self.bn1_bias = nn.Parameter(torch.empty(32))
-        self.bn1_running_mean = nn.Parameter(torch.empty(32), requires_grad=False)
-        self.bn1_running_var = nn.Parameter(torch.empty(32), requires_grad=False)
+        self.params['conv0_weight'] = nn.Parameter(torch.empty(32, 3, 3, 3))
+        self.params['bn0_weight'] = nn.Parameter(torch.empty(32))
+        self.params['bn0_bias'] = nn.Parameter(torch.empty(32))
+        self.params['bn0_running_mean'] = nn.Parameter(torch.empty(32), requires_grad=False)
+        self.params['bn0_running_var'] = nn.Parameter(torch.empty(32), requires_grad=False)
 
         # Parameters for inverted residual blocks
-        self.ir_params = nn.ParameterDict()
         block_idx = 0
         for t, c, n, s in inverted_residual_setting:
             output_channel = _make_divisible(c, 8)
@@ -77,50 +89,50 @@ class Model(nn.Module):
                 hidden_dim = int(input_channel * t)
                 use_res_connect = stride == 1 and input_channel == output_channel
 
-                prefix = f'block{block_idx}.'
+                prefix = f'block{block_idx}_'
                 if t != 1:
-                    self.ir_params[prefix + 'conv1.weight'] = nn.Parameter(torch.empty(hidden_dim, input_channel, 1, 1))
-                    self.ir_params[prefix + 'bn1.weight'] = nn.Parameter(torch.empty(hidden_dim))
-                    self.ir_params[prefix + 'bn1.bias'] = nn.Parameter(torch.empty(hidden_dim))
-                    self.ir_params[prefix + 'bn1.running_mean'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
-                    self.ir_params[prefix + 'bn1.running_var'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
+                    self.params[prefix + 'conv1_weight'] = nn.Parameter(torch.empty(hidden_dim, input_channel, 1, 1))
+                    self.params[prefix + 'bn1_weight'] = nn.Parameter(torch.empty(hidden_dim))
+                    self.params[prefix + 'bn1_bias'] = nn.Parameter(torch.empty(hidden_dim))
+                    self.params[prefix + 'bn1_running_mean'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
+                    self.params[prefix + 'bn1_running_var'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
 
-                self.ir_params[prefix + 'conv2.weight'] = nn.Parameter(torch.empty(hidden_dim, 1, 3, 3))
-                self.ir_params[prefix + 'bn2.weight'] = nn.Parameter(torch.empty(hidden_dim))
-                self.ir_params[prefix + 'bn2.bias'] = nn.Parameter(torch.empty(hidden_dim))
-                self.ir_params[prefix + 'bn2.running_mean'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
-                self.ir_params[prefix + 'bn2.running_var'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
-                self.ir_params[prefix + 'conv3.weight'] = nn.Parameter(torch.empty(output_channel, hidden_dim, 1, 1))
-                self.ir_params[prefix + 'bn3.weight'] = nn.Parameter(torch.empty(output_channel))
-                self.ir_params[prefix + 'bn3.bias'] = nn.Parameter(torch.empty(output_channel))
-                self.ir_params[prefix + 'bn3.running_mean'] = nn.Parameter(torch.empty(output_channel), requires_grad=False)
-                self.ir_params[prefix + 'bn3.running_var'] = nn.Parameter(torch.empty(output_channel), requires_grad=False)
-                self.ir_params[prefix + 'stride'] = nn.Parameter(torch.tensor(stride), requires_grad=False)
+                self.params[prefix + 'conv2_weight'] = nn.Parameter(torch.empty(hidden_dim, 1, 3, 3))
+                self.params[prefix + 'bn2_weight'] = nn.Parameter(torch.empty(hidden_dim))
+                self.params[prefix + 'bn2_bias'] = nn.Parameter(torch.empty(hidden_dim))
+                self.params[prefix + 'bn2_running_mean'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
+                self.params[prefix + 'bn2_running_var'] = nn.Parameter(torch.empty(hidden_dim), requires_grad=False)
+                self.params[prefix + 'conv3_weight'] = nn.Parameter(torch.empty(output_channel, hidden_dim, 1, 1))
+                self.params[prefix + 'bn3_weight'] = nn.Parameter(torch.empty(output_channel))
+                self.params[prefix + 'bn3_bias'] = nn.Parameter(torch.empty(output_channel))
+                self.params[prefix + 'bn3_running_mean'] = nn.Parameter(torch.empty(output_channel), requires_grad=False)
+                self.params[prefix + 'bn3_running_var'] = nn.Parameter(torch.empty(output_channel), requires_grad=False)
+                self.params[prefix + 'stride'] = nn.Parameter(torch.tensor(stride), requires_grad=False)
                 if use_res_connect:
-                    self.ir_params[prefix + 'residual'] = nn.Parameter(torch.zeros(1, output_channel, 1, 1), requires_grad=False)
+                    self.params[prefix + 'residual'] = nn.Parameter(torch.zeros(1, output_channel, 1, 1), requires_grad=False)
 
                 input_channel = output_channel
                 block_idx += 1
 
         # Parameters for the last layers
-        self.conv_last_weight = nn.Parameter(torch.empty(last_channel, input_channel, 1, 1))
-        self.bn_last_weight = nn.Parameter(torch.empty(last_channel))
-        self.bn_last_bias = nn.Parameter(torch.empty(last_channel))
-        self.bn_last_running_mean = nn.Parameter(torch.empty(last_channel), requires_grad=False)
-        self.bn_last_running_var = nn.Parameter(torch.empty(last_channel), requires_grad=False)
+        self.params['conv_last_weight'] = nn.Parameter(torch.empty(last_channel, input_channel, 1, 1))
+        self.params['bn_last_weight'] = nn.Parameter(torch.empty(last_channel))
+        self.params['bn_last_bias'] = nn.Parameter(torch.empty(last_channel))
+        self.params['bn_last_running_mean'] = nn.Parameter(torch.empty(last_channel), requires_grad=False)
+        self.params['bn_last_running_var'] = nn.Parameter(torch.empty(last_channel), requires_grad=False)
 
         # Parameters for the classifier
-        self.fc_weight = nn.Parameter(torch.empty(num_classes, last_channel))
-        self.fc_bias = nn.Parameter(torch.empty(num_classes))
+        self.params['fc_weight'] = nn.Parameter(torch.empty(num_classes, last_channel))
+        self.params['fc_bias'] = nn.Parameter(torch.empty(num_classes))
 
         # Initialize weights
-        nn.init.kaiming_normal_(self.conv1_weight, mode='fan_out')
-        nn.init.ones_(self.bn1_weight)
-        nn.init.zeros_(self.bn1_bias)
-        nn.init.zeros_(self.bn1_running_mean)
-        nn.init.ones_(self.bn1_running_var)
+        # nn.init.kaiming_normal_(self.conv1_weight, mode='fan_out')
+        # nn.init.ones_(self.bn1_weight)
+        # nn.init.zeros_(self.bn1_bias)
+        # nn.init.zeros_(self.bn1_running_mean)
+        # nn.init.ones_(self.bn1_running_var)
 
-        for name, param in self.ir_params.items():
+        for name, param in self.params.items():
             if 'weight' in name and 'conv' in name:
                 nn.init.kaiming_normal_(param, mode='fan_out')
             elif 'weight' in name and 'bn' in name:
@@ -132,40 +144,48 @@ class Model(nn.Module):
             elif 'running_var' in name:
                 nn.init.ones_(param)
 
-        nn.init.kaiming_normal_(self.conv_last_weight, mode='fan_out')
-        nn.init.ones_(self.bn_last_weight)
-        nn.init.zeros_(self.bn_last_bias)
-        nn.init.zeros_(self.bn_last_running_mean)
-        nn.init.ones_(self.bn_last_running_var)
+        # nn.init.kaiming_normal_(self.conv_last_weight, mode='fan_out')
+        # nn.init.ones_(self.bn_last_weight)
+        # nn.init.zeros_(self.bn_last_bias)
+        # nn.init.zeros_(self.bn_last_running_mean)
+        # nn.init.ones_(self.bn_last_running_var)
 
-        nn.init.normal_(self.fc_weight, 0, 0.01)
-        nn.init.zeros_(self.fc_bias)
+        # nn.init.normal_(self.fc_weight, 0, 0.01)
+        # nn.init.zeros_(self.fc_bias)
 
     def forward(self, x, fn=None):
         if fn is None:
             fn = module_fn
-        return fn(x, self)
+        return fn(x, self.params, False)
 
-def module_fn(x, model):
+def module_fn(x, params, is_training):
     # First layer
-    x = F.conv2d(x, model.conv1_weight, stride=2, padding=1)
-    x = F.batch_norm(x, model.bn1_weight, model.bn1_bias, 
-                     model.bn1_running_mean, model.bn1_running_var, training=False)
+    x = F.conv2d(x, params['conv0_weight'], stride=2, padding=1)
+    x = F.batch_norm(x, 
+                     params['bn0_running_mean'], 
+                     params['bn0_running_var'], 
+                     params['bn0_weight'], 
+                     params['bn0_bias'], 
+                     training=False)
     x = F.relu6(x, inplace=True)
 
     # Inverted residual blocks
     block_idx = 0
-    for name, param in model.ir_params.items():
-        if name.startswith(f'block{block_idx}.'):
-            prefix = f'block{block_idx}.'
-            use_res_connect = prefix + 'residual' in model.ir_params
-            x = inverted_residual_block_fn(x, model.ir_params, prefix, use_res_connect)
+    for name, param in params.items():
+        if name.startswith(f'block{block_idx}_'):
+            prefix = f'block{block_idx}_'
+            use_res_connect = prefix + 'residual' in params
+            x = inverted_residual_block_fn(x, params, prefix, use_res_connect)
             block_idx += 1
 
     # Last layers
-    x = F.conv2d(x, model.conv_last_weight, stride=1, padding=0)
-    x = F.batch_norm(x, model.bn_last_weight, model.bn_last_bias, 
-                     model.bn_last_running_mean, model.bn_last_running_var, training=False)
+    x = F.conv2d(x, params['conv_last_weight'], stride=1, padding=0)
+    x = F.batch_norm(x, 
+                     params['bn_last_running_mean'], 
+                     params['bn_last_running_var'], 
+                     params['bn_last_weight'], 
+                     params['bn_last_bias'], 
+                     training=False)
     x = F.relu6(x, inplace=True)
 
     # Adaptive average pooling
@@ -173,7 +193,7 @@ def module_fn(x, model):
 
     # Classifier
     x = x.view(x.size(0), -1)
-    x = F.linear(x, model.fc_weight, model.fc_bias)
+    x = F.linear(x, params['fc_weight'], params['fc_bias'])
     return x
 
 # Test code
