@@ -52,8 +52,11 @@ def load_cuda_module(kernel_path):
     return cuda_module
 
 if __name__ == "__main__":
-    cuda_path = '/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1.cu'
-    functional_path = "/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.py"
+    cuda_path = '/root/Projects/LLM4HPCTransCompile/ParallelBench/level3/20_MobileNetV2.cu'
+    functional_path = "/root/Projects/LLM4HPCTransCompile/EvalEngine/torch_functionals/level3/20_MobileNetV2.py"
+
+    # cuda_path = '/root/Projects/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1.cu'
+    # functional_path = "/root/Projects/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.py"
 
     ref_src = load_ref_src(functional_path)
     cuda_module = load_cuda_module(cuda_path)

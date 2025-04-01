@@ -1,6 +1,24 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
+
+
+def module_fn(x, 
+            weight, 
+            bias_param, 
+            stride, 
+            padding, 
+            dilation, 
+            groups):
+    return F.conv3d(x, 
+            weight, 
+            bias_param, 
+            stride, 
+            padding, 
+            dilation, 
+            groups)
+
 
 class Model(nn.Module):
     """
@@ -41,7 +59,7 @@ class Model(nn.Module):
             bound = 1 / math.sqrt(fan_in)
             nn.init.uniform_(self.bias_param, -bound, bound)
         
-    def forward(self, x: torch.Tensor, fn=F.conv3d) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, fn=module_fn) -> torch.Tensor:
         """
         Performs the 3D convolution.
 
@@ -52,15 +70,23 @@ class Model(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, out_channels, depth_out, width_out, height_out).
         """
+        bias = self.bias_param
+        weight = self.weight
+        if fn != module_fn:
+            if bias is None:
+                bias = torch.zeros(weight.shape[0], device=x.device, dtype=x.dtype)
+            weight = weight.detach()  # Convert nn.Parameter to a tensor
+
         return fn(
             x, 
-            self.weight, 
-            self.bias_param, 
-            stride=self.stride, 
-            padding=self.padding, 
-            dilation=self.dilation, 
-            groups=self.groups
+            weight, 
+            bias, 
+            self.stride, 
+            self.padding, 
+            self.dilation, 
+            self.groups
         )
+
 
 # Test code
 batch_size = 16

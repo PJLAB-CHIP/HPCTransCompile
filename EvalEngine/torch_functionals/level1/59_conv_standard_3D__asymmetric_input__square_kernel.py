@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 
 class Model(nn.Module):
     """
@@ -28,7 +29,7 @@ class Model(nn.Module):
         self.bias = bias
         
         # Initialize parameters
-        self.weight = nn.Parameter(torch.empty(out_channels, in_channels // groups, kernel_size, kernel_size, 1))
+        self.weight = nn.Parameter(torch.empty(out_channels, in_channels // groups, kernel_size, kernel_size, kernel_size))
         if bias:
             self.bias_param = nn.Parameter(torch.empty(out_channels))
         else:
@@ -54,10 +55,35 @@ class Model(nn.Module):
         """
         if fn is None:
             fn = module_fn
-        return fn(x, self.weight, self.bias_param, self.stride, self.padding, self.dilation, self.groups)
+        bias = self.bias_param
+        weight = self.weight
+        if fn != module_fn:
+            if bias is None:
+                bias = torch.zeros(weight.shape[0], device=x.device, dtype=x.dtype)
+            weight = weight.detach()  # Convert nn.Parameter to a tensor
 
-def module_fn(x, weight, bias, stride=1, padding=0, dilation=1, groups=1):
-    return F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation, groups=groups)
+        return fn(x, 
+                  weight, 
+                  bias, 
+                  self.stride, 
+                  self.padding, 
+                  self.dilation, 
+                  self.groups)
+
+def module_fn(x, 
+            weight, 
+            bias_param, 
+            stride, 
+            padding, 
+            dilation, 
+            groups):
+    return F.conv3d(x, 
+            weight, 
+            bias_param, 
+            stride, 
+            padding, 
+            dilation, 
+            groups)
 
 # Test code
 batch_size = 16
@@ -66,7 +92,7 @@ out_channels = 64
 kernel_size = 3
 width = 256
 height = 256
-depth = 10
+depth = 12
 
 def get_inputs():
     x = torch.randn(batch_size, in_channels, height, width, depth)
