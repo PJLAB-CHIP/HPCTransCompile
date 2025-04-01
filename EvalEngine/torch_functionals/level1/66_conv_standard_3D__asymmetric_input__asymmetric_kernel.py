@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
+
 
 class Model(nn.Module):
     """
@@ -55,23 +57,27 @@ class Model(nn.Module):
         if fn is None:
             return module_fn(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
         else:
-            return fn(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
+            if self.bias is None:
+                bias = torch.zeros(self.out_channels).cuda()
+            return fn(x, self.weight.detach(), bias, self.stride, self.padding, self.dilation, self.groups)
 
 def module_fn(x, weight, bias, stride, padding, dilation, groups):
     return F.conv3d(x, weight, bias, stride, padding, dilation, groups)
 
 # Test code
-batch_size = 16
+batch_size = 1
 in_channels = 3
 out_channels = 64
 kernel_size = (3, 5, 7)  # Asymmetric kernel size
-depth = 16
-height = 256
-width = 256
+
+depth = 35
+height = 55
+width = 73
 
 def get_inputs():
     x = torch.randn(batch_size, in_channels, depth, height, width)
     return [x]
+
 
 def get_init_inputs():
     return [in_channels, out_channels, kernel_size]  # Provide in_channels, out_channels, kernel_size for initialization

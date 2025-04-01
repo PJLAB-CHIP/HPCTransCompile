@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import math
 class Model(nn.Module):
     """
     Performs a transposed 3D convolution with a square input and an asymmetric kernel.
@@ -58,10 +58,12 @@ class Model(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, out_channels, depth_out, width_out, height_out).
         """
+        if self.bias is None:
+            bias = torch.zeros(self.out_channels).cuda()
         return fn(
             x,
-            self.weight,
-            self.bias,
+            self.weight.detach(),
+            bias,
             stride=self.stride,
             padding=self.padding,
             output_padding=self.output_padding,
