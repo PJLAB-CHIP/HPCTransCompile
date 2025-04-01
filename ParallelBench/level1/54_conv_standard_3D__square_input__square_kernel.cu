@@ -1,83 +1,8 @@
-```cpp
+#include <cstdio>
 #include <torch/extension.h>
 #include <ATen/ATen.h>
-#include <vector>
-
-// CUDA kernel declarations
-void conv3d_forward_cuda(
-    const at::Tensor input,
-    const at::Tensor weight,
-    const at::Tensor bias,
-    at::Tensor output,
-    int stride,
-    int padding,
-    int dilation,
-    int groups
-);
-
-// Function to check tensor properties
-#define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x " must be a CUDA tensor")
-#define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
-#define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
-
-// Forward function
-at::Tensor conv3d_forward(
-    at::Tensor input,
-    at::Tensor weight,
-    at::Tensor bias,
-    int stride,
-    int padding,
-    int dilation,
-    int groups
-) {
-    CHECK_INPUT(input);
-    CHECK_INPUT(weight);
-    if (bias.defined()) {
-        CHECK_INPUT(bias);
-    }
-
-    // Calculate output dimensions
-    int batch_size = input.size(0);
-    int in_channels = input.size(1);
-    int depth = input.size(2);
-    int height = input.size(3);
-    int width = input.size(4);
-    
-    int out_channels = weight.size(0);
-    int kernel_size = weight.size(2);
-    
-    int depth_out = (depth + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
-    int height_out = (height + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
-    int width_out = (width + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
-
-    // Create output tensor
-    auto output = at::zeros({batch_size, out_channels, depth_out, height_out, width_out}, input.options());
-
-    // Call CUDA kernel
-    conv3d_forward_cuda(
-        input,
-        weight,
-        bias,
-        output,
-        stride,
-        padding,
-        dilation,
-        groups
-    );
-
-    return output;
-}
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &conv3d_forward, "3D Convolution forward (CUDA)");
-}
-```
-
-```cu
-#include <torch/extension.h>
-#include <ATen/ATen.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 // CUDA kernel for 3D convolution
 __global__ void conv3d_kernel(
@@ -103,13 +28,18 @@ __global__ void conv3d_kernel(
     // Calculate output position
     const int n = blockIdx.x;
     const int oc = blockIdx.y;
-    const int od = blockIdx.z * blockDim.z + threadIdx.z;
-    const int oh = blockIdx.z * blockDim.y + threadIdx.y;
-    const int ow = blockIdx.z * blockDim.x + threadIdx.x;
 
-    if (n >= batch_size || oc >= out_channels || od >= depth_out || oh >= height_out || ow >= width_out) {
-        return;
-    }
+    int index = blockIdx.z * blockDim.x * blockDim.y * blockDim.z +
+            threadIdx.z * blockDim.x * blockDim.y +
+            threadIdx.y * blockDim.x +
+            threadIdx.x;
+
+    const int total_elements = depth_out * height_out * width_out;
+    if (index >= total_elements) return;
+
+    const int ow = index % width_out;
+    const int oh = (index / width_out) % height_out;
+    const int od = index / (width_out * height_out);
 
     // Calculate input position
     const int id_start = od * stride - padding;
@@ -129,7 +59,7 @@ __global__ void conv3d_kernel(
 
                     if (id >= 0 && id < depth && ih >= 0 && ih < height && iw >= 0 && iw < width) {
                         const int input_idx = ((n * in_channels + (oc / (out_channels / groups)) * (in_channels / groups) + ic) * depth + id) * height * width + ih * width + iw;
-                        const int weight_idx = ((oc * (in_channels / groups) + ic) * kernel_size * kernel_size * kernel_size + kd * kernel_size * kernel_size + kh * kernel_size + kw;
+                        const int weight_idx = (oc * (in_channels / groups) + ic) * kernel_size * kernel_size * kernel_size + kd * kernel_size * kernel_size + kh * kernel_size + kw;
                         value += input[input_idx] * weight[weight_idx];
                     }
                 }
@@ -147,11 +77,10 @@ __global__ void conv3d_kernel(
     output[output_idx] = value;
 }
 
-void conv3d_forward_cuda(
-    const at::Tensor input,
-    const at::Tensor weight,
-    const at::Tensor bias,
-    at::Tensor output,
+torch::Tensor conv3d_forward_cuda(
+    torch::Tensor input,
+    torch::Tensor weight,
+    torch::Tensor bias,
     int stride,
     int padding,
     int dilation,
@@ -166,10 +95,15 @@ void conv3d_forward_cuda(
     
     const int out_channels = weight.size(0);
     const int kernel_size = weight.size(2);
+
+    int out_d = (depth + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
+    int out_h = (height + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
+    int out_w = (width + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1;
     
-    const int depth_out = output.size(2);
-    const int height_out = output.size(3);
-    const int width_out = output.size(4);
+    auto options = input.options();
+    auto output = torch::zeros(
+        {batch_size, out_channels, out_d, out_h, out_w},
+        input.options());
 
     // Get pointers to tensor data
     const float* input_data = input.data_ptr<float>();
@@ -178,11 +112,12 @@ void conv3d_forward_cuda(
     float* output_data = output.data_ptr<float>();
 
     // Set grid and block dimensions
-    dim3 block(16, 16, 1);
+    int block_dim = 8;
+    dim3 block(block_dim, block_dim, block_dim);
     dim3 grid(
         batch_size,
         out_channels,
-        (depth_out * height_out * width_out + block.x * block.y * block.z - 1) / (block.x * block.y * block.z)
+        (out_d * out_h * out_w + block.x * block.y * block.z - 1) / (block.x * block.y * block.z)
     );
 
     // Launch kernel
@@ -202,12 +137,18 @@ void conv3d_forward_cuda(
         padding,
         dilation,
         groups,
-        depth_out,
-        height_out,
-        width_out
+        out_d,
+        out_h,
+        out_w
     );
 
     // Synchronize to check for errors
     cudaDeviceSynchronize();
+
+    return output;
 }
-```
+
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+    m.def("forward", &conv3d_forward_cuda, "3D convolution forward CUDA kernel with pipelined streams");
+}

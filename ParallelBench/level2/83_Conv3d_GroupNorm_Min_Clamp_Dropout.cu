@@ -1,4 +1,3 @@
-```cpp
 #include <torch/extension.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -10,7 +9,7 @@
 #define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
-
+namespace py = pybind11;
 namespace {
 
 template <typename scalar_t>
@@ -31,46 +30,21 @@ __global__ void apply_min_clamp_kernel(
     }
 }
 
-template <typename scalar_t>
-__global__ void apply_dropout_kernel(
-    scalar_t* output,
-    const scalar_t* input,
-    const float p,
-    const int64_t num_elements,
-    const uint64_t seed,
-    const uint64_t offset) {
-    
-    const int64_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < num_elements) {
-        uint64_t idx_seed = idx + offset;
-        uint64_t random = at::cuda::detail::PhiloxCudaState(seed, idx_seed).rand();
-        float scale = 1.0f / (1.0f - p);
-        float mask = (random % 10000) / 10000.0f > p;
-        output[idx] = input[idx] * mask * scale;
-    }
-}
-
 } // namespace
 
 torch::Tensor forward(
     torch::Tensor x,
-    torch::Tensor conv_weight,
-    torch::Tensor conv_bias,
-    torch::Tensor norm_weight,
-    torch::Tensor norm_bias,
+    py::object params_obj,
     int64_t groups,
     float min_value,
     float max_value,
     float dropout_p,
     bool training) {
     
-    // Input checks
-    CHECK_INPUT(x);
-    CHECK_INPUT(conv_weight);
-    CHECK_INPUT(conv_bias);
-    CHECK_INPUT(norm_weight);
-    CHECK_INPUT(norm_bias);
-
+    torch::Tensor conv_weight = params_obj["conv_weight"].cast<torch::Tensor>();
+    torch::Tensor conv_bias = params_obj["conv_bias"].cast<torch::Tensor>();
+    torch::Tensor norm_weight = params_obj["norm_weight"].cast<torch::Tensor>();
+    torch::Tensor norm_bias = params_obj["norm_bias"].cast<torch::Tensor>();
     // Conv3d
     auto x_conv = torch::conv3d(x, conv_weight, conv_bias);
 
@@ -94,20 +68,8 @@ torch::Tensor forward(
 
     // Apply dropout if training
     if (training && dropout_p > 0.0f) {
-        auto output_dropout = output.clone();
-        auto gen = at::cuda::detail::getDefaultCUDAGenerator();
-        auto philox_seed = gen.current_seed();
-        auto philox_offset = gen.philox_engine_offset();
-
-        AT_DISPATCH_FLOATING_TYPES(output_dropout.scalar_type(), "dropout_kernel", ([&] {
-            apply_dropout_kernel<scalar_t><<<blocks, threads>>>(
-                output_dropout.data_ptr<scalar_t>(),
-                output.data_ptr<scalar_t>(),
-                dropout_p,
-                num_elements,
-                philox_seed,
-                philox_offset);
-        }));
+        // x = F.dropout(x, p=dropout_p)
+        auto output_dropout = torch::nn::functional::dropout(output, torch::nn::functional::DropoutFuncOptions().p(dropout_p).inplace(false));
         output = output_dropout;
     }
 
@@ -117,4 +79,3 @@ torch::Tensor forward(
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("forward", &forward, "Custom CUDA forward");
 }
-```

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 def module_fn(x, dim):
-    exclusive_cumsum = torch.cat((torch.zeros_like(x.select(dim, 0).unsqueeze(dim)), x), dim=dim)[:-1]
+    exclusive_cumsum = torch.cat((torch.zeros_like(x.select(dim, 0).unsqueeze(dim)), x), dim=dim)[:, :-1]
     return torch.cumsum(exclusive_cumsum, dim=dim)
 
 class Model(nn.Module):

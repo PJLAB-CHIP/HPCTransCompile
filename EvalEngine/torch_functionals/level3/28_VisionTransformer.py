@@ -54,6 +54,8 @@ class Model(nn.Module):
         patch_dim = channels * patch_size ** 2
         
         self.patch_size = patch_size
+        self.dim = dim
+        self.heads = heads
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
         self.patch_to_embedding_weight = nn.Parameter(torch.randn(dim, patch_dim))
         self.patch_to_embedding_bias = nn.Parameter(torch.randn(dim))
@@ -71,20 +73,59 @@ class Model(nn.Module):
         self.mlp_head_3_bias = nn.Parameter(torch.randn(num_classes))
     
     def forward(self, img, fn=module_fn):
-        return fn(
-            img,
-            self.patch_size,
-            self.pos_embedding,
-            self.patch_to_embedding_weight,
-            self.patch_to_embedding_bias,
-            self.cls_token,
-            self.dropout_p,
-            self.transformer_layers,
-            self.mlp_head_0_weight,
-            self.mlp_head_0_bias,
-            self.mlp_head_3_weight,
-            self.mlp_head_3_bias
-        )
+        if fn == module_fn:
+            # 原生 PyTorch 前向传播
+            return fn(
+                img,
+                self.patch_size,
+                self.pos_embedding,
+                self.patch_to_embedding_weight.detach(),
+                self.patch_to_embedding_bias,
+                self.cls_token,
+                self.dropout_p,
+                self.transformer_layers,
+                self.mlp_head_0_weight.detach(),
+                self.mlp_head_0_bias,
+                self.mlp_head_3_weight.detach(),
+                self.mlp_head_3_bias
+            )
+        else:
+            # CUDA 扩展前向传播
+            args = [
+                img,
+                self.patch_size,
+                self.pos_embedding.detach(),
+                self.patch_to_embedding_weight.detach(),
+                self.patch_to_embedding_bias.detach(),
+                self.cls_token.detach(),
+                self.dropout_p,
+            ]
+            # 解包 Transformer 层参数
+            for layer in self.transformer_layers:
+                args.extend([
+                    layer.self_attn.in_proj_weight.detach(),
+                    layer.self_attn.in_proj_bias.detach(),
+                    layer.self_attn.out_proj.weight.detach(),
+                    layer.self_attn.out_proj.bias.detach(),
+                    layer.linear1.weight.detach(),
+                    layer.linear1.bias.detach(),
+                    layer.linear2.weight.detach(),
+                    layer.linear2.bias.detach(),
+                    layer.norm1.weight.detach(),
+                    layer.norm1.bias.detach(),
+                    layer.norm2.weight.detach(),
+                    layer.norm2.bias.detach(),
+                ])
+            # 添加 dim 和 heads
+            args.extend([self.dim, self.heads])
+            # 添加 mlp_head 参数
+            args.extend([
+                self.mlp_head_0_weight.detach(),
+                self.mlp_head_0_bias.detach(),
+                self.mlp_head_3_weight.detach(),
+                self.mlp_head_3_bias.detach(),
+            ])
+            return fn(*args)
 
 # Test code
 image_size = 224

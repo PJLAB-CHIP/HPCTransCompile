@@ -2,44 +2,63 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def module_fn(x, conv_weight, conv_bias, multiplier, running_mean, running_var, clamp_min, clamp_max):
-    # Conv3d
+def module_fn(
+    x: torch.Tensor,
+    conv_weight: torch.Tensor,
+    conv_bias: torch.Tensor,
+    multiplier: torch.Tensor,
+    clamp_min: float,
+    clamp_max: float
+) -> torch.Tensor:
+    """
+    3D卷积后接乘法、实例归一化、截断、再乘法和最大值操作的函数式实现
+    
+    Args:
+        x: 输入张量 (B, C_in, D, H, W)
+        conv_weight: 卷积核权重 (C_out, C_in, kD, kH, kW)
+        conv_bias: 卷积偏置 (C_out,)
+        multiplier: 乘法系数 (C_out, 1, 1, 1)
+        clamp_min: 截断下限
+        clamp_max: 截断上限
+        
+    Returns:
+        处理后的张量 (B, 1, D', H', W')
+    """
     x = F.conv3d(x, conv_weight, conv_bias)
-    # Multiply by multiplier
     x = x * multiplier
-    # InstanceNorm3d
-    x = F.instance_norm(x, running_mean=running_mean, running_var=running_var, weight=None, bias=None, use_input_stats=True)
-    # Clamp
+    x = F.instance_norm(x, running_mean=None, running_var=None)
     x = torch.clamp(x, clamp_min, clamp_max)
-    # Multiply by multiplier again
     x = x * multiplier
-    # Max along dim=1
-    x = torch.max(x, dim=1)[0]
+    x = torch.max(x, dim=1, keepdim=True)[0]
     return x
 
 class Model(nn.Module):
     """
-    A 3D convolutional layer followed by multiplication, instance normalization, clamping, multiplication, and a max operation.
+    封装卷积参数并提供forward接口的模型类
     """
     def __init__(self, in_channels, out_channels, kernel_size, multiplier_shape, clamp_min, clamp_max):
         super(Model, self).__init__()
-        self.conv_weight = nn.Parameter(torch.empty(out_channels, in_channels, kernel_size, kernel_size, kernel_size))
-        self.conv_bias = nn.Parameter(torch.empty(out_channels))
+        # 初始化卷积参数
+        conv = nn.Conv3d(in_channels, out_channels, kernel_size)
+        self.conv_weight = nn.Parameter(conv.weight)
+        self.conv_bias = nn.Parameter(conv.bias)
+        
+        # 初始化其他参数
         self.multiplier = nn.Parameter(torch.randn(multiplier_shape))
-        self.register_buffer('running_mean', torch.zeros(out_channels))
-        self.register_buffer('running_var', torch.ones(out_channels))
         self.clamp_min = clamp_min
         self.clamp_max = clamp_max
 
-        # Initialize parameters
-        nn.init.kaiming_uniform_(self.conv_weight, a=math.sqrt(5))
-        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.conv_weight)
-        bound = 1 / math.sqrt(fan_in)
-        nn.init.uniform_(self.conv_bias, -bound, bound)
-
     def forward(self, x, fn=module_fn):
-        return fn(x, self.conv_weight, self.conv_bias, self.multiplier, self.running_mean, self.running_var, self.clamp_min, self.clamp_max)
+        return fn(
+            x,
+            self.conv_weight,
+            self.conv_bias,
+            self.multiplier,
+            self.clamp_min,
+            self.clamp_max
+        )
 
+# 参数配置与原始代码保持一致
 batch_size = 128
 in_channels = 3
 out_channels = 16

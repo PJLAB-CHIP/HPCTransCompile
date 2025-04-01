@@ -1,7 +1,7 @@
-```cpp
 #include <torch/extension.h>
 #include <ATen/ATen.h>
 #include <vector>
+namespace py = pybind11;
 
 template <typename scalar_t>
 __global__ void exclusive_cumsum_kernel(
@@ -26,10 +26,9 @@ __global__ void exclusive_cumsum_kernel(
     }
 }
 
-torch::Tensor exclusive_cumsum(torch::Tensor input, int64_t dim) {
+torch::Tensor exclusive_cumsum(torch::Tensor input, int dim) {
     // Ensure input is contiguous
     input = input.contiguous();
-    
     // Get tensor dimensions
     auto sizes = input.sizes();
     int64_t dim_size = sizes[dim];
@@ -66,4 +65,3 @@ torch::Tensor exclusive_cumsum(torch::Tensor input, int64_t dim) {
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("forward", &exclusive_cumsum, "Exclusive cumulative sum along a dimension");
 }
-```

@@ -28,9 +28,9 @@ class Model(nn.Module):
         self.bias = bias
         
         # Define parameters
-        self.weight = nn.Parameter(torch.empty(out_channels, in_channels // groups, kernel_size, kernel_size, kernel_size))
+        self.weight = nn.Parameter(torch.empty(in_channels, out_channels // groups, kernel_size, kernel_size, kernel_size))
         if bias:
-            self.bias_param = nn.Parameter(torch.empty(out_channels))
+            self.bias_param = nn.Parameter(torch.empty(in_channels))
         else:
             self.register_parameter('bias_param', None)
         
@@ -51,7 +51,13 @@ class Model(nn.Module):
         """
         if fn is None:
             fn = module_fn
-        return fn(x, self.weight, self.bias_param, self.stride, self.padding, self.output_padding, self.groups)
+        bias = self.bias_param
+        weight = self.weight
+        if fn != module_fn:
+            if bias is None:
+                bias = torch.zeros(weight.shape[1], device=x.device, dtype=x.dtype)
+            weight = weight.detach()  # Convert nn.Parameter to a tensor
+        return fn(x, weight, bias, self.stride, self.padding, self.output_padding, self.groups)
 
 def module_fn(x, weight, bias, stride, padding, output_padding, groups):
     return F.conv_transpose3d(

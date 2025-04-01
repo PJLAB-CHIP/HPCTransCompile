@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Model(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, expand_ratio):
         """
@@ -17,25 +18,27 @@ class Model(nn.Module):
         
         self.use_residual = (stride == 1 and in_channels == out_channels)
         hidden_dim = in_channels * expand_ratio
+
+        self.params = nn.ParameterDict()
         
         if expand_ratio != 1:
-            self.expand_conv_weight = nn.Parameter(torch.randn(hidden_dim, in_channels, 1, 1))
-            self.expand_conv_bn_weight = nn.Parameter(torch.ones(hidden_dim))
-            self.expand_conv_bn_bias = nn.Parameter(torch.zeros(hidden_dim))
-            self.expand_conv_bn_running_mean = nn.Parameter(torch.zeros(hidden_dim), requires_grad=False)
-            self.expand_conv_bn_running_var = nn.Parameter(torch.ones(hidden_dim), requires_grad=False)
+            self.params['expand_conv_weight'] = nn.Parameter(torch.randn(hidden_dim, in_channels, 1, 1))
+            self.params['expand_conv_bn_weight'] = nn.Parameter(torch.ones(hidden_dim))
+            self.params['expand_conv_bn_bias'] = nn.Parameter(torch.zeros(hidden_dim))
+            self.params['expand_conv_bn_running_mean'] = nn.Parameter(torch.zeros(hidden_dim), requires_grad=False)
+            self.params['expand_conv_bn_running_var'] = nn.Parameter(torch.ones(hidden_dim), requires_grad=False)
         
-        self.depthwise_conv_weight = nn.Parameter(torch.randn(hidden_dim, 1, kernel_size, kernel_size))
-        self.depthwise_conv_bn_weight = nn.Parameter(torch.ones(hidden_dim))
-        self.depthwise_conv_bn_bias = nn.Parameter(torch.zeros(hidden_dim))
-        self.depthwise_conv_bn_running_mean = nn.Parameter(torch.zeros(hidden_dim), requires_grad=False)
-        self.depthwise_conv_bn_running_var = nn.Parameter(torch.ones(hidden_dim), requires_grad=False)
+        self.params['depthwise_conv_weight'] = nn.Parameter(torch.randn(hidden_dim, 1, kernel_size, kernel_size))
+        self.params['depthwise_conv_bn_weight'] = nn.Parameter(torch.ones(hidden_dim))
+        self.params['depthwise_conv_bn_bias'] = nn.Parameter(torch.zeros(hidden_dim))
+        self.params['depthwise_conv_bn_running_mean'] = nn.Parameter(torch.zeros(hidden_dim), requires_grad=False)
+        self.params['depthwise_conv_bn_running_var'] = nn.Parameter(torch.ones(hidden_dim), requires_grad=False)
         
-        self.project_conv_weight = nn.Parameter(torch.randn(out_channels, hidden_dim, 1, 1))
-        self.project_conv_bn_weight = nn.Parameter(torch.ones(out_channels))
-        self.project_conv_bn_bias = nn.Parameter(torch.zeros(out_channels))
-        self.project_conv_bn_running_mean = nn.Parameter(torch.zeros(out_channels), requires_grad=False)
-        self.project_conv_bn_running_var = nn.Parameter(torch.ones(out_channels), requires_grad=False)
+        self.params['project_conv_weight'] = nn.Parameter(torch.randn(out_channels, hidden_dim, 1, 1))
+        self.params['project_conv_bn_weight'] = nn.Parameter(torch.ones(out_channels))
+        self.params['project_conv_bn_bias'] = nn.Parameter(torch.zeros(out_channels))
+        self.params['project_conv_bn_running_mean'] = nn.Parameter(torch.zeros(out_channels), requires_grad=False)
+        self.params['project_conv_bn_running_var'] = nn.Parameter(torch.ones(out_channels), requires_grad=False)
     
     def forward(self, x, fn=None):
         """
@@ -47,28 +50,29 @@ class Model(nn.Module):
         """
         if fn is None:
             fn = module_fn
-        return fn(x, self)
+        return fn(x, self.params, False, self.use_residual)
         
-def module_fn(x, module):
+def module_fn(x, params, is_training, use_residual):
     identity = x
     
-    if hasattr(module, 'expand_conv_weight'):
-        x = F.conv2d(x, module.expand_conv_weight, bias=None, stride=1, padding=0)
-        x = F.batch_norm(x, module.expand_conv_bn_running_mean, module.expand_conv_bn_running_var, 
-                          module.expand_conv_bn_weight, module.expand_conv_bn_bias, training=module.training)
+    if 'expand_conv_weight' in params:
+        x = F.conv2d(x, params['expand_conv_weight'], bias=None, stride=1, padding=0)
+        x = F.batch_norm(x, params['expand_conv_bn_running_mean'], params['expand_conv_bn_running_var'], 
+                          params['expand_conv_bn_weight'], params['expand_conv_bn_bias'], training=is_training)
         x = F.relu6(x, inplace=True)
     
-    x = F.conv2d(x, module.depthwise_conv_weight, bias=None, stride=module.use_residual + 1, 
-                 padding=(module.depthwise_conv_weight.shape[2] - 1) // 2, groups=module.depthwise_conv_weight.shape[0])
-    x = F.batch_norm(x, module.depthwise_conv_bn_running_mean, module.depthwise_conv_bn_running_var, 
-                      module.depthwise_conv_bn_weight, module.depthwise_conv_bn_bias, training=module.training)
+    # print(use_residual + 1, (params['depthwise_conv_weight'].shape[2] - 1) // 2, params['depthwise_conv_weight'].shape[0])
+    x = F.conv2d(x, params['depthwise_conv_weight'], bias=None, stride=use_residual + 1, 
+                 padding=(params['depthwise_conv_weight'].shape[2] - 1) // 2, groups=params['depthwise_conv_weight'].shape[0])
+    x = F.batch_norm(x, params['depthwise_conv_bn_running_mean'], params['depthwise_conv_bn_running_var'], 
+                      params['depthwise_conv_bn_weight'], params['depthwise_conv_bn_bias'], training=is_training)
     x = F.relu6(x, inplace=True)
     
-    x = F.conv2d(x, module.project_conv_weight, bias=None, stride=1, padding=0)
-    x = F.batch_norm(x, module.project_conv_bn_running_mean, module.project_conv_bn_running_var, 
-                      module.project_conv_bn_weight, module.project_conv_bn_bias, training=module.training)
+    x = F.conv2d(x, params['project_conv_weight'], bias=None, stride=1, padding=0)
+    x = F.batch_norm(x, params['project_conv_bn_running_mean'], params['project_conv_bn_running_var'], 
+                      params['project_conv_bn_weight'], params['project_conv_bn_bias'], training=is_training)
     
-    if module.use_residual:
+    if use_residual:
         x += identity
     
     return x

@@ -1,4 +1,3 @@
-```cpp
 #include <torch/extension.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -10,41 +9,41 @@
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
-// Forward declaration of kernel functions
-__global__ void multiply_kernel(float* input, const float* multiplier, int num_elements, int channels, int depth, int height, int width);
-__global__ void clamp_kernel(float* input, float min_val, float max_val, int num_elements);
-__global__ void max_reduce_kernel(const float* input, float* output, int batch_size, int channels, int depth, int height, int width);
+// Kernel声明
+__global__ void multiply_kernel(float* input, const float* multiplier, 
+    int num_elements, int channels, int depth, int height, int width);
+__global__ void clamp_kernel(float* input, float min_val, float max_val, 
+    int num_elements);
+__global__ void max_reduce_kernel(const float* input, float* output, 
+    int batch_size, int channels, int depth, int height, int width);
 
+// 对齐Python Model参数的forward函数
 torch::Tensor forward(
     torch::Tensor input,
     torch::Tensor conv_weight,
     torch::Tensor conv_bias,
     torch::Tensor multiplier,
-    torch::Tensor running_mean,
-    torch::Tensor running_var,
     float clamp_min,
     float clamp_max) {
     
-    // Check inputs
+    // 输入检查
     CHECK_INPUT(input);
     CHECK_INPUT(conv_weight);
     CHECK_INPUT(conv_bias);
     CHECK_INPUT(multiplier);
-    CHECK_INPUT(running_mean);
-    CHECK_INPUT(running_var);
 
-    // Conv3d
+    // 执行3D卷积
     auto x = torch::conv3d(input, conv_weight, conv_bias);
 
-    // Get dimensions
+    // 获取张量维度
     int batch_size = x.size(0);
     int channels = x.size(1);
     int depth = x.size(2);
     int height = x.size(3);
     int width = x.size(4);
-    int num_elements = batch_size * channels * depth * height * width;
+    int num_elements = x.numel();
 
-    // First multiplication
+    // 第一次乘法（修复通道索引计算）
     {
         dim3 block(256);
         dim3 grid((num_elements + block.x - 1) / block.x);
@@ -56,12 +55,21 @@ torch::Tensor forward(
             depth,
             height,
             width);
+        cudaDeviceSynchronize();
     }
 
-    // InstanceNorm3d (using PyTorch's built-in function)
-    x = torch::instance_norm(x, running_mean, running_var, torch::Tensor(), torch::Tensor(), true, 0.0, 1e-5, false);
+    // 实例归一化（与PyTorch严格一致）
+    x = torch::instance_norm(x, 
+        /*running_mean=*/torch::Tensor(),
+        /*running_var=*/torch::Tensor(),
+        /*weight=*/torch::Tensor(),
+        /*bias=*/torch::Tensor(),
+        /*use_input_stats=*/true,
+        /*momentum=*/0.0,
+        /*eps=*/1e-5,
+        /*cudnn_enabled=*/false);
 
-    // Clamp
+    // 截断操作
     {
         dim3 block(256);
         dim3 grid((num_elements + block.x - 1) / block.x);
@@ -70,9 +78,10 @@ torch::Tensor forward(
             clamp_min,
             clamp_max,
             num_elements);
+        cudaDeviceSynchronize();
     }
 
-    // Second multiplication
+    // 第二次乘法
     {
         dim3 block(256);
         dim3 grid((num_elements + block.x - 1) / block.x);
@@ -84,15 +93,17 @@ torch::Tensor forward(
             depth,
             height,
             width);
+        cudaDeviceSynchronize();
     }
 
-    // Max along dim=1
-    auto output = torch::empty({batch_size, depth, height, width}, x.options());
+    // 沿通道维度取最大值（修复输出维度）
+    auto output = torch::empty({batch_size, 1, depth, height, width}, x.options());
     {
         dim3 block(16, 16);
-        dim3 grid((depth + block.x - 1) / block.x,
-                  (height + block.y - 1) / block.y,
-                  batch_size);
+        dim3 grid(
+            (depth + block.x - 1) / block.x,
+            (height + block.y - 1) / block.y,
+            batch_size * width);
         max_reduce_kernel<<<grid, block>>>(
             x.data_ptr<float>(),
             output.data_ptr<float>(),
@@ -101,46 +112,55 @@ torch::Tensor forward(
             depth,
             height,
             width);
+        cudaDeviceSynchronize();
     }
 
     return output;
 }
 
-// Kernel implementations
-__global__ void multiply_kernel(float* input, const float* multiplier, int num_elements, int channels, int depth, int height, int width) {
+// 核函数实现（关键修正）
+__global__ void multiply_kernel(float* input, const float* multiplier, 
+    int num_elements, int channels, int depth, int height, int width) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_elements) {
-        int c = (idx / (depth * height * width)) % channels;
+        // 正确的通道索引计算
+        int elements_per_channel = depth * height * width;
+        int c = (idx / elements_per_channel) % channels;
         input[idx] *= multiplier[c];
     }
 }
 
-__global__ void clamp_kernel(float* input, float min_val, float max_val, int num_elements) {
+__global__ void clamp_kernel(float* input, float min_val, float max_val, 
+    int num_elements) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_elements) {
         input[idx] = fminf(fmaxf(input[idx], min_val), max_val);
     }
 }
 
-__global__ void max_reduce_kernel(const float* input, float* output, int batch_size, int channels, int depth, int height, int width) {
+__global__ void max_reduce_kernel(const float* input, float* output, 
+    int batch_size, int channels, int depth, int height, int width) {
     int d = blockIdx.x * blockDim.x + threadIdx.x;
     int h = blockIdx.y * blockDim.y + threadIdx.y;
-    int b = blockIdx.z;
+    int bw = blockIdx.z;
+    
+    // 分解批次和宽度维度
+    int b = bw / width;
+    int w = bw % width;
 
-    if (d < depth && h < height && b < batch_size) {
-        float max_val = -INFINITY;
-        for (int w = 0; w < width; w++) {
-            for (int c = 0; c < channels; c++) {
-                int idx = ((b * channels + c) * depth + d) * height + h;
-                idx = idx * width + w;
-                max_val = fmaxf(max_val, input[idx]);
-            }
-        }
-        output[(b * depth + d) * height + h] = max_val;
+    if (d >= depth || h >= height || b >= batch_size || w >= width) return;
+
+    float max_val = -INFINITY;
+    for (int c = 0; c < channels; ++c) {
+        // 输入索引计算
+        int idx = (((b * channels + c) * depth + d) * height + h) * width + w;
+        max_val = fmaxf(max_val, input[idx]);
     }
+    // 输出索引修正（保持通道维度）
+    int out_idx = (((b * 1) * depth + d) * height + h) * width + w;
+    output[out_idx] = max_val;
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &forward, "Forward pass of the model");
+    m.def("forward", &forward, "Forward pass of the optimized model");
 }
-```

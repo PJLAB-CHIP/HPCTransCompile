@@ -52,8 +52,13 @@ def load_cuda_module(kernel_path):
     return cuda_module
 
 if __name__ == "__main__":
-    cuda_path = '/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1.cu'
-    functional_path = "/code/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.py"
+    cuda_path = '/code/LLM4HPCTransCompile/OpSample/48_Mamba2ReturnY.cu'
+    functional_path = "/code/LLM4HPCTransCompile/OpSample/Mamba2ReturnY.py"
+    cuda_path = '/root/Projects/LLM4HPCTransCompile/ParallelBench/level3/20_MobileNetV2.cu'
+    functional_path = "/root/Projects/LLM4HPCTransCompile/EvalEngine/torch_functionals/level3/20_MobileNetV2.py"
+
+    # cuda_path = '/root/Projects/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1.cu'
+    # functional_path = "/root/Projects/LLM4HPCTransCompile/OpSample/MobileNetv1_case/19_MobileNetV1_functional.py"
 
     ref_src = load_ref_src(functional_path)
     cuda_module = load_cuda_module(cuda_path)
@@ -74,11 +79,11 @@ if __name__ == "__main__":
 
         # get ref output
         ref_out = model(*inputs, fn=module_fn)
-        print("ref_out:\n", ref_out)
+        #print("ref_out:\n", ref_out)
 
         # replace with cuda module forward kernel
         new_out = model(*inputs, fn=cuda_module.forward)
-        print("new_out:\n", new_out)
+        #print("new_out:\n", new_out)
 
 
         if not torch.allclose(ref_out, new_out, atol=1e-02, rtol=1e-02):
