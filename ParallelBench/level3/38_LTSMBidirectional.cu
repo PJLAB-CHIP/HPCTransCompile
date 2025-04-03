@@ -1,77 +1,101 @@
-```cpp
-#include <torch/extension.h>
-#include <ATen/ATen.h>
-#include <vector>
+#include <torch/torch.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-std::vector<at::Tensor> forward(
-    at::Tensor x,
-    at::Tensor h0,
-    at::Tensor c0,
-    std::vector<at::Tensor> lstm_params,
-    at::Tensor fc_weight,
-    at::Tensor fc_bias,
-    int64_t num_layers,
-    double dropout,
-    int64_t output_size,
-    int64_t hidden_size,
-    bool bidirectional) {
+namespace py = pybind11;
 
-    // Prepare LSTM weights
-    std::vector<std::vector<at::Tensor>> all_weights;
+std::tuple<torch::Tensor, std::tuple<torch::Tensor, torch::Tensor>> 
+lstm_module_fn(const torch::Tensor& input, 
+              std::tuple<torch::Tensor, torch::Tensor> hx,
+              const py::dict& params, 
+              int64_t num_layers, 
+              double dropout, 
+              bool bidirectional) {
+    
+    // Initialize the weights vector
+    std::vector<torch::Tensor> all_weights;
+    
     for (int64_t layer = 0; layer < num_layers; ++layer) {
         for (int64_t direction = 0; direction < (bidirectional ? 2 : 1); ++direction) {
             std::string suffix = (direction == 1) ? "_reverse" : "";
             
-            int64_t param_offset = layer * (bidirectional ? 4 : 2) + direction * 2;
+            // Get the parameters for this layer and direction
+            std::string w_ih_key = "weight_ih_l" + std::to_string(layer) + suffix;
+            std::string w_hh_key = "weight_hh_l" + std::to_string(layer) + suffix;
+            std::string b_ih_key = "bias_ih_l" + std::to_string(layer) + suffix;
+            std::string b_hh_key = "bias_hh_l" + std::to_string(layer) + suffix;
             
-            at::Tensor w_ih = lstm_params[param_offset];
-            at::Tensor w_hh = lstm_params[param_offset + 1];
-            at::Tensor b_ih = lstm_params[param_offset + (bidirectional ? 4*num_layers : 2*num_layers)];
-            at::Tensor b_hh = lstm_params[param_offset + (bidirectional ? 4*num_layers : 2*num_layers) + 1];
+            torch::Tensor w_ih = params[py::str(w_ih_key)].cast<torch::Tensor>();
+            torch::Tensor w_hh = params[py::str(w_hh_key)].cast<torch::Tensor>();
+            torch::Tensor b_ih = params[py::str(b_ih_key)].cast<torch::Tensor>();
+            torch::Tensor b_hh = params[py::str(b_hh_key)].cast<torch::Tensor>();
             
-            all_weights.push_back({w_ih, w_hh, b_ih, b_hh});
+            // Append individual tensors to create a flat list
+            all_weights.push_back(w_ih);
+            all_weights.push_back(w_hh);
+            all_weights.push_back(b_ih);
+            all_weights.push_back(b_hh);
         }
     }
+    
+    // Extract hidden states
+    torch::Tensor h0 = std::get<0>(hx);
+    torch::Tensor c0 = std::get<1>(hx);
+    
+    // Call lstm with the properly formatted weights
+    auto result = torch::lstm(input, 
+                             {h0, c0}, 
+                             all_weights, 
+                             /*has_biases=*/true, 
+                             num_layers, 
+                             dropout, 
+                             /*train=*/false, 
+                             bidirectional, 
+                             /*batch_first=*/true);
+    
+    torch::Tensor output = std::get<0>(result);
+    torch::Tensor h_n = std::get<1>(result);
+    torch::Tensor c_n = std::get<2>(result);
+    
+    return {output, {h_n, c_n}};
+}
 
-    // Run LSTM
-    auto lstm_out = at::lstm(x, {h0, c0}, all_weights, true, num_layers, dropout, false, bidirectional);
-    at::Tensor out = std::get<0>(lstm_out);
-    auto hn = std::get<1>(lstm_out);
-    auto cn = std::get<2>(lstm_out);
+torch::Tensor linear_module_fn(const torch::Tensor& input, 
+                              const torch::Tensor& weight, 
+                              const torch::Tensor& bias) {
+    return torch::linear(input, weight, bias);
+}
 
-    // Get last time step output
-    out = out.slice(1, -1, out.size(1)).squeeze(1);
-
-    // Linear layer
-    out = at::linear(out, fc_weight, fc_bias);
-
-    return {out};
+torch::Tensor model_forward(const torch::Tensor& x, 
+                       const torch::Tensor& h0, 
+                       const torch::Tensor& c0,
+                       const py::dict& params,
+                       int64_t num_layers, 
+                       double dropout, 
+                       int64_t output_size, 
+                       int64_t hidden_size, 
+                       bool bidirectional = true) {
+    
+    py::dict lstm_params = params["lstm"].cast<py::dict>();
+    py::dict fc_params = params["fc"].cast<py::dict>();
+    
+    auto lstm_result = lstm_module_fn(x, {h0, c0}, lstm_params, num_layers, dropout, bidirectional);
+    
+    torch::Tensor lstm_output = std::get<0>(lstm_result);
+    
+    // Get the last timestep output: lstm_output[:, -1, :]
+    torch::Tensor last_output = lstm_output.index({torch::indexing::Slice(), -1, torch::indexing::Slice()});
+    
+    // Apply linear layer
+    torch::Tensor output = linear_module_fn(
+        last_output, 
+        fc_params["weight"].cast<torch::Tensor>(), 
+        fc_params["bias"].cast<torch::Tensor>()
+    );
+    
+    return output;
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &forward, "LSTM model forward");
+    m.def("forward", &model_forward, "lstm bidrectional forward");
 }
-```
-
-Here's the CMakeLists.txt file that should accompany this code:
-
-```cmake
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(lstm_module)
-
-find_package(Torch REQUIRED)
-
-add_library(lstm_module SHARED lstm_module.cpp)
-target_compile_features(lstm_module PRIVATE cxx_range_for)
-target_link_libraries(lstm_module PRIVATE ${TORCH_LIBRARIES})
-set_property(TARGET lstm_module PROPERTY CXX_STANDARD 14)
-```
-
-Key points about the implementation:
-1. The CUDA code follows the same logic as the PyTorch version but uses ATen C++ API
-2. We use torch's built-in LSTM implementation (at::lstm) which is already optimized
-3. The parameter organization matches the PyTorch version's structure
-4. The linear layer is implemented using at::linear
-5. The module is exposed via pybind11 with the same interface
-
-Note that this implementation leverages PyTorch's built-in optimized LSTM implementation rather than writing a custom CUDA kernel, as writing an efficient LSTM kernel from scratch would be extremely complex and likely less performant than PyTorch's highly optimized version.

@@ -9,14 +9,14 @@ from torch.utils.cpp_extension import load_inline, load
 #     get_inputs,
 #     get_init_inputs,
 # )
-from _29_SwinMLP import (
+from _38_LTSMBidirectional import (
     Model,
     get_inputs,
     get_init_inputs,
 )
 
 # 将cuda_path修改为自己编写的.cu
-cuda_path = "OpSample/29_SwinMLP.cu"
+cuda_path = "OpSample/38_LTSMBidirectional.cu"
 
 TEST_TIMES = 1
 
