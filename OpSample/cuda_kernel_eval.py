@@ -26,10 +26,7 @@ def eval(eval_module, torch_model):
         inputs = get_inputs()
         inputs = [tensor.to("cuda") for tensor in inputs]
         torch_result = torch_model(*inputs)
-        cuda_result = eval_module.forward(
-            *inputs,
-            *torch_model.get_params(),
-        )
+        cuda_result = eval_module.forward(*inputs)
         if torch.allclose(torch_result, cuda_result, rtol=1e-02, atol=1e-02):
             continue
         else:

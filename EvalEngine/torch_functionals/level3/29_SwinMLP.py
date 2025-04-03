@@ -196,8 +196,15 @@ class Model(nn.Module):
 
     def forward(self, x, fn=None):
         if fn is None:
-            fn = self.module_fn
-        return fn(x, self)
+            return self.module_fn(x, self)
+        else:
+            return fn(x, self.proj_weight, self.proj_bias, self.norm_weight, self.norm_bias,
+                      self.patches_resolution, self.patch_size, self.embed_dim,
+                      self.num_layers, self.layer_params, self.depths,
+                      self.num_heads, self.window_size, self.mlp_ratio,
+                      self.drop_rate, self.drop_path_rate, self.num_features,
+                      self.norm_weight_2, self.norm_bias_2,
+                      self.head_weight, self.head_bias, True)
 
     def module_fn(self, x, model):
         # Patch embed
