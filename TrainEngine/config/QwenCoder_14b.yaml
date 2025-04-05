@@ -1,0 +1,52 @@
+model:
+  model_hub_dir: "/code/model_hub"
+  model_name: "models--Qwen--Qwen2.5-Coder-14B-Instruct"
+  model_path: "/code/model_hub/models--Qwen--Qwen2.5-Coder-14B-Instruct/snapshots/7fc9a75b07a3f8f325985b8a10af2e73d7cd63c3"
+  cache_dir: False
+  use_quant: True
+  tokenizer_pad: "right"
+  device_map: "auto"
+  lora_save_model: "/code/LLM4HPCTransCompile/TrainEngine/lora_model"
+  result_dir: "/code/LLM4HPCTransCompile/TrainEngine/final_result"
+
+data:
+  train_size: 0.8
+  dataset_dir: "/code/LLM4HPCTransCompile/TrainEngine/dataset"
+  data_name: "data.jsonl"
+  test_dir_single: "/code/LLM4HPCTransCompile/final_benchmark/single_op/single_op.json"
+  test_dir_topology: "/code/LLM4HPCTransCompile/final_benchmark/generated_graph/generated_graph.json"
+  test_dir_model: "/code/LLM4HPCTransCompile/final_benchmark/model/model.json"
+
+bnb:
+  q4bit: True
+  quant_type: "nf4"
+  double_quant: False
+
+training:
+  output_dir: "/code/LLM4HPCTransCompile/TrainEngine/output"
+  epoch: 5
+  gradient_accumulation_steps: 1
+  optim: "adamw_8bit"
+  auto_batch: True
+  batch_size: 16
+  grad_check: False
+  logging_steps: 1
+  eval_steps: 200
+  save_steps: 200
+  learning_rate: 0.0002
+  weight_decay: 0.001
+  max_grad_norm: 0.3
+  max_steps: -1
+  warmup_ratio: 0.3
+  group_by_length: True
+  lr_scheduler_type: "linear"
+  source_max_len: 2048
+  target_max_len: 4096
+  report: "none"
+
+inference:
+  lora_finetune: True
+  checkpoint: True
+  max_length: 8192
+  starcoder_max: 8192
+  codellama: 4096
