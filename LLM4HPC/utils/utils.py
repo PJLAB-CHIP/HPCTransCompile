@@ -3,8 +3,27 @@ from os.path import join,exists
 import re
 
 def extract_code(content,action):
-    if action == 'translation_c':
+    if action == 'translation_c' or action == 'optimization_c':
         match = re.search(r"<cpu>(.*?)</cpu>", content, re.DOTALL)
+        if match:
+            code = match.group(1).strip()
+            if code.startswith("```cpp\n"):
+                code = code[7:]  # 移除前缀
+            if code.endswith("```"):
+                code = code[:-3]  # 移除后缀
+            return code
+        else:
+            match = re.search(r"```cpp\n(.*?)```", content, re.DOTALL)
+            if match:
+                code = match.group(1).strip()
+                return code
+            else:
+                print('Fail to find <cpu></cpu> template.')
+            # raise ValueError('Fail to find <cpu></cpu> template.')
+    elif action == 'conversion':
+        return content
+    elif action == 'translation':
+        match = re.search(r"<cuda>(.*?)</cuda>", content, re.DOTALL)
         if match:
             return match.group(1).strip()
         else:

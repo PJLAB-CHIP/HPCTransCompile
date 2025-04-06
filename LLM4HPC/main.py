@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('--level',type=str)
     parser.add_argument('--action',type=str)
     parser.add_argument('--range',type=str,default='left')
+    parser.add_argument('--use_lora',type=bool,default=False)
     return parser.parse_args()
 
 args = parse_args()
@@ -57,22 +58,31 @@ def no_pass_generate_batch(model_name,prompt_generator:PromptGenerator):
     #         generate(model_name,prompt_generator,key,operator,action='conversion')
     #         generate(model_name,prompt_generator,key,operator,action='translation')
 
-def generate(model_name,prompt_generator:PromptGenerator,level,operator,action):
+def generate(model_name,prompt_generator:PromptGenerator,level,operator,action,use_lora):
     code = prompt_generator.load_source_code_single(level,operator,action=action,return_code=True,model_name=model_name)
     base_prompt,system_prompt = prompt_generator.fill_template(code,action=action,operator=operator)
     if model_name == 'deepseek':
         content = api_call(model_name,system_prompt,base_prompt)
     elif model_name in ['QwenCoder_14b','DeepSeekCoder_Lite','LingCoder','OpenCoder']:
-        content = local_call(model_name,system_prompt,base_prompt,device)
+        content = local_call(model_name,system_prompt,base_prompt,device,use_lora=use_lora)
     
     if action == 'optimization_c':
-        save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_optim",level)
+        if use_lora:
+            save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_optim_lora",level)
+        else:
+            save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_optim",level)
     else:
-        save_path = join(prompt_generator.save_path_dict[action],model_name,level)
+        if use_lora:
+            save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_lora",level)
+        else:
+            save_path = join(prompt_generator.save_path_dict[action],model_name,level)
+    # 临时设置 #
+    save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_simplify",level)      
+    ###########  
     os.makedirs(save_path,exist_ok=True)
     save_to_file(content,operator,suffix=prompt_generator.suffix_dict[action],action=action,save_path=save_path)
 
-def generate_batch(model_name,prompt_generator:PromptGenerator,level,action,range):
+def generate_batch(model_name,prompt_generator:PromptGenerator,level,action,range,use_lora):
     if range == 'left':
         operators = extract_residual_operator(model_name,level)
     elif range == 'all':
@@ -81,7 +91,7 @@ def generate_batch(model_name,prompt_generator:PromptGenerator,level,action,rang
     print('====Operators====')
     print(operators)
     for operator in tqdm(operators):
-        generate(model_name,prompt_generator,level,operator,action)
+        generate(model_name,prompt_generator,level,operator,action,use_lora)
 
 def extract_residual_operator(model_name,level):
     all_operators_path = join('/code/KernelBench/KernelBench',level)
@@ -101,7 +111,7 @@ def extract_optim_operator(model_name,level):
 if __name__ == '__main__':
     # QwenCoder_14b DeepSeekCoder_Lite CodeShell_7b CodeLlama_34b
     prompt_generator = PromptGenerator()
-    generate_batch(args.model_name,prompt_generator,args.level,action=args.action,range=args.range)
+    generate_batch(args.model_name,prompt_generator,args.level,action=args.action,range=args.range,use_lora=args.use_lora)
     """EXAMPLE1"""
     # no_pass_generate_batch('deepseek',prompt_generator)
     """EXAMPLE2"""

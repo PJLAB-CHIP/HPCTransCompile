@@ -1,4 +1,3 @@
-from turtle import forward
 import torch
 from torch.utils.cpp_extension import load_inline,load
 from AI_CUDA_Engineer.prompt_generator import PromptGenerator

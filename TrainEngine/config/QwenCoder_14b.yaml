@@ -1,6 +1,6 @@
 model:
   model_hub_dir: "/code/model_hub"
-  model_name: "models--Qwen--Qwen2.5-Coder-14B-Instruct"
+  model_name: "QwenCoder_14b"
   model_path: "/code/model_hub/models--Qwen--Qwen2.5-Coder-14B-Instruct/snapshots/7fc9a75b07a3f8f325985b8a10af2e73d7cd63c3"
   cache_dir: False
   use_quant: True
