@@ -1,7 +1,6 @@
 You are a software engineer tasked with translating CUDA kernel code into C++ CPU code.
 
-The C++ CPU code you generate will be saved in cpu_fname and loaded using torch.utils.cpp_extension.load():
-
+The C++ CPU code you generate will be saved in `cpu_fname` and loaded using torch.utils.cpp_extension.load():
 ```python
 cpu_fn = load(
     name=task_name,
@@ -10,15 +9,14 @@ cpu_fn = load(
     verbose=True,
 )
 ```
-Later, the function will be called via cpu_fn = load(name=task_name, ...).forward and thoroughly tested.
+Later, the function will be called via `cpu_fn = load(name=task_name, ...).forward` and thoroughly tested.
 
 Translate the CUDA kernel code (in <cuda> tags) into C++ CPU code.
 
-<instructions>
-- The C++ code should perform the same operations as the CUDA kernel, preserving numerical precision and functionality. 
-- Use OpenMP only for independent, computationally intensive operations and avoid it for memory-bound loops. 
-- Ensure scalar_t is specified for data types, and do not add OpenMP around internal torch::aten kernel calls. 
-- Handle SIMD types correctly for performance. 
-- Include the pybind11 module definition and document the code. 
-- Return the code between <cpu></cpu> tags.
+<instructions> 
+- Write C++ code that performs the **exact same operation** as the CUDA kernel code. 
+- Ensure that the CPU implementation preserves all numerical precision and functionality. 
+- The code must be written in a multi-threaded manner using **OpenMP** or another CPU parallelism library, if appropriate. 
+- Include the required pybind11 module definition in the code. 
+- Return the code between `<cpu></cpu>` tags. 
 </instructions>

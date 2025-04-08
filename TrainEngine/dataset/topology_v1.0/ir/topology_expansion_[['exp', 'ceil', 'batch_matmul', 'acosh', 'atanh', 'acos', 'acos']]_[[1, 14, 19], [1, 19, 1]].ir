@@ -1,0 +1,37 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((1, 14, 19), "float32"), ph_4: T.Buffer((1, 19, 1), "float32"), T_batch_matmul_NN: T.Buffer((1, 14, 1), "float32"), compute: T.Buffer((1, 14, 19), "float32"), compute_1: T.Buffer((1, 14, 19), "float32"), compute_2: T.Buffer((1, 14, 19), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_batch_matmul_NN_rf = T.allocate([266], "float32", "global")
+        T_batch_matmul_NN_rf_1 = T.Buffer((266,), data=T_batch_matmul_NN_rf)
+        ph_0_1 = T.Buffer((266,), data=ph_0.data)
+        for b_i_fused_j_fused in T.parallel(14):
+            for k_inner_init in range(19):
+                T_batch_matmul_NN_rf_1[b_i_fused_j_fused * 19 + k_inner_init] = T.float32(0)
+            for k_inner in range(19):
+                cse_var_1: T.int32 = b_i_fused_j_fused * 19 + k_inner
+                ph_4_1 = T.Buffer((19,), data=ph_4.data)
+                T_batch_matmul_NN_rf_1[cse_var_1] = T_batch_matmul_NN_rf_1[cse_var_1] + T.ceil(ph_0_1[cse_var_1]) * ph_4_1[k_inner]
+        for ax0_ax1_fused_ax2_fused in T.parallel(14):
+            T_batch_matmul_NN_1 = T.Buffer((14,), data=T_batch_matmul_NN.data)
+            T_batch_matmul_NN_1[ax0_ax1_fused_ax2_fused] = T.float32(0)
+            for k_inner_v in range(19):
+                T_batch_matmul_NN_1[ax0_ax1_fused_ax2_fused] = T_batch_matmul_NN_1[ax0_ax1_fused_ax2_fused] + T_batch_matmul_NN_rf_1[ax0_ax1_fused_ax2_fused * 19 + k_inner_v]
+        for i0_i1_fused_i2_fused in T.parallel(266):
+            compute_3 = T.Buffer((266,), data=compute.data)
+            compute_3[i0_i1_fused_i2_fused] = T.atanh(T.acosh(ph_0_1[i0_i1_fused_i2_fused]))
+        for i0_i1_fused_i2_fused in T.parallel(266):
+            compute_3 = T.Buffer((266,), data=compute_1.data)
+            compute_3[i0_i1_fused_i2_fused] = T.acos(T.acosh(ph_0_1[i0_i1_fused_i2_fused]))
+        for i0_i1_fused in T.parallel(14):
+            compute_3 = T.allocate([19], "float32", "global")
+            compute_4 = T.Buffer((19,), data=compute_3)
+            for i2 in range(19):
+                compute_4[i2] = T.exp(ph_0_1[i0_i1_fused * 19 + i2])
+            for i2 in range(19):
+                compute_5 = T.Buffer((266,), data=compute_2.data)
+                compute_5[i0_i1_fused * 19 + i2] = T.acos(compute_4[i2])

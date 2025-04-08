@@ -1,0 +1,17 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((18, 15, 13), "float32"), T_subtract: T.Buffer((18, 15, 13), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(18):
+            compute = T.allocate([1], "float32", "global")
+            for ax1, ax2 in T.grid(15, 13):
+                cse_var_1: T.int32 = ax0 * 195 + ax1 * 13 + ax2
+                compute_1 = T.Buffer((1,), data=compute, align=4)
+                ph_0_1 = T.Buffer((3510,), data=ph_0.data)
+                compute_1[0] = T.exp(ph_0_1[cse_var_1])
+                T_subtract_1 = T.Buffer((3510,), data=T_subtract.data)
+                T_subtract_1[cse_var_1] = ph_0_1[cse_var_1] - compute_1[0]

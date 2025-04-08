@@ -1,0 +1,21 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((1, 8, 13), "float32"), compute: T.Buffer((1, 8, 13), "float32"), compute_1: T.Buffer((1, 8, 13), "float32"), T_add: T.Buffer((1, 8, 13), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((104,), data=ph_0.data)
+        for i0_i1_fused in T.parallel(8):
+            for i2 in range(13):
+                cse_var_1: T.int32 = i0_i1_fused * 13 + i2
+                compute_2 = T.Buffer((104,), data=compute.data)
+                compute_2[cse_var_1] = T.acos(ph_0_1[cse_var_1])
+        for i1, i2 in T.grid(8, 13):
+            cse_var_2: T.int32 = i1 * 13 + i2
+            compute_2 = T.Buffer((104,), data=compute_1.data)
+            compute_2[cse_var_2] = T.asin(T.asin(ph_0_1[cse_var_2]))
+        for ax0_ax1_fused_ax2_fused in T.parallel(104):
+            T_add_1 = T.Buffer((104,), data=T_add.data)
+            T_add_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] + T.ceil(ph_0_1[ax0_ax1_fused_ax2_fused])

@@ -1,0 +1,30 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((3, 8, 20), "float32"), ph_4: T.Buffer((3, 20, 1), "float32"), compute: T.Buffer((3, 8, 20), "float32"), T_batch_matmul_NN: T.Buffer((3, 8, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([60], "float32", "global")
+        ph_0_1 = T.Buffer((480,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(480):
+            compute_1 = T.Buffer((480,), data=compute.data)
+            compute_1[i0_i1_fused_i2_fused] = T.asinh(ph_0_1[i0_i1_fused_i2_fused])
+        auto_scheduler_layout_transform_1 = T.Buffer((60,), data=auto_scheduler_layout_transform)
+        for ax5, ax7 in T.grid(3, 20):
+            cse_var_1: T.int32 = ax5 * 20 + ax7
+            ph_4_1 = T.Buffer((60,), data=ph_4.data)
+            auto_scheduler_layout_transform_1[cse_var_1] = ph_4_1[cse_var_1]
+        for b_outer_outer_outer_i_outer_outer_outer_fused in T.parallel(4):
+            compute_1 = T.allocate([120], "float32", "global")
+            compute_2 = T.Buffer((120,), data=compute_1)
+            for i0, i1, i2 in T.grid(3, 2, 20):
+                cse_var_2: T.int32 = i1 * 20
+                compute_2[i0 * 40 + cse_var_2 + i2] = T.exp(ph_0_1[i0 * 160 + b_outer_outer_outer_i_outer_outer_outer_fused * 40 + cse_var_2 + i2])
+            T_batch_matmul_NN_1 = T.Buffer((24,), data=T_batch_matmul_NN.data)
+            for b_outer_inner_init, i_outer_inner_init in T.grid(3, 2):
+                T_batch_matmul_NN_1[b_outer_inner_init * 8 + b_outer_outer_outer_i_outer_outer_outer_fused * 2 + i_outer_inner_init] = T.float32(0)
+            for b_outer_inner, i_outer_inner, k_inner in T.grid(3, 2, 20):
+                cse_var_3: T.int32 = b_outer_inner * 8 + b_outer_outer_outer_i_outer_outer_outer_fused * 2 + i_outer_inner
+                T_batch_matmul_NN_1[cse_var_3] = T_batch_matmul_NN_1[cse_var_3] + compute_2[b_outer_inner * 40 + i_outer_inner * 20 + k_inner] * auto_scheduler_layout_transform_1[b_outer_inner * 20 + k_inner]

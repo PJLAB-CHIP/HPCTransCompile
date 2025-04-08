@@ -1,7 +1,6 @@
 #include <torch/extension.h>
 #include <ATen/ATen.h>
 #include <vector>
-#include <omp.h>
 
 torch::Tensor forward(
     torch::Tensor x,
@@ -39,16 +38,7 @@ torch::Tensor forward(
   assignment = assignment.transpose(1, 2);
   x = x.reshape({B, N, D});
 
-  #pragma omp parallel for collapse(2)
-  for(int b = 0; b < B; ++b) {
-    for(int n = 0; n < N; ++n) {
-      auto v = x[b * N + n];
-      for(int c = 0; c < cluster_size; ++c) {
-        vlad[b][c * D + d] -= a[b][c] * v[d];
-      }
-    }
-  }
-
+  auto vlad = at::bmm(assignment, x).transpose(1, 2) - a;
   vlad = vlad / (vlad.norm(2, {1}, true) + 1e-12);
   vlad = vlad.reshape({B, D * cluster_size});
   return vlad / (vlad.norm(2, {1}, true) + 1e-12);

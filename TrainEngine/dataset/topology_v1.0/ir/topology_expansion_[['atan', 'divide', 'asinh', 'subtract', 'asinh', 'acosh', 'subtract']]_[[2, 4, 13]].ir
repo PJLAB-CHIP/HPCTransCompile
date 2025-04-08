@@ -1,0 +1,22 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((2, 4, 13), "float32"), T_subtract: T.Buffer((2, 4, 13), "float32"), compute: T.Buffer((2, 4, 13), "float32"), T_subtract_1: T.Buffer((2, 4, 13), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((104,), data=ph_0.data)
+        for ax0_ax1_fused_ax2_fused in T.parallel(104):
+            T_subtract_2 = T.Buffer((104,), data=T_subtract.data)
+            T_subtract_2[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] - T.asinh(ph_0_1[ax0_ax1_fused_ax2_fused] / T.atan(ph_0_1[ax0_ax1_fused_ax2_fused]))
+        for i0 in T.parallel(2):
+            for i1, i2 in T.grid(4, 13):
+                cse_var_1: T.int32 = i0 * 52 + i1 * 13 + i2
+                compute_1 = T.Buffer((104,), data=compute.data)
+                compute_1[cse_var_1] = T.acosh(T.asinh(ph_0_1[cse_var_1]))
+        for ax0_ax1_fused in T.parallel(8):
+            for ax2 in range(13):
+                cse_var_2: T.int32 = ax0_ax1_fused * 13 + ax2
+                T_subtract_2 = T.Buffer((104,), data=T_subtract_1.data)
+                T_subtract_2[cse_var_2] = T.asinh(ph_0_1[cse_var_2]) - ph_0_1[cse_var_2]

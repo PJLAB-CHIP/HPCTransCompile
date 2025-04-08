@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((17, 2, 2, 12, 15), "float32"), Scale: T.Buffer((2, 15), "float32"), Shift: T.Buffer((2, 15), "float32"), ScaleShift: T.Buffer((17, 2, 2, 12, 15), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_cb_outer_outer_outer_fused_b_outer_outer_inner_fused_cc_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused_cb_outer_outer_inner_fused_b_outer_inner_fused_cc_outer_inner_fused in T.parallel(3060):
+            for i_outer_inner, j_inner in T.grid(2, 2):
+                cse_var_3: T.int32 = b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_cb_outer_outer_outer_fused_b_outer_outer_inner_fused_cc_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused_cb_outer_outer_inner_fused_b_outer_inner_fused_cc_outer_inner_fused // 204
+                cse_var_2: T.int32 = b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_cb_outer_outer_outer_fused_b_outer_outer_inner_fused_cc_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused_cb_outer_outer_inner_fused_b_outer_inner_fused_cc_outer_inner_fused % 2 * 15 + cse_var_3
+                cse_var_1: T.int32 = b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_cb_outer_outer_outer_fused_b_outer_outer_inner_fused_cc_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused_cb_outer_outer_inner_fused_b_outer_inner_fused_cc_outer_inner_fused % 34 * 360 + i_outer_inner * 180 + b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_cb_outer_outer_outer_fused_b_outer_outer_inner_fused_cc_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused_cb_outer_outer_inner_fused_b_outer_inner_fused_cc_outer_inner_fused % 204 // 34 * 30 + j_inner * 15 + cse_var_3
+                ScaleShift_1 = T.Buffer((12240,), data=ScaleShift.data)
+                data_1 = T.Buffer((12240,), data=data.data)
+                Scale_1 = T.Buffer((30,), data=Scale.data)
+                Shift_1 = T.Buffer((30,), data=Shift.data)
+                ScaleShift_1[cse_var_1] = data_1[cse_var_1] * Scale_1[cse_var_2] + Shift_1[cse_var_2]

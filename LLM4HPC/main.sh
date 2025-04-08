@@ -1,7 +1,9 @@
 #### QwenCoder_14b ####
 #!/bin/bash
 
-python main.py --model_name QwenCoder_14b --level level1 --action translation_c --device cuda:6 --range all
+python main.py --model_name QwenCoder_14b --level level2 --action translation_c --device cuda:1 --range left --use_lora True
+
+python main.py --model_name QwenCoder_14b --level level1 --action translation_c --device cuda:0 --range left --use_lora True
 # python main.py --model_name QwenCoder_14b --level level2 --action translation_c --device cuda:4 --range all
 # python main.py --model_name QwenCoder_14b --level level3 --action translation_c --device cuda:5 --range all
 

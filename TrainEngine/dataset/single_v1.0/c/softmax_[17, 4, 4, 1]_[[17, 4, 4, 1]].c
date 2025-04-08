@@ -1,0 +1,24 @@
+void default_function_kernel(float* T_softmax_norm, float* data) {
+  #pragma omp parallel for
+  for (int32_t i0 = 0; i0 < 17; ++i0) {
+    float T_softmax_maxelem[4];
+    float T_softmax_expsum[4];
+    for (int32_t i1 = 0; i1 < 4; ++i1) {
+      for (int32_t i2 = 0; i2 < 4; ++i2) {
+        T_softmax_maxelem[i2] = -3.402823e+38f;
+        T_softmax_maxelem[i2] = max(T_softmax_maxelem[i2], data[(((i0 * 16) + (i1 * 4)) + i2)]);
+      }
+      for (int32_t i2_1 = 0; i2_1 < 4; ++i2_1) {
+        T_softmax_maxelem[i2_1] = expf((data[(((i0 * 16) + (i1 * 4)) + i2_1)] - T_softmax_maxelem[i2_1]));
+      }
+      for (int32_t i2_2 = 0; i2_2 < 4; ++i2_2) {
+        T_softmax_expsum[i2_2] = 0.000000e+00f;
+        T_softmax_expsum[i2_2] = (T_softmax_expsum[i2_2] + T_softmax_maxelem[i2_2]);
+      }
+      for (int32_t i2_3 = 0; i2_3 < 4; ++i2_3) {
+        T_softmax_norm[(((i0 * 16) + (i1 * 4)) + i2_3)] = (T_softmax_maxelem[i2_3] / T_softmax_expsum[i2_3]);
+      }
+    }
+  }
+}
+

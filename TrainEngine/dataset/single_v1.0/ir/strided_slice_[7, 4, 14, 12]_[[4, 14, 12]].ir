@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(a: T.Buffer((4, 14, 12), "float32"), T_strided_slice: T.Buffer((3, 5, 7), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(3):
+            for ax1, ax2 in T.grid(5, 7):
+                T_strided_slice_1 = T.Buffer((105,), data=T_strided_slice.data)
+                a_1 = T.Buffer((672,), data=a.data)
+                T_strided_slice_1[ax0 * 35 + ax1 * 7 + ax2] = a_1[ax0 * 168 + ax1 * 12 + ax2 + 195]

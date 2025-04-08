@@ -5,3 +5,7 @@ LLM4HPC/AI_CUDA_Engineer
 LLM4HPC/AI-CUDA-Engineer-Archive/
 OpSample/
 __pycache__
+*.log
+*.pdf
+nohup.out
+checkpoint*

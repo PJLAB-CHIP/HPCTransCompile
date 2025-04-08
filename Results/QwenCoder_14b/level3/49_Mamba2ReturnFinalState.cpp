@@ -7,59 +7,71 @@
 #define FINAL_TILE_SIZE 256
 #endif
 
+// Function to compute the cumulative sum of an array
+void parallel_prefix_sum(float* arr, int size) {
+    for (int offset = 1; offset < size; offset *= 2) {
+        #pragma omp parallel for
+        for (int i = offset; i < size; i++) {
+            arr[i] += arr[i - offset];
+        }
+    }
+}
+
+// Function to compute the weight vector
+void compute_weights(float* s_data, float* w_data, int size) {
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++) {
+        w_data[i] = expf(s_data[size - 1] - s_data[i]);
+    }
+}
+
+// CPU version of the balanced_final_state_kernel
 void balanced_final_state_cpu(
     const float* A_tail_pad,  // shape: [b, h, T]
     const float* states_cat,    // shape: [b, T, h, p, n]
     float* final_state,         // shape: [b, h, p, n]
-    int T,                                   // T = c+1
+    int T,                       // T = c+1
     int b_size,
     int h_size,
     int p_size,
     int n_size
 ) {
     #pragma omp parallel for collapse(3)
-    for (int b_idx = 0; b_idx < b_size; ++b_idx) {
-        for (int h_idx = 0; h_idx < h_size; ++h_idx) {
-            for (int tile_idx = 0; tile_idx < ((p_size * n_size + FINAL_TILE_SIZE - 1) / FINAL_TILE_SIZE); ++tile_idx) {
+    for (int b_idx = 0; b_idx < b_size; b_idx++) {
+        for (int h_idx = 0; h_idx < h_size; h_idx++) {
+            for (int tile_idx = 0; tile_idx < (p_size * n_size + FINAL_TILE_SIZE - 1) / FINAL_TILE_SIZE; tile_idx++) {
                 int base_output = tile_idx * FINAL_TILE_SIZE;
-                for (int tid = 0; tid < FINAL_TILE_SIZE; ++tid) {
+                for (int tid = 0; tid < FINAL_TILE_SIZE; tid++) {
                     int global_output = base_output + tid;
                     if (global_output >= p_size * n_size) continue;
 
                     int p_idx = global_output / n_size;
                     int n_idx = global_output % n_size;
 
+                    // Allocate shared memory for T floats for cumulative sum and for weights
                     float s_data[T];
                     float w_data[T];
 
-                    // Load A_tail_pad for the given (b_idx, h_idx) into local array.
-                    for (int t = 0; t < T; ++t) {
+                    // Load A_tail_pad for the given (b_idx, h_idx) into local memory
+                    for (int t = 0; t < T; t++) {
                         int idx = (b_idx * h_size + h_idx) * T + t;
                         s_data[t] = A_tail_pad[idx];
                     }
 
-                    // Perform an in-block parallel prefix sum to compute cumulative sum of s_data.
-                    for (int offset = 1; offset < T; offset *= 2) {
-                        for (int i = offset; i < T; ++i) {
-                            s_data[i] += s_data[i - offset];
-                        }
-                    }
+                    // Perform an in-block parallel prefix sum to compute cumulative sum of s_data
+                    parallel_prefix_sum(s_data, T);
 
-                    // The final cumulative sum value is s_data[T-1]
-                    float s_final = s_data[T - 1];
                     // Compute weight for each index: weight = exp(s_final - s_data)
-                    for (int t = 0; t < T; ++t) {
-                        w_data[t] = expf(s_final - s_data[t]);
-                    }
+                    compute_weights(s_data, w_data, T);
 
-                    // Compute dot product for the designated output element
+                    // Compute the dot product for the designated output element
                     float sum_val = 0.0f;
-                    for (int t = 0; t < T; ++t) {
+                    for (int t = 0; t < T; t++) {
                         int state_idx = (((b_idx * T + t) * h_size + h_idx) * p_size + p_idx) * n_size + n_idx;
                         sum_val += w_data[t] * states_cat[state_idx];
                     }
 
-                    // Write the result to final_state. final_state shape: [b, h, p, n]
+                    // Write the result to final_state
                     int out_idx = (((b_idx * h_size + h_idx) * p_size + p_idx) * n_size) + n_idx;
                     final_state[out_idx] = sum_val;
                 }
@@ -68,6 +80,7 @@ void balanced_final_state_cpu(
     }
 }
 
+// Forward function that interfaces with PyTorch
 torch::Tensor forward(
     const torch::Tensor& X,       // [b, length, n_heads, d_head]
     const torch::Tensor& A,         // [b, length, n_heads]
@@ -130,6 +143,10 @@ torch::Tensor forward(
     int h_size = states_cat.size(2);  // n_heads
     int p_size = states_cat.size(3);  // dH
     int n_size = states_cat.size(4);  // dState
+
+    // Total outputs per (b, h) pair
+    int total_outputs = p_size * n_size;
+    int grid_z = (total_outputs + FINAL_TILE_SIZE - 1) / FINAL_TILE_SIZE;
 
     auto final_out = torch::empty({b_size, h_size, p_size, n_size}, states_cat.options());
 

@@ -15,11 +15,11 @@ float warp_reduce_sum(float val) {
     return val;
 }
 
-void gru_bidirectional_cpu(
-    const float* input,
-    const float* weights,
-    const float* hidden,
-    float* output,
+void gru_bidirectional_kernel(
+    const float* __restrict__ input,
+    const float* __restrict__ weights,
+    const float* __restrict__ hidden,
+    float* __restrict__ output,
     const int batch_size,
     const int seq_length,
     const int hidden_size,

@@ -1,0 +1,22 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((20, 12, 12), "float32"), T_batch_matmul_NN: T.Buffer((20, 12, 12), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([2880], "float32", "global")
+        auto_scheduler_layout_transform_1 = T.Buffer((2880,), data=auto_scheduler_layout_transform)
+        ph_0_1 = T.Buffer((2880,), data=ph_0.data)
+        for ax0_ax1_fused_ax2_fused in T.parallel(16):
+            for ax4, ax6, ax7, ax8 in T.grid(4, 3, 3, 5):
+                auto_scheduler_layout_transform_1[ax0_ax1_fused_ax2_fused * 180 + ax4 * 45 + ax6 * 15 + ax7 * 5 + ax8] = T.ceil(ph_0_1[ax0_ax1_fused_ax2_fused // 4 * 720 + ax8 * 144 + ax4 * 36 + ax7 * 12 + ax0_ax1_fused_ax2_fused % 4 * 3 + ax6])
+        for b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused in T.parallel(96):
+            T_batch_matmul_NN_1 = T.Buffer((2880,), data=T_batch_matmul_NN.data)
+            for j_outer_inner_init, b_inner_init, i_inner_init in T.grid(3, 5, 2):
+                T_batch_matmul_NN_1[b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused // 24 * 720 + b_inner_init * 144 + b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused % 6 * 24 + i_inner_init * 12 + b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused % 24 // 6 * 3 + j_outer_inner_init] = T.float32(0)
+            for k_outer, j_outer_inner, k_inner, b_inner, i_inner in T.grid(4, 3, 3, 5, 2):
+                cse_var_2: T.int32 = b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused // 24 * 720 + b_inner * 144 + b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused % 6 * 24 + i_inner * 12
+                cse_var_1: T.int32 = cse_var_2 + b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused % 24 // 6 * 3 + j_outer_inner
+                T_batch_matmul_NN_1[cse_var_1] = T_batch_matmul_NN_1[cse_var_1] + ph_0_1[cse_var_2 + k_outer * 3 + k_inner] * auto_scheduler_layout_transform_1[b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused // 6 * 180 + k_outer * 45 + j_outer_inner * 15 + k_inner * 5 + b_inner]

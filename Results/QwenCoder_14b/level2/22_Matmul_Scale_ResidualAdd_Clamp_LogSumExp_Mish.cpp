@@ -18,22 +18,16 @@ void clamp_and_scale_scalar(const float* in, float* out, int num_elements, float
 }
 
 // Vectorized function processing 4 floats at a time
-void clamp_and_scale_vectorized(const float* in, float* out, int num_elements4, float factor, float min_val, float max_val) {
+void clamp_and_scale_vectorized(const float4* in, float4* out, int num_elements4, float factor, float min_val, float max_val) {
     #pragma omp parallel for
     for (int idx = 0; idx < num_elements4; ++idx) {
-        float v0 = in[idx * 4 + 0];
-        float v1 = in[idx * 4 + 1];
-        float v2 = in[idx * 4 + 2];
-        float v3 = in[idx * 4 + 3];
+        float4 v = in[idx];
         float s = 2.0f * factor;
-        v0 = std::fmin(std::fmax(v0 * s, min_val), max_val);
-        v1 = std::fmin(std::fmax(v1 * s, min_val), max_val);
-        v2 = std::fmin(std::fmax(v2 * s, min_val), max_val);
-        v3 = std::fmin(std::fmax(v3 * s, min_val), max_val);
-        out[idx * 4 + 0] = v0;
-        out[idx * 4 + 1] = v1;
-        out[idx * 4 + 2] = v2;
-        out[idx * 4 + 3] = v3;
+        v.x = std::fmin(std::fmax(v.x * s, min_val), max_val);
+        v.y = std::fmin(std::fmax(v.y * s, min_val), max_val);
+        v.z = std::fmin(std::fmax(v.z * s, min_val), max_val);
+        v.w = std::fmin(std::fmax(v.w * s, min_val), max_val);
+        out[idx] = v;
     }
 }
 
@@ -89,14 +83,27 @@ torch::Tensor module_fn_forward(
 
     if (use_vectorized) {
         int num_elements4 = num_elements / 4;
-        clamp_and_scale_vectorized(out.data_ptr<float>(), out.data_ptr<float>(), num_elements4, scale_factor, clamp_min, clamp_max);
+        clamp_and_scale_vectorized(reinterpret_cast<const float4*>(out.data_ptr<float>()),
+                                   reinterpret_cast<float4*>(out.data_ptr<float>()),
+                                   num_elements4,
+                                   scale_factor,
+                                   clamp_min,
+                                   clamp_max);
     } else {
-        clamp_and_scale_scalar(out.data_ptr<float>(), out.data_ptr<float>(), num_elements, scale_factor, clamp_min, clamp_max);
+        clamp_and_scale_scalar(out.data_ptr<float>(),
+                               out.data_ptr<float>(),
+                               num_elements,
+                               scale_factor,
+                               clamp_min,
+                               clamp_max);
     }
     
     // 3. Apply LogSumExp and Mish activation along rows using a reduction function
     auto output = torch::empty({out.size(0), 1}, out.options());
-    logsumexp_mish_function(out.data_ptr<float>(), output.data_ptr<float>(), out.size(0), out.size(1));
+    logsumexp_mish_function(out.data_ptr<float>(),
+                            output.data_ptr<float>(),
+                            out.size(0),
+                            out.size(1));
     
     return output;
 }

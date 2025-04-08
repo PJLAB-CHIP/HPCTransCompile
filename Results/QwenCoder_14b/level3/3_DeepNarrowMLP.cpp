@@ -1,10 +1,11 @@
 #include <torch/extension.h>
-#include <omp.h>
+#include <vector>
+#include <cmath>
 
 // Define the number of threads per block used for intra-block reduction
 constexpr int THREADS_PER_BLOCK = 128;
 
-// Optimized CPU function with ReLU activation using OpenMP
+// Optimized CPU function with ReLU activation
 template <typename T>
 void optimized_linear_relu_cpu(
     const T* input,
@@ -28,7 +29,7 @@ void optimized_linear_relu_cpu(
     }
 }
 
-// Optimized CPU function without activation using OpenMP
+// Optimized CPU function without activation
 template <typename T>
 void optimized_linear_cpu(
     const T* input,
@@ -73,15 +74,18 @@ torch::Tensor forward(
         auto output = torch::zeros({batch_size, out_dim}, 
             torch::device(torch::kCPU).dtype(current_input.dtype()));
 
-        optimized_linear_relu_cpu<float>(
-            current_input.data_ptr<float>(),
-            in_dim,
-            weight.data_ptr<float>(),
-            bias.data_ptr<float>(),
-            output.data_ptr<float>(),
-            batch_size,
-            out_dim);
-
+        if (current_input.dtype() == torch::kFloat32) {
+            optimized_linear_relu_cpu<float>(
+                current_input.data_ptr<float>(),
+                in_dim,
+                weight.data_ptr<float>(),
+                bias.data_ptr<float>(),
+                output.data_ptr<float>(),
+                batch_size,
+                out_dim);
+        } else {
+            TORCH_CHECK(false, "Unsupported dtype");
+        }
         current_input = output;
     }
 
@@ -95,14 +99,18 @@ torch::Tensor forward(
     auto output = torch::zeros({batch_size, out_dim}, 
         torch::device(torch::kCPU).dtype(current_input.dtype()));
 
-    optimized_linear_cpu<float>(
-        current_input.data_ptr<float>(),
-        in_dim,
-        weight.data_ptr<float>(),
-        bias.data_ptr<float>(),
-        output.data_ptr<float>(),
-        batch_size,
-        out_dim);
+    if (current_input.dtype() == torch::kFloat32) {
+        optimized_linear_cpu<float>(
+            current_input.data_ptr<float>(),
+            in_dim,
+            weight.data_ptr<float>(),
+            bias.data_ptr<float>(),
+            output.data_ptr<float>(),
+            batch_size,
+            out_dim);
+    } else {
+        TORCH_CHECK(false, "Unsupported dtype");
+    }
 
     return output;
 }

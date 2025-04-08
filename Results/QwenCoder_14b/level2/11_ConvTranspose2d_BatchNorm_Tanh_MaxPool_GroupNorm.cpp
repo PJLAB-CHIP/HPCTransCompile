@@ -1,5 +1,4 @@
 #include <torch/extension.h>
-#include <ATen/ATen.h>
 #include <cmath>
 #include <omp.h>
 
@@ -10,18 +9,18 @@ void tanh_maxpool_cpu(
     int out_H, int out_W) {
     
     #pragma omp parallel for collapse(3)
-    for(int n = 0; n < N; n++) {
-        for(int c = 0; c < C; c++) {
-            for(int out_y = 0; out_y < out_H; out_y++) {
-                for(int out_x = 0; out_x < out_W; out_x++) {
+    for(int n = 0; n < N; ++n) {
+        for(int c = 0; c < C; ++c) {
+            for(int out_y = 0; out_y < out_H; ++out_y) {
+                for(int out_x = 0; out_x < out_W; ++out_x) {
                     const int in_y = out_y * 2;
                     const int in_x = out_x * 2;
                     
                     const int base_idx = ((n * C + c) * H + in_y) * W + in_x;
                     
                     float max_val = -INFINITY;
-                    for(int dy = 0; dy < 2; dy++) {
-                        for(int dx = 0; dx < 2; dx++) {
+                    for(int dy = 0; dy < 2; ++dy) {
+                        for(int dx = 0; dx < 2; ++dx) {
                             const float val = tanhf(input[base_idx + dy * W + dx]);
                             max_val = fmaxf(max_val, val);
                         }

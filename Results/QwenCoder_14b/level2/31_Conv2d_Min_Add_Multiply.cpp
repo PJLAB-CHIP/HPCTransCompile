@@ -1,8 +1,9 @@
 #include <torch/extension.h>
-#include <omp.h>
+#include <vector>
+#include <cmath>
 
 template <typename scalar_t>
-void cpu_kernel(
+void kernel(
     const scalar_t* __restrict__ x,
     const scalar_t* __restrict__ conv_weight,
     const scalar_t* __restrict__ conv_bias,
@@ -88,7 +89,8 @@ void cpu_kernel(
                     sum += bias[c_out];
                     sum *= scaling_factor;
 
-                    output[n * out_channels * out_h * out_w + c_out * out_h * out_w + h_out * out_w + w_out] = sum;
+                    const int global_idx = n * out_channels * out_h * out_w + c_out * out_h * out_w + h_out * out_w + w_out;
+                    output[global_idx] = sum;
                 }
             }
         }
@@ -123,8 +125,8 @@ torch::Tensor forward(
     auto output = torch::empty({batch_size, out_channels, out_h, out_w}, x.options());
     const int total_elements = output.numel();
 
-    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "forward_cpu_kernel", ([&] {
-        cpu_kernel<scalar_t>(
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "forward_kernel", ([&] {
+        kernel<scalar_t>(
             x.data_ptr<scalar_t>(),
             conv_weight.data_ptr<scalar_t>(),
             conv_bias.data_ptr<scalar_t>(),

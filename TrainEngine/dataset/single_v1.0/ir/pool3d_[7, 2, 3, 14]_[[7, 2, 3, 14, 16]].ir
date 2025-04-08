@@ -1,0 +1,20 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((7, 2, 3, 14, 16), "float32"), pool_max: T.Buffer((7, 2, 2, 7, 8), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(7):
+            pad_temp = T.allocate([2550], "float32", "global")
+            pad_temp_1 = T.Buffer((2550,), data=pad_temp)
+            for ax1, ax2, ax3, ax4 in T.grid(2, 5, 15, 17):
+                data_1 = T.Buffer((9408,), data=data.data)
+                pad_temp_1[ax1 * 1275 + ax2 * 255 + ax3 * 17 + ax4] = T.if_then_else(1 <= ax2 and ax2 < 4 and 1 <= ax3 and 1 <= ax4, data_1[ax0 * 1344 + ax1 * 672 + ax2 * 224 + ax3 * 16 + ax4 - 241], T.float32(-3.4028234663852886e+38))
+            for ax1, ax2, ax3, ax4 in T.grid(2, 2, 7, 8):
+                pool_max_1 = T.Buffer((1568,), data=pool_max.data)
+                pool_max_1[ax0 * 224 + ax1 * 112 + ax2 * 56 + ax3 * 8 + ax4] = T.float32(-3.4028234663852886e+38)
+                for rv0, rv1, rv2 in T.grid(3, 3, 3):
+                    cse_var_1: T.int32 = ax0 * 224 + ax1 * 112 + ax2 * 56 + ax3 * 8 + ax4
+                    pool_max_1[cse_var_1] = T.max(pool_max_1[cse_var_1], pad_temp_1[ax1 * 1275 + ax2 * 510 + rv0 * 255 + ax3 * 34 + rv1 * 17 + ax4 * 2 + rv2])

@@ -1,0 +1,861 @@
+; ModuleID = 'TVMMod'
+source_filename = "TVMMod"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-pc-linux-gnu"
+
+%0 = type { double }
+%1 = type { i8*, %2, i32, %3, i64*, i64*, i64 }
+%2 = type { i32, i32 }
+%3 = type { i8, i8, i16 }
+
+@__tvm_module_ctx = linkonce dllexport local_unnamed_addr global i8* null, align 8
+@__TVMFuncCall = linkonce dllexport local_unnamed_addr global i32 (i8*, %0*, i32*, i32, %0*, i32*)* null, align 8
+@__TVMBackendGetFuncFromEnv = linkonce dllexport local_unnamed_addr global i32 (i8*, i8*, i8**)* null, align 8
+@__TVMAPISetLastError = linkonce dllexport local_unnamed_addr global void (i8*)* null, align 8
+@.str = private constant [67 x i8] c"Assert fail: num_args == 3, default_function: num_args should be 3\00", align 1
+@.str.1 = private constant [130 x i8] c"Assert fail: ph_0_code == 3 or ph_0_code == 13 or ph_0_code == 7 or ph_0_code == 4, default_function: Expect arg[0] to be pointer\00", align 1
+@.str.2 = private constant [142 x i8] c"Assert fail: compute_code == 3 or compute_code == 13 or compute_code == 7 or compute_code == 4, default_function: Expect arg[1] to be pointer\00", align 1
+@.str.3 = private constant [142 x i8] c"Assert fail: compute_code == 3 or compute_code == 13 or compute_code == 7 or compute_code == 4, default_function: Expect arg[2] to be pointer\00", align 1
+@.str.4 = private constant [107 x i8] c"Assert fail: 3 == T.tvm_struct_get(ph_0, 0, 4, \22int32\22), default_function.ph_0.ndim is expected to equal 3\00", align 1
+@.str.5 = private constant [235 x i8] c"Assert fail: T.tvm_struct_get(ph_0, 0, 5, \22uint8\22) == T.uint8(2) and T.tvm_struct_get(ph_0, 0, 6, \22uint8\22) == T.uint8(32) and T.tvm_struct_get(ph_0, 0, 7, \22uint16\22) == T.uint16(1), default_function.ph_0.dtype is expected to be float32\00", align 1
+@.str.6 = private constant [193 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_ph_0_shape[0]) == 18, Argument default_function.ph_0.shape[0] has an unsatisfied constraint: 18 == T.Cast(\22int32\22, default_function_ph_0_shape[0])\00", align 1
+@.str.7 = private constant [191 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_ph_0_shape[1]) == 1, Argument default_function.ph_0.shape[1] has an unsatisfied constraint: 1 == T.Cast(\22int32\22, default_function_ph_0_shape[1])\00", align 1
+@.str.8 = private constant [191 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_ph_0_shape[2]) == 3, Argument default_function.ph_0.shape[2] has an unsatisfied constraint: 3 == T.Cast(\22int32\22, default_function_ph_0_shape[2])\00", align 1
+@.str.9 = private constant [188 x i8] c"Assert fail: 1 == T.Cast(\22int32\22, default_function_ph_0_strides[2]) and 3 == T.Cast(\22int32\22, default_function_ph_0_strides[0]), default_function.ph_0.strides: expected to be compact array\00", align 1
+@.str.10 = private constant [196 x i8] c"Assert fail: T.uint64(0) == T.tvm_struct_get(ph_0, 0, 8, \22uint64\22), Argument default_function.ph_0.byte_offset has an unsatisfied constraint: T.uint64(0) == T.tvm_struct_get(ph_0, 0, 8, \22uint64\22)\00", align 1
+@.str.11 = private constant [176 x i8] c"Assert fail: T.tvm_struct_get(ph_0, 0, 10, \22int32\22) == 1, Argument default_function.ph_0.device_type has an unsatisfied constraint: 1 == T.tvm_struct_get(ph_0, 0, 10, \22int32\22)\00", align 1
+@.str.12 = private constant [113 x i8] c"Assert fail: 3 == T.tvm_struct_get(compute, 0, 4, \22int32\22), default_function.compute.ndim is expected to equal 3\00", align 1
+@.str.13 = private constant [247 x i8] c"Assert fail: T.tvm_struct_get(compute, 0, 5, \22uint8\22) == T.uint8(2) and T.tvm_struct_get(compute, 0, 6, \22uint8\22) == T.uint8(32) and T.tvm_struct_get(compute, 0, 7, \22uint16\22) == T.uint16(1), default_function.compute.dtype is expected to be float32\00", align 1
+@.str.14 = private constant [202 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_compute_shape[0]) == 18, Argument default_function.compute.shape[0] has an unsatisfied constraint: 18 == T.Cast(\22int32\22, default_function_compute_shape[0])\00", align 1
+@.str.15 = private constant [200 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_compute_shape[1]) == 1, Argument default_function.compute.shape[1] has an unsatisfied constraint: 1 == T.Cast(\22int32\22, default_function_compute_shape[1])\00", align 1
+@.str.16 = private constant [200 x i8] c"Assert fail: T.Cast(\22int32\22, default_function_compute_shape[2]) == 3, Argument default_function.compute.shape[2] has an unsatisfied constraint: 3 == T.Cast(\22int32\22, default_function_compute_shape[2])\00", align 1
+@.str.17 = private constant [197 x i8] c"Assert fail: 1 == T.Cast(\22int32\22, default_function_compute_strides[2]) and 3 == T.Cast(\22int32\22, default_function_compute_strides[0]), default_function.compute.strides: expected to be compact array\00", align 1
+@.str.18 = private constant [205 x i8] c"Assert fail: T.uint64(0) == T.tvm_struct_get(compute, 0, 8, \22uint64\22), Argument default_function.compute.byte_offset has an unsatisfied constraint: T.uint64(0) == T.tvm_struct_get(compute, 0, 8, \22uint64\22)\00", align 1
+@.str.19 = private constant [185 x i8] c"Assert fail: T.tvm_struct_get(compute, 0, 10, \22int32\22) == 1, Argument default_function.compute.device_type has an unsatisfied constraint: 1 == T.tvm_struct_get(compute, 0, 10, \22int32\22)\00", align 1
+@.str.20 = private constant [191 x i8] c"Assert fail: dev_id == T.tvm_struct_get(compute, 0, 9, \22int32\22), Argument default_function.compute.device_id has an unsatisfied constraint: dev_id == T.tvm_struct_get(compute, 0, 9, \22int32\22)\00", align 1
+@.tvm_func.default_function_kernel = internal unnamed_addr global i8* null, align 8
+@.str.21 = private constant [24 x i8] c"default_function_kernel\00", align 1
+@.str.22 = private constant [68 x i8] c"Assert fail: kernel_error_code == 0, Error executing compute kernel\00", align 1
+@__tvm_main__ = weak dllexport local_unnamed_addr constant [17 x i8] c"default_function\00", align 1
+@llvm.global_ctors = appending global [0 x { i32, void ()*, i8* }] zeroinitializer
+
+define dllexport i32 @default_function(i8* noalias nocapture readonly %args, i32* noalias nocapture readonly %arg_type_ids, i32 %num_args, i8* noalias nocapture readnone %out_ret_value, i32* noalias nocapture readnone %out_ret_tcode, i8* noalias nocapture readnone %resource_handle) local_unnamed_addr #0 !dbg !5 {
+entry:
+  call void @llvm.dbg.value(metadata i8* %args, metadata !12, metadata !DIExpression()), !dbg !18
+  call void @llvm.dbg.value(metadata i32* %arg_type_ids, metadata !13, metadata !DIExpression()), !dbg !18
+  call void @llvm.dbg.value(metadata i32 %num_args, metadata !14, metadata !DIExpression()), !dbg !18
+  call void @llvm.dbg.value(metadata i8* %out_ret_value, metadata !15, metadata !DIExpression()), !dbg !18
+  call void @llvm.dbg.value(metadata i32* %out_ret_tcode, metadata !16, metadata !DIExpression()), !dbg !18
+  call void @llvm.dbg.value(metadata i8* %resource_handle, metadata !17, metadata !DIExpression()), !dbg !18
+  %stack_value_void_ptr86 = alloca [4 x %0], align 8, !dbg !18
+  %stack_tcode87 = alloca [4 x i32], align 4, !dbg !18
+  %stack_tcode87.sub = getelementptr inbounds [4 x i32], [4 x i32]* %stack_tcode87, i64 0, i64 0
+  %stack_value = bitcast [4 x %0]* %stack_value_void_ptr86 to i8*, !dbg !18
+  %0 = icmp eq i32 %num_args, 3, !dbg !18
+  br i1 %0, label %assert_end, label %assert_fail, !dbg !18, !prof !19
+
+assert_fail:                                      ; preds = %entry
+  %1 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %1(i8* getelementptr inbounds ([67 x i8], [67 x i8]* @.str, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end:                                       ; preds = %entry
+  %ph_0.code = load i32, i32* %arg_type_ids, align 4, !dbg !18, !tbaa !23
+  %2 = getelementptr inbounds i32, i32* %arg_type_ids, i64 1, !dbg !18
+  %compute.code = load i32, i32* %2, align 4, !dbg !18, !tbaa !34
+  %3 = getelementptr inbounds i32, i32* %arg_type_ids, i64 2, !dbg !18
+  %compute.code1 = load i32, i32* %3, align 4, !dbg !18, !tbaa !36
+  %4 = bitcast i8* %args to %1**, !dbg !18
+  %ph_088 = load %1*, %1** %4, align 8, !dbg !18
+  %5 = getelementptr inbounds i8, i8* %args, i64 8, !dbg !18
+  %6 = bitcast i8* %5 to %1**, !dbg !18
+  %compute89 = load %1*, %1** %6, align 8, !dbg !18
+  %7 = getelementptr inbounds i8, i8* %args, i64 16, !dbg !18
+  %8 = bitcast i8* %7 to %1**, !dbg !18
+  %compute290 = load %1*, %1** %8, align 8, !dbg !18
+  %9 = bitcast %1* %ph_088 to float**, !dbg !18
+  %ph_0_void_ptr91 = load float*, float** %9, align 8, !dbg !18
+  %ptrint = ptrtoint float* %ph_0_void_ptr91 to i64, !dbg !18
+  %maskedptr = and i64 %ptrint, 63, !dbg !18
+  %maskcond = icmp eq i64 %maskedptr, 0, !dbg !18
+  tail call void @llvm.assume(i1 %maskcond), !dbg !18
+  %10 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 4, !dbg !18
+  %default_function.ph_0.shape = load i64*, i64** %10, align 8, !dbg !18
+  %11 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 5, !dbg !18
+  %default_function.ph_0.strides = load i64*, i64** %11, align 8, !dbg !18
+  %12 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 1, i32 1, !dbg !18
+  %dev_id = load i32, i32* %12, align 4, !dbg !18
+  %13 = bitcast %1* %compute89 to float**, !dbg !18
+  %compute_void_ptr92 = load float*, float** %13, align 8, !dbg !18
+  %ptrint5 = ptrtoint float* %compute_void_ptr92 to i64, !dbg !18
+  %maskedptr6 = and i64 %ptrint5, 63, !dbg !18
+  %maskcond7 = icmp eq i64 %maskedptr6, 0, !dbg !18
+  tail call void @llvm.assume(i1 %maskcond7), !dbg !18
+  %14 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 4, !dbg !18
+  %default_function.compute.shape = load i64*, i64** %14, align 8, !dbg !18
+  %15 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 5, !dbg !18
+  %default_function.compute.strides = load i64*, i64** %15, align 8, !dbg !18
+  %16 = bitcast %1* %compute290 to float**, !dbg !18
+  %compute_void_ptr893 = load float*, float** %16, align 8, !dbg !18
+  %ptrint10 = ptrtoint float* %compute_void_ptr893 to i64, !dbg !18
+  %maskedptr11 = and i64 %ptrint10, 63, !dbg !18
+  %maskcond12 = icmp eq i64 %maskedptr11, 0, !dbg !18
+  tail call void @llvm.assume(i1 %maskcond12), !dbg !18
+  %17 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 4, !dbg !18
+  %default_function.compute.shape13 = load i64*, i64** %17, align 8, !dbg !18
+  %18 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 5, !dbg !18
+  %default_function.compute.strides14 = load i64*, i64** %18, align 8, !dbg !18
+  switch i32 %ph_0.code, label %assert_fail15 [
+    i32 13, label %assert_end16
+    i32 7, label %assert_end16
+    i32 4, label %assert_end16
+    i32 3, label %assert_end16
+  ], !dbg !18
+
+assert_fail15:                                    ; preds = %assert_end
+  %19 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %19(i8* getelementptr inbounds ([130 x i8], [130 x i8]* @.str.1, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end16:                                     ; preds = %assert_end, %assert_end, %assert_end, %assert_end
+  switch i32 %compute.code, label %assert_fail17 [
+    i32 13, label %assert_end18
+    i32 7, label %assert_end18
+    i32 4, label %assert_end18
+    i32 3, label %assert_end18
+  ], !dbg !18
+
+assert_fail17:                                    ; preds = %assert_end16
+  %20 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %20(i8* getelementptr inbounds ([142 x i8], [142 x i8]* @.str.2, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end18:                                     ; preds = %assert_end16, %assert_end16, %assert_end16, %assert_end16
+  switch i32 %compute.code1, label %assert_fail19 [
+    i32 13, label %assert_end20
+    i32 7, label %assert_end20
+    i32 4, label %assert_end20
+    i32 3, label %assert_end20
+  ], !dbg !18
+
+assert_fail19:                                    ; preds = %assert_end18
+  %21 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %21(i8* getelementptr inbounds ([142 x i8], [142 x i8]* @.str.3, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end20:                                     ; preds = %assert_end18, %assert_end18, %assert_end18, %assert_end18
+  %22 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 2, !dbg !18
+  %23 = load i32, i32* %22, align 4, !dbg !18
+  %24 = icmp eq i32 %23, 3, !dbg !18
+  br i1 %24, label %assert_end24, label %assert_fail21, !dbg !18, !prof !19
+
+assert_fail21:                                    ; preds = %assert_end20
+  %25 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %25(i8* getelementptr inbounds ([107 x i8], [107 x i8]* @.str.4, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end24:                                     ; preds = %assert_end20
+  %26 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 3, i32 2, !dbg !18
+  %27 = load i16, i16* %26, align 2, !dbg !18
+  %28 = icmp eq i16 %27, 1, !dbg !18
+  %29 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 3, i32 1, !dbg !18
+  %30 = load i8, i8* %29, align 1, !dbg !18
+  %31 = icmp eq i8 %30, 32, !dbg !18
+  %32 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 3, i32 0, !dbg !18
+  %33 = load i8, i8* %32, align 1, !dbg !18
+  %34 = icmp eq i8 %33, 2, !dbg !18
+  %35 = and i1 %31, %34, !dbg !18
+  %36 = and i1 %28, %35, !dbg !18
+  br i1 %36, label %assert_end26, label %assert_fail25, !dbg !18, !prof !19
+
+assert_fail25:                                    ; preds = %assert_end24
+  %37 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %37(i8* getelementptr inbounds ([235 x i8], [235 x i8]* @.str.5, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end26:                                     ; preds = %assert_end24
+  %38 = load i64, i64* %default_function.ph_0.shape, align 8, !dbg !18, !tbaa !39
+  %39 = trunc i64 %38 to i32, !dbg !18
+  %40 = icmp eq i32 %39, 18, !dbg !18
+  br i1 %40, label %assert_end28, label %assert_fail27, !dbg !18, !prof !19
+
+assert_fail27:                                    ; preds = %assert_end26
+  %41 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %41(i8* getelementptr inbounds ([193 x i8], [193 x i8]* @.str.6, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end28:                                     ; preds = %assert_end26
+  %42 = getelementptr inbounds i64, i64* %default_function.ph_0.shape, i64 1, !dbg !18
+  %43 = load i64, i64* %42, align 8, !dbg !18, !tbaa !49
+  %44 = trunc i64 %43 to i32, !dbg !18
+  %45 = icmp eq i32 %44, 1, !dbg !18
+  br i1 %45, label %assert_end30, label %assert_fail29, !dbg !18, !prof !19
+
+assert_fail29:                                    ; preds = %assert_end28
+  %46 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %46(i8* getelementptr inbounds ([191 x i8], [191 x i8]* @.str.7, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end30:                                     ; preds = %assert_end28
+  %47 = getelementptr inbounds i64, i64* %default_function.ph_0.shape, i64 2, !dbg !18
+  %48 = load i64, i64* %47, align 8, !dbg !18, !tbaa !51
+  %49 = trunc i64 %48 to i32, !dbg !18
+  %50 = icmp eq i32 %49, 3, !dbg !18
+  br i1 %50, label %assert_end32, label %assert_fail31, !dbg !18, !prof !19
+
+assert_fail31:                                    ; preds = %assert_end30
+  %51 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %51(i8* getelementptr inbounds ([191 x i8], [191 x i8]* @.str.8, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end32:                                     ; preds = %assert_end30
+  %52 = icmp eq i64* %default_function.ph_0.strides, null, !dbg !18
+  br i1 %52, label %if_end, label %if_then, !dbg !18, !prof !54
+
+if_then:                                          ; preds = %assert_end32
+  %53 = load i64, i64* %default_function.ph_0.strides, align 8, !dbg !18, !tbaa !55
+  %54 = trunc i64 %53 to i32, !dbg !18
+  %55 = icmp eq i32 %54, 3, !dbg !18
+  %56 = getelementptr inbounds i64, i64* %default_function.ph_0.strides, i64 2, !dbg !18
+  %57 = load i64, i64* %56, align 8, !dbg !18, !tbaa !65
+  %58 = trunc i64 %57 to i32, !dbg !18
+  %59 = icmp eq i32 %58, 1, !dbg !18
+  %60 = and i1 %55, %59, !dbg !18
+  br i1 %60, label %if_end, label %assert_fail33, !dbg !18, !prof !19
+
+if_end:                                           ; preds = %assert_end32, %if_then
+  %61 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 6, !dbg !18
+  %62 = load i64, i64* %61, align 8, !dbg !18
+  %63 = icmp eq i64 %62, 0, !dbg !18
+  br i1 %63, label %assert_end36, label %assert_fail35, !dbg !18, !prof !19
+
+assert_fail33:                                    ; preds = %if_then
+  %64 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %64(i8* getelementptr inbounds ([188 x i8], [188 x i8]* @.str.9, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_fail35:                                    ; preds = %if_end
+  %65 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %65(i8* getelementptr inbounds ([196 x i8], [196 x i8]* @.str.10, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end36:                                     ; preds = %if_end
+  %66 = getelementptr inbounds %1, %1* %ph_088, i64 0, i32 1, i32 0, !dbg !18
+  %67 = load i32, i32* %66, align 4, !dbg !18
+  %68 = icmp eq i32 %67, 1, !dbg !18
+  br i1 %68, label %assert_end38, label %assert_fail37, !dbg !18, !prof !19
+
+assert_fail37:                                    ; preds = %assert_end36
+  %69 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %69(i8* getelementptr inbounds ([176 x i8], [176 x i8]* @.str.11, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end38:                                     ; preds = %assert_end36
+  %70 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 2, !dbg !18
+  %71 = load i32, i32* %70, align 4, !dbg !18
+  %72 = icmp eq i32 %71, 3, !dbg !18
+  br i1 %72, label %assert_end42, label %assert_fail39, !dbg !18, !prof !19
+
+assert_fail39:                                    ; preds = %assert_end38
+  %73 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %73(i8* getelementptr inbounds ([113 x i8], [113 x i8]* @.str.12, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end42:                                     ; preds = %assert_end38
+  %74 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 3, i32 2, !dbg !18
+  %75 = load i16, i16* %74, align 2, !dbg !18
+  %76 = icmp eq i16 %75, 1, !dbg !18
+  %77 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 3, i32 1, !dbg !18
+  %78 = load i8, i8* %77, align 1, !dbg !18
+  %79 = icmp eq i8 %78, 32, !dbg !18
+  %80 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 3, i32 0, !dbg !18
+  %81 = load i8, i8* %80, align 1, !dbg !18
+  %82 = icmp eq i8 %81, 2, !dbg !18
+  %83 = and i1 %79, %82, !dbg !18
+  %84 = and i1 %76, %83, !dbg !18
+  br i1 %84, label %assert_end44, label %assert_fail43, !dbg !18, !prof !19
+
+assert_fail43:                                    ; preds = %assert_end42
+  %85 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %85(i8* getelementptr inbounds ([247 x i8], [247 x i8]* @.str.13, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end44:                                     ; preds = %assert_end42
+  %86 = load i64, i64* %default_function.compute.shape, align 8, !dbg !18, !tbaa !68
+  %87 = trunc i64 %86 to i32, !dbg !18
+  %88 = icmp eq i32 %87, 18, !dbg !18
+  br i1 %88, label %assert_end46, label %assert_fail45, !dbg !18, !prof !19
+
+assert_fail45:                                    ; preds = %assert_end44
+  %89 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %89(i8* getelementptr inbounds ([202 x i8], [202 x i8]* @.str.14, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end46:                                     ; preds = %assert_end44
+  %90 = getelementptr inbounds i64, i64* %default_function.compute.shape, i64 1, !dbg !18
+  %91 = load i64, i64* %90, align 8, !dbg !18, !tbaa !78
+  %92 = trunc i64 %91 to i32, !dbg !18
+  %93 = icmp eq i32 %92, 1, !dbg !18
+  br i1 %93, label %assert_end48, label %assert_fail47, !dbg !18, !prof !19
+
+assert_fail47:                                    ; preds = %assert_end46
+  %94 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %94(i8* getelementptr inbounds ([200 x i8], [200 x i8]* @.str.15, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end48:                                     ; preds = %assert_end46
+  %95 = getelementptr inbounds i64, i64* %default_function.compute.shape, i64 2, !dbg !18
+  %96 = load i64, i64* %95, align 8, !dbg !18, !tbaa !80
+  %97 = trunc i64 %96 to i32, !dbg !18
+  %98 = icmp eq i32 %97, 3, !dbg !18
+  br i1 %98, label %assert_end50, label %assert_fail49, !dbg !18, !prof !19
+
+assert_fail49:                                    ; preds = %assert_end48
+  %99 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %99(i8* getelementptr inbounds ([200 x i8], [200 x i8]* @.str.16, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end50:                                     ; preds = %assert_end48
+  %100 = icmp eq i64* %default_function.compute.strides, null, !dbg !18
+  br i1 %100, label %if_end52, label %if_then51, !dbg !18, !prof !54
+
+if_then51:                                        ; preds = %assert_end50
+  %101 = load i64, i64* %default_function.compute.strides, align 8, !dbg !18, !tbaa !83
+  %102 = trunc i64 %101 to i32, !dbg !18
+  %103 = icmp eq i32 %102, 3, !dbg !18
+  %104 = getelementptr inbounds i64, i64* %default_function.compute.strides, i64 2, !dbg !18
+  %105 = load i64, i64* %104, align 8, !dbg !18, !tbaa !93
+  %106 = trunc i64 %105 to i32, !dbg !18
+  %107 = icmp eq i32 %106, 1, !dbg !18
+  %108 = and i1 %103, %107, !dbg !18
+  br i1 %108, label %if_end52, label %assert_fail53, !dbg !18, !prof !19
+
+if_end52:                                         ; preds = %assert_end50, %if_then51
+  %109 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 6, !dbg !18
+  %110 = load i64, i64* %109, align 8, !dbg !18
+  %111 = icmp eq i64 %110, 0, !dbg !18
+  br i1 %111, label %assert_end56, label %assert_fail55, !dbg !18, !prof !19
+
+assert_fail53:                                    ; preds = %if_then51
+  %112 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %112(i8* getelementptr inbounds ([197 x i8], [197 x i8]* @.str.17, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_fail55:                                    ; preds = %if_end52
+  %113 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %113(i8* getelementptr inbounds ([205 x i8], [205 x i8]* @.str.18, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end56:                                     ; preds = %if_end52
+  %114 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 1, i32 0, !dbg !18
+  %115 = load i32, i32* %114, align 4, !dbg !18
+  %116 = icmp eq i32 %115, 1, !dbg !18
+  br i1 %116, label %assert_end58, label %assert_fail57, !dbg !18, !prof !19
+
+assert_fail57:                                    ; preds = %assert_end56
+  %117 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %117(i8* getelementptr inbounds ([185 x i8], [185 x i8]* @.str.19, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end58:                                     ; preds = %assert_end56
+  %118 = getelementptr inbounds %1, %1* %compute89, i64 0, i32 1, i32 1, !dbg !18
+  %119 = load i32, i32* %118, align 4, !dbg !18
+  %120 = icmp eq i32 %dev_id, %119, !dbg !18
+  br i1 %120, label %assert_end60, label %assert_fail59, !dbg !18, !prof !19
+
+assert_fail59:                                    ; preds = %assert_end58
+  %121 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %121(i8* getelementptr inbounds ([191 x i8], [191 x i8]* @.str.20, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end60:                                     ; preds = %assert_end58
+  %122 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 2, !dbg !18
+  %123 = load i32, i32* %122, align 4, !dbg !18
+  %124 = icmp eq i32 %123, 3, !dbg !18
+  br i1 %124, label %assert_end64, label %assert_fail61, !dbg !18, !prof !19
+
+assert_fail61:                                    ; preds = %assert_end60
+  %125 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %125(i8* getelementptr inbounds ([113 x i8], [113 x i8]* @.str.12, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end64:                                     ; preds = %assert_end60
+  %126 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 3, i32 2, !dbg !18
+  %127 = load i16, i16* %126, align 2, !dbg !18
+  %128 = icmp eq i16 %127, 1, !dbg !18
+  %129 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 3, i32 1, !dbg !18
+  %130 = load i8, i8* %129, align 1, !dbg !18
+  %131 = icmp eq i8 %130, 32, !dbg !18
+  %132 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 3, i32 0, !dbg !18
+  %133 = load i8, i8* %132, align 1, !dbg !18
+  %134 = icmp eq i8 %133, 2, !dbg !18
+  %135 = and i1 %131, %134, !dbg !18
+  %136 = and i1 %128, %135, !dbg !18
+  br i1 %136, label %assert_end66, label %assert_fail65, !dbg !18, !prof !19
+
+assert_fail65:                                    ; preds = %assert_end64
+  %137 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %137(i8* getelementptr inbounds ([247 x i8], [247 x i8]* @.str.13, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end66:                                     ; preds = %assert_end64
+  %138 = load i64, i64* %default_function.compute.shape13, align 8, !dbg !18, !tbaa !96
+  %139 = trunc i64 %138 to i32, !dbg !18
+  %140 = icmp eq i32 %139, 18, !dbg !18
+  br i1 %140, label %assert_end68, label %assert_fail67, !dbg !18, !prof !19
+
+assert_fail67:                                    ; preds = %assert_end66
+  %141 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %141(i8* getelementptr inbounds ([202 x i8], [202 x i8]* @.str.14, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end68:                                     ; preds = %assert_end66
+  %142 = getelementptr inbounds i64, i64* %default_function.compute.shape13, i64 1, !dbg !18
+  %143 = load i64, i64* %142, align 8, !dbg !18, !tbaa !106
+  %144 = trunc i64 %143 to i32, !dbg !18
+  %145 = icmp eq i32 %144, 1, !dbg !18
+  br i1 %145, label %assert_end70, label %assert_fail69, !dbg !18, !prof !19
+
+assert_fail69:                                    ; preds = %assert_end68
+  %146 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %146(i8* getelementptr inbounds ([200 x i8], [200 x i8]* @.str.15, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end70:                                     ; preds = %assert_end68
+  %147 = getelementptr inbounds i64, i64* %default_function.compute.shape13, i64 2, !dbg !18
+  %148 = load i64, i64* %147, align 8, !dbg !18, !tbaa !108
+  %149 = trunc i64 %148 to i32, !dbg !18
+  %150 = icmp eq i32 %149, 3, !dbg !18
+  br i1 %150, label %assert_end72, label %assert_fail71, !dbg !18, !prof !19
+
+assert_fail71:                                    ; preds = %assert_end70
+  %151 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %151(i8* getelementptr inbounds ([200 x i8], [200 x i8]* @.str.16, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end72:                                     ; preds = %assert_end70
+  %152 = icmp eq i64* %default_function.compute.strides14, null, !dbg !18
+  br i1 %152, label %if_end74, label %if_then73, !dbg !18, !prof !54
+
+if_then73:                                        ; preds = %assert_end72
+  %153 = load i64, i64* %default_function.compute.strides14, align 8, !dbg !18, !tbaa !111
+  %154 = trunc i64 %153 to i32, !dbg !18
+  %155 = icmp eq i32 %154, 3, !dbg !18
+  %156 = getelementptr inbounds i64, i64* %default_function.compute.strides14, i64 2, !dbg !18
+  %157 = load i64, i64* %156, align 8, !dbg !18, !tbaa !121
+  %158 = trunc i64 %157 to i32, !dbg !18
+  %159 = icmp eq i32 %158, 1, !dbg !18
+  %160 = and i1 %155, %159, !dbg !18
+  br i1 %160, label %if_end74, label %assert_fail75, !dbg !18, !prof !19
+
+if_end74:                                         ; preds = %assert_end72, %if_then73
+  %161 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 6, !dbg !18
+  %162 = load i64, i64* %161, align 8, !dbg !18
+  %163 = icmp eq i64 %162, 0, !dbg !18
+  br i1 %163, label %assert_end78, label %assert_fail77, !dbg !18, !prof !19
+
+assert_fail75:                                    ; preds = %if_then73
+  %164 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %164(i8* getelementptr inbounds ([197 x i8], [197 x i8]* @.str.17, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_fail77:                                    ; preds = %if_end74
+  %165 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %165(i8* getelementptr inbounds ([205 x i8], [205 x i8]* @.str.18, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end78:                                     ; preds = %if_end74
+  %166 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 1, i32 0, !dbg !18
+  %167 = load i32, i32* %166, align 4, !dbg !18
+  %168 = icmp eq i32 %167, 1, !dbg !18
+  br i1 %168, label %assert_end80, label %assert_fail79, !dbg !18, !prof !19
+
+assert_fail79:                                    ; preds = %assert_end78
+  %169 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %169(i8* getelementptr inbounds ([185 x i8], [185 x i8]* @.str.19, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end80:                                     ; preds = %assert_end78
+  %170 = getelementptr inbounds %1, %1* %compute290, i64 0, i32 1, i32 1, !dbg !18
+  %171 = load i32, i32* %170, align 4, !dbg !18
+  %172 = icmp eq i32 %dev_id, %171, !dbg !18
+  br i1 %172, label %assert_end82, label %assert_fail81, !dbg !18, !prof !19
+
+assert_fail81:                                    ; preds = %assert_end80
+  %173 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !dbg !18, !tbaa !20
+  tail call void %173(i8* getelementptr inbounds ([191 x i8], [191 x i8]* @.str.20, i64 0, i64 0)), !dbg !18
+  ret i32 -1, !dbg !18
+
+assert_end82:                                     ; preds = %assert_end80
+  %174 = call fastcc i32 @default_function_compute_(i8* nonnull %stack_value, float* %compute_void_ptr92, i32* nonnull %stack_tcode87.sub, float* %compute_void_ptr893, float* %ph_0_void_ptr91), !dbg !18
+  ret i32 %174, !dbg !18
+}
+
+; Function Attrs: nounwind willreturn
+declare void @llvm.assume(i1) #1
+
+; Function Attrs: noinline
+define internal fastcc i32 @default_function_compute_(i8* noalias %0, float* noalias align 64 %1, i32* noalias %2, float* noalias align 64 %3, float* noalias align 64 %4) unnamed_addr #2 {
+entry:
+  %5 = alloca i8*, align 8
+  %6 = bitcast i8* %0 to %0*
+  %7 = bitcast i8* %0 to float**
+  store float* %1, float** %7, align 8
+  store i32 3, i32* %2, align 4, !tbaa !124
+  %8 = getelementptr inbounds i8, i8* %0, i64 8
+  %9 = bitcast i8* %8 to float**
+  store float* %3, float** %9, align 8
+  %10 = getelementptr inbounds i32, i32* %2, i64 1
+  store i32 3, i32* %10, align 4, !tbaa !135
+  %11 = getelementptr inbounds i8, i8* %0, i64 16
+  %12 = bitcast i8* %11 to float**
+  store float* %4, float** %12, align 8
+  %13 = getelementptr inbounds i32, i32* %2, i64 2
+  store i32 3, i32* %13, align 4, !tbaa !137
+  %14 = getelementptr inbounds i8, i8* %0, i64 24
+  %15 = bitcast i8* %14 to %0*
+  %16 = getelementptr inbounds i32, i32* %2, i64 3
+  %17 = load i32 (i8*, %0*, i32*, i32, %0*, i32*)*, i32 (i8*, %0*, i32*, i32, %0*, i32*)** @__TVMFuncCall, align 8, !tbaa !20
+  %18 = load i8*, i8** @.tvm_func.default_function_kernel, align 8
+  %19 = icmp eq i8* %18, null
+  br i1 %19, label %handle_init, label %handle_init_end, !prof !54
+
+handle_init:                                      ; preds = %entry
+  %20 = load i8*, i8** @__tvm_module_ctx, align 8, !tbaa !20
+  %21 = load i32 (i8*, i8*, i8**)*, i32 (i8*, i8*, i8**)** @__TVMBackendGetFuncFromEnv, align 8, !tbaa !20
+  %22 = call i32 %21(i8* %20, i8* getelementptr inbounds ([24 x i8], [24 x i8]* @.str.21, i64 0, i64 0), i8** nonnull %5)
+  %23 = icmp eq i32 %22, 0
+  br i1 %23, label %call_end, label %call_fail, !prof !19
+
+handle_init_end:                                  ; preds = %entry, %call_end
+  %24 = phi i8* [ %18, %entry ], [ %27, %call_end ]
+  %25 = call i32 %17(i8* %24, %0* %6, i32* nonnull %2, i32 3, %0* nonnull %15, i32* nonnull %16)
+  %26 = icmp eq i32 %25, 0
+  br i1 %26, label %call_end2, label %call_fail, !prof !19
+
+call_fail:                                        ; preds = %call_end2, %handle_init_end, %handle_init
+  %merge = phi i32 [ %22, %handle_init ], [ %25, %handle_init_end ], [ 0, %call_end2 ]
+  ret i32 %merge
+
+call_end:                                         ; preds = %handle_init
+  %27 = load i8*, i8** %5, align 8
+  store i8* %27, i8** @.tvm_func.default_function_kernel, align 8
+  br label %handle_init_end
+
+call_end2:                                        ; preds = %handle_init_end
+  %28 = bitcast i8* %14 to i64*
+  %29 = load i64, i64* %28, align 8
+  %kernel_error_code = trunc i64 %29 to i32
+  %30 = icmp eq i32 %kernel_error_code, 0
+  br i1 %30, label %call_fail, label %assert_fail, !prof !19
+
+assert_fail:                                      ; preds = %call_end2
+  %31 = load void (i8*)*, void (i8*)** @__TVMAPISetLastError, align 8, !tbaa !20
+  call void %31(i8* getelementptr inbounds ([68 x i8], [68 x i8]* @.str.22, i64 0, i64 0))
+  ret i32 -1
+}
+
+; Function Attrs: nounwind readnone
+define weak dso_local i16 @__truncsfhf2(float %a0) local_unnamed_addr #3 section ".text.tvm.fp16.conv" {
+b0:
+  %v0 = bitcast float %a0 to i32
+  %v1 = and i32 %v0, 2147483647
+  %v2 = add nsw i32 %v1, -947912704
+  %v3 = add nsw i32 %v1, -1199570944
+  %v4 = icmp ult i32 %v2, %v3
+  br i1 %v4, label %b1, label %b5
+
+b1:                                               ; preds = %b0
+  %v5 = lshr i32 %v0, 13
+  %v6 = and i32 %v5, 65535
+  %v7 = add nuw nsw i32 %v6, -114688
+  %v8 = and i32 %v0, 8191
+  %v9 = icmp ugt i32 %v8, 4096
+  br i1 %v9, label %b2, label %b3
+
+b2:                                               ; preds = %b1
+  %v10 = add nuw nsw i32 %v6, -114687
+  br label %b13
+
+b3:                                               ; preds = %b1
+  %v11 = icmp eq i32 %v8, 4096
+  br i1 %v11, label %b4, label %b13
+
+b4:                                               ; preds = %b3
+  %v12 = and i32 %v7, 65535
+  %v13 = and i32 %v5, 1
+  %v14 = add nuw nsw i32 %v12, %v13
+  br label %b13
+
+b5:                                               ; preds = %b0
+  %v15 = icmp ugt i32 %v1, 2139095040
+  br i1 %v15, label %b6, label %b7
+
+b6:                                               ; preds = %b5
+  %v16 = lshr i32 %v0, 13
+  %v17 = and i32 %v16, 511
+  %v18 = or i32 %v17, 32256
+  br label %b13
+
+b7:                                               ; preds = %b5
+  %v19 = icmp ugt i32 %v1, 1199570943
+  br i1 %v19, label %b13, label %b8
+
+b8:                                               ; preds = %b7
+  %v20 = icmp ult i32 %v1, 754974720
+  br i1 %v20, label %b13, label %b9
+
+b9:                                               ; preds = %b8
+  %v21 = lshr i32 %v1, 23
+  %v22 = sub nsw i32 113, %v21
+  %v23 = and i32 %v0, 8388607
+  %v24 = or i32 %v23, 8388608
+  %v25 = add nsw i32 %v21, -81
+  %v26 = shl i32 %v24, %v25
+  %v27 = icmp ne i32 %v26, 0
+  %v28 = lshr i32 %v24, %v22
+  %v29 = zext i1 %v27 to i32
+  %v30 = lshr i32 %v28, 13
+  %v31 = and i32 %v28, 8191
+  %v32 = or i32 %v31, %v29
+  %v33 = icmp ugt i32 %v32, 4096
+  br i1 %v33, label %b10, label %b11
+
+b10:                                              ; preds = %b9
+  %v34 = add nuw nsw i32 %v30, 1
+  br label %b13
+
+b11:                                              ; preds = %b9
+  %v35 = icmp eq i32 %v32, 4096
+  br i1 %v35, label %b12, label %b13
+
+b12:                                              ; preds = %b11
+  %v36 = and i32 %v30, 1
+  %v37 = add nuw nsw i32 %v36, %v30
+  br label %b13
+
+b13:                                              ; preds = %b12, %b11, %b10, %b8, %b7, %b6, %b4, %b3, %b2
+  %v38 = phi i32 [ %v18, %b6 ], [ %v10, %b2 ], [ %v14, %b4 ], [ %v7, %b3 ], [ 31744, %b7 ], [ 0, %b8 ], [ %v34, %b10 ], [ %v37, %b12 ], [ %v30, %b11 ]
+  %v39 = lshr i32 %v0, 16
+  %v40 = and i32 %v39, 32768
+  %v41 = or i32 %v38, %v40
+  %vlast = trunc i32 %v41 to i16
+  ret i16 %vlast
+}
+
+; Function Attrs: nounwind readnone
+define weak dso_local float @__extendhfsf2(i16 %a0) local_unnamed_addr #3 section ".text.tvm.fp16.conv" {
+b0:
+  %v1 = and i16 %a0, 32767
+  %v2 = zext i16 %v1 to i32
+  %v3 = add nsw i16 %v1, -1024
+  %v4 = icmp ult i16 %v3, 30720
+  br i1 %v4, label %b1, label %b2
+
+b1:                                               ; preds = %b0
+  %v5 = shl nuw nsw i32 %v2, 13
+  %v6 = add nuw nsw i32 %v5, 939524096
+  br label %b6
+
+b2:                                               ; preds = %b0
+  %v7 = icmp ugt i16 %v1, 31743
+  br i1 %v7, label %b3, label %b4
+
+b3:                                               ; preds = %b2
+  %v8 = shl nuw nsw i32 %v2, 13
+  %v9 = or i32 %v8, 2139095040
+  br label %b6
+
+b4:                                               ; preds = %b2
+  %v10 = icmp eq i16 %v1, 0
+  br i1 %v10, label %b6, label %b5
+
+b5:                                               ; preds = %b4
+  %v11 = icmp ult i16 %v1, 256
+  %v12 = lshr i32 %v2, 8
+  %v13 = select i1 %v11, i32 %v2, i32 %v12
+  %v14 = select i1 %v11, i32 32, i32 24
+  %v15 = icmp ult i32 %v13, 16
+  %v16 = lshr i32 %v13, 4
+  %v17 = add nsw i32 %v14, -4
+  %v18 = select i1 %v15, i32 %v13, i32 %v16
+  %v19 = select i1 %v15, i32 %v14, i32 %v17
+  %v20 = icmp ult i32 %v18, 4
+  %v21 = lshr i32 %v18, 2
+  %v22 = add nsw i32 %v19, -2
+  %v23 = select i1 %v20, i32 %v18, i32 %v21
+  %v24 = select i1 %v20, i32 %v19, i32 %v22
+  %v25 = icmp ult i32 %v23, 2
+  %v26 = sub nsw i32 0, %v23
+  %v27 = select i1 %v25, i32 %v26, i32 -2
+  %v28 = add nsw i32 %v27, %v24
+  %v29 = add nsw i32 %v28, -8
+  %v30 = shl i32 %v2, %v29
+  %v31 = xor i32 %v30, 8388608
+  %v32 = shl i32 %v28, 23
+  %v33 = sub i32 1124073472, %v32
+  %v34 = or i32 %v31, %v33
+  br label %b6
+
+b6:                                               ; preds = %b5, %b4, %b3, %b1
+  %v35 = phi i32 [ %v6, %b1 ], [ %v9, %b3 ], [ %v34, %b5 ], [ 0, %b4 ]
+  %v36 = and i16 %a0, -32768
+  %v37 = zext i16 %v36 to i32
+  %v38 = shl nuw i32 %v37, 16
+  %v39 = or i32 %v35, %v38
+  %v40 = bitcast i32 %v39 to float
+  ret float %v40
+}
+
+; Function Attrs: nounwind readnone speculatable willreturn
+declare void @llvm.dbg.value(metadata, metadata, metadata) #4
+
+attributes #0 = { "target-cpu"="generic" }
+attributes #1 = { nounwind willreturn }
+attributes #2 = { noinline "target-cpu"="generic" }
+attributes #3 = { nounwind readnone "target-cpu"="generic" "target-features" }
+attributes #4 = { nounwind readnone speculatable willreturn }
+
+!llvm.dbg.cu = !{!0}
+!llvm.module.flags = !{!3, !4}
+
+!0 = distinct !DICompileUnit(language: DW_LANG_C, file: !1, producer: "TVM", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug, enums: !2)
+!1 = !DIFile(filename: "main.tir", directory: ".")
+!2 = !{}
+!3 = !{i32 2, !"tvm_target", !"llvm -mtriple=x86_64-pc-linux-gnu"}
+!4 = !{i32 4, !"Debug Info Version", i32 3}
+!5 = distinct !DISubprogram(name: "main.tir", scope: !1, file: !1, type: !6, spFlags: DISPFlagLocalToUnit | DISPFlagDefinition | DISPFlagOptimized, unit: !0, retainedNodes: !11)
+!6 = !DISubroutineType(types: !7)
+!7 = !{!8, !9, !10, !8, !9, !10, !9}
+!8 = !DIBasicType(name: "int32", size: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !8)
+!11 = !{!12, !13, !14, !15, !16, !17}
+!12 = !DILocalVariable(name: "arg1", arg: 1, scope: !5, file: !1, type: !9)
+!13 = !DILocalVariable(name: "arg2", arg: 2, scope: !5, file: !1, type: !10)
+!14 = !DILocalVariable(name: "arg3", arg: 3, scope: !5, file: !1, type: !8)
+!15 = !DILocalVariable(name: "arg4", arg: 4, scope: !5, file: !1, type: !9)
+!16 = !DILocalVariable(name: "arg5", arg: 5, scope: !5, file: !1, type: !10)
+!17 = !DILocalVariable(name: "arg6", arg: 6, scope: !5, file: !1, type: !9)
+!18 = !DILocation(line: 0, scope: !5)
+!19 = !{!"branch_weights", i32 1048576, i32 1}
+!20 = !{!21, !21, i64 0}
+!21 = !{!"ctx_ptr", !22, i64 0}
+!22 = !{!"tvm-tbaa"}
+!23 = !{!24, !24, i64 0}
+!24 = !{!"0x3cd50a0.w4.b0", !25, i64 0}
+!25 = !{!"0x3cd50a0.w8.b0", !26, i64 0}
+!26 = !{!"0x3cd50a0.w16.b0", !27, i64 0}
+!27 = !{!"0x3cd50a0.w32.b0", !28, i64 0}
+!28 = !{!"0x3cd50a0.w64.b0", !29, i64 0}
+!29 = !{!"0x3cd50a0.w128.b0", !30, i64 0}
+!30 = !{!"0x3cd50a0.w256.b0", !31, i64 0}
+!31 = !{!"0x3cd50a0.w512.b0", !32, i64 0}
+!32 = !{!"0x3cd50a0.w1024.b0", !33, i64 0}
+!33 = !{!"0x3cd50a0", !22, i64 0}
+!34 = !{!35, !35, i64 0}
+!35 = !{!"0x3cd50a0.w4.b4", !25, i64 0}
+!36 = !{!37, !37, i64 0}
+!37 = !{!"0x3cd50a0.w4.b8", !38, i64 0}
+!38 = !{!"0x3cd50a0.w8.b8", !26, i64 0}
+!39 = !{!40, !40, i64 0}
+!40 = !{!"0x413c370.w8.b0", !41, i64 0}
+!41 = !{!"0x413c370.w16.b0", !42, i64 0}
+!42 = !{!"0x413c370.w32.b0", !43, i64 0}
+!43 = !{!"0x413c370.w64.b0", !44, i64 0}
+!44 = !{!"0x413c370.w128.b0", !45, i64 0}
+!45 = !{!"0x413c370.w256.b0", !46, i64 0}
+!46 = !{!"0x413c370.w512.b0", !47, i64 0}
+!47 = !{!"0x413c370.w1024.b0", !48, i64 0}
+!48 = !{!"0x413c370", !22, i64 0}
+!49 = !{!50, !50, i64 0}
+!50 = !{!"0x413c370.w8.b8", !41, i64 0}
+!51 = !{!52, !52, i64 0}
+!52 = !{!"0x413c370.w8.b16", !53, i64 0}
+!53 = !{!"0x413c370.w16.b16", !42, i64 0}
+!54 = !{!"branch_weights", i32 1, i32 1048576}
+!55 = !{!56, !56, i64 0}
+!56 = !{!"0x44a9590.w8.b0", !57, i64 0}
+!57 = !{!"0x44a9590.w16.b0", !58, i64 0}
+!58 = !{!"0x44a9590.w32.b0", !59, i64 0}
+!59 = !{!"0x44a9590.w64.b0", !60, i64 0}
+!60 = !{!"0x44a9590.w128.b0", !61, i64 0}
+!61 = !{!"0x44a9590.w256.b0", !62, i64 0}
+!62 = !{!"0x44a9590.w512.b0", !63, i64 0}
+!63 = !{!"0x44a9590.w1024.b0", !64, i64 0}
+!64 = !{!"0x44a9590", !22, i64 0}
+!65 = !{!66, !66, i64 0}
+!66 = !{!"0x44a9590.w8.b16", !67, i64 0}
+!67 = !{!"0x44a9590.w16.b16", !58, i64 0}
+!68 = !{!69, !69, i64 0}
+!69 = !{!"0x4689fe0.w8.b0", !70, i64 0}
+!70 = !{!"0x4689fe0.w16.b0", !71, i64 0}
+!71 = !{!"0x4689fe0.w32.b0", !72, i64 0}
+!72 = !{!"0x4689fe0.w64.b0", !73, i64 0}
+!73 = !{!"0x4689fe0.w128.b0", !74, i64 0}
+!74 = !{!"0x4689fe0.w256.b0", !75, i64 0}
+!75 = !{!"0x4689fe0.w512.b0", !76, i64 0}
+!76 = !{!"0x4689fe0.w1024.b0", !77, i64 0}
+!77 = !{!"0x4689fe0", !22, i64 0}
+!78 = !{!79, !79, i64 0}
+!79 = !{!"0x4689fe0.w8.b8", !70, i64 0}
+!80 = !{!81, !81, i64 0}
+!81 = !{!"0x4689fe0.w8.b16", !82, i64 0}
+!82 = !{!"0x4689fe0.w16.b16", !71, i64 0}
+!83 = !{!84, !84, i64 0}
+!84 = !{!"0x41b68f0.w8.b0", !85, i64 0}
+!85 = !{!"0x41b68f0.w16.b0", !86, i64 0}
+!86 = !{!"0x41b68f0.w32.b0", !87, i64 0}
+!87 = !{!"0x41b68f0.w64.b0", !88, i64 0}
+!88 = !{!"0x41b68f0.w128.b0", !89, i64 0}
+!89 = !{!"0x41b68f0.w256.b0", !90, i64 0}
+!90 = !{!"0x41b68f0.w512.b0", !91, i64 0}
+!91 = !{!"0x41b68f0.w1024.b0", !92, i64 0}
+!92 = !{!"0x41b68f0", !22, i64 0}
+!93 = !{!94, !94, i64 0}
+!94 = !{!"0x41b68f0.w8.b16", !95, i64 0}
+!95 = !{!"0x41b68f0.w16.b16", !86, i64 0}
+!96 = !{!97, !97, i64 0}
+!97 = !{!"0x3cc3d60.w8.b0", !98, i64 0}
+!98 = !{!"0x3cc3d60.w16.b0", !99, i64 0}
+!99 = !{!"0x3cc3d60.w32.b0", !100, i64 0}
+!100 = !{!"0x3cc3d60.w64.b0", !101, i64 0}
+!101 = !{!"0x3cc3d60.w128.b0", !102, i64 0}
+!102 = !{!"0x3cc3d60.w256.b0", !103, i64 0}
+!103 = !{!"0x3cc3d60.w512.b0", !104, i64 0}
+!104 = !{!"0x3cc3d60.w1024.b0", !105, i64 0}
+!105 = !{!"0x3cc3d60", !22, i64 0}
+!106 = !{!107, !107, i64 0}
+!107 = !{!"0x3cc3d60.w8.b8", !98, i64 0}
+!108 = !{!109, !109, i64 0}
+!109 = !{!"0x3cc3d60.w8.b16", !110, i64 0}
+!110 = !{!"0x3cc3d60.w16.b16", !99, i64 0}
+!111 = !{!112, !112, i64 0}
+!112 = !{!"0x452ace0.w8.b0", !113, i64 0}
+!113 = !{!"0x452ace0.w16.b0", !114, i64 0}
+!114 = !{!"0x452ace0.w32.b0", !115, i64 0}
+!115 = !{!"0x452ace0.w64.b0", !116, i64 0}
+!116 = !{!"0x452ace0.w128.b0", !117, i64 0}
+!117 = !{!"0x452ace0.w256.b0", !118, i64 0}
+!118 = !{!"0x452ace0.w512.b0", !119, i64 0}
+!119 = !{!"0x452ace0.w1024.b0", !120, i64 0}
+!120 = !{!"0x452ace0", !22, i64 0}
+!121 = !{!122, !122, i64 0}
+!122 = !{!"0x452ace0.w8.b16", !123, i64 0}
+!123 = !{!"0x452ace0.w16.b16", !114, i64 0}
+!124 = !{!125, !125, i64 0}
+!125 = !{!"0x43ad1a0.w4.b0", !126, i64 0}
+!126 = !{!"0x43ad1a0.w8.b0", !127, i64 0}
+!127 = !{!"0x43ad1a0.w16.b0", !128, i64 0}
+!128 = !{!"0x43ad1a0.w32.b0", !129, i64 0}
+!129 = !{!"0x43ad1a0.w64.b0", !130, i64 0}
+!130 = !{!"0x43ad1a0.w128.b0", !131, i64 0}
+!131 = !{!"0x43ad1a0.w256.b0", !132, i64 0}
+!132 = !{!"0x43ad1a0.w512.b0", !133, i64 0}
+!133 = !{!"0x43ad1a0.w1024.b0", !134, i64 0}
+!134 = !{!"0x43ad1a0", !22, i64 0}
+!135 = !{!136, !136, i64 0}
+!136 = !{!"0x43ad1a0.w4.b4", !126, i64 0}
+!137 = !{!138, !138, i64 0}
+!138 = !{!"0x43ad1a0.w4.b8", !139, i64 0}
+!139 = !{!"0x43ad1a0.w8.b8", !127, i64 0}

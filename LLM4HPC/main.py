@@ -77,14 +77,14 @@ def generate(model_name,prompt_generator:PromptGenerator,level,operator,action,u
         else:
             save_path = join(prompt_generator.save_path_dict[action],model_name,level)
     # 临时设置 #
-    save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_simplify",level)      
+    # save_path = join(prompt_generator.save_path_dict[action],f"{model_name}_simplify",level)
     ###########  
     os.makedirs(save_path,exist_ok=True)
     save_to_file(content,operator,suffix=prompt_generator.suffix_dict[action],action=action,save_path=save_path)
 
 def generate_batch(model_name,prompt_generator:PromptGenerator,level,action,range,use_lora):
     if range == 'left':
-        operators = extract_residual_operator(model_name,level)
+        operators = extract_residual_operator(model_name,level,use_lora)
     elif range == 'all':
         base_path = '/code/LLM4HPCTransCompile/ParallelBench'
         operators = [os.path.splitext(file)[0] for file in os.listdir(join(base_path,level)) if os.path.isfile(join(base_path,level,file))]
@@ -93,10 +93,13 @@ def generate_batch(model_name,prompt_generator:PromptGenerator,level,action,rang
     for operator in tqdm(operators):
         generate(model_name,prompt_generator,level,operator,action,use_lora)
 
-def extract_residual_operator(model_name,level):
+def extract_residual_operator(model_name,level,use_lora):
     all_operators_path = join('/code/KernelBench/KernelBench',level)
     all_operators = [os.path.splitext(file)[0] for file in os.listdir(all_operators_path) if os.path.isfile(join(all_operators_path,file))]
-    generated_operators_path = join('/code/LLM4HPCTransCompile/Results',model_name,level)
+    if use_lora:
+        generated_operators_path = join('/code/LLM4HPCTransCompile/Results',f"{model_name}_lora",level)
+    else:
+        generated_operators_path = join('/code/LLM4HPCTransCompile/Results',model_name,level)
     generated_operators = [os.path.splitext(file)[0] for file in os.listdir(generated_operators_path) if os.path.isfile(join(generated_operators_path,file))]
     return list(filter(lambda x: x not in generated_operators, all_operators))
 

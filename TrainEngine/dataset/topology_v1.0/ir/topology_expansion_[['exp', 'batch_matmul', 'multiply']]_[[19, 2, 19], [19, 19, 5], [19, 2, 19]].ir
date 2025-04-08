@@ -1,0 +1,27 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((19, 2, 19), "float32"), ph_3: T.Buffer((19, 19, 5), "float32"), ph_5: T.Buffer((19, 2, 19), "float32"), compute: T.Buffer((19, 2, 19), "float32"), T_batch_matmul_NN: T.Buffer((19, 2, 5), "float32"), T_multiply: T.Buffer((19, 2, 19), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([1805], "float32", "global")
+        ph_0_1 = T.Buffer((722,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(722):
+            compute_1 = T.Buffer((722,), data=compute.data)
+            compute_1[i0_i1_fused_i2_fused] = T.exp(ph_0_1[i0_i1_fused_i2_fused])
+        auto_scheduler_layout_transform_1 = T.Buffer((1805,), data=auto_scheduler_layout_transform)
+        for ax4, ax6, ax8 in T.grid(19, 5, 19):
+            ph_3_1 = T.Buffer((1805,), data=ph_3.data)
+            auto_scheduler_layout_transform_1[ax4 * 95 + ax6 * 19 + ax8] = ph_3_1[ax8 * 95 + ax4 * 5 + ax6]
+        T_batch_matmul_NN_1 = T.Buffer((190,), data=T_batch_matmul_NN.data)
+        for i_outer_inner_init, j_outer_inner_init, b_inner_init in T.grid(2, 5, 19):
+            T_batch_matmul_NN_1[b_inner_init * 10 + i_outer_inner_init * 5 + j_outer_inner_init] = T.float32(0)
+        for k_outer, i_outer_inner, j_outer_inner, b_inner in T.grid(19, 2, 5, 19):
+            cse_var_1: T.int32 = b_inner * 10 + i_outer_inner * 5 + j_outer_inner
+            T_batch_matmul_NN_1[cse_var_1] = T_batch_matmul_NN_1[cse_var_1] + ph_0_1[b_inner * 38 + i_outer_inner * 19 + k_outer] * auto_scheduler_layout_transform_1[k_outer * 95 + j_outer_inner * 19 + b_inner]
+        for ax0_ax1_fused_ax2_fused in T.parallel(722):
+            T_multiply_1 = T.Buffer((722,), data=T_multiply.data)
+            ph_5_1 = T.Buffer((722,), data=ph_5.data)
+            T_multiply_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] * ph_5_1[ax0_ax1_fused_ax2_fused]

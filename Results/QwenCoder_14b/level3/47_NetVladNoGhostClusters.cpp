@@ -1,111 +1,76 @@
 #include <torch/extension.h>
-#include <ATen/ATen.h>
-#include <omp.h>
+#include <vector>
 #include <cmath>
-#include <limits>
+#include <omp.h>
 
-#define CHECK_CUDA(x) TORCH_CHECK(x.is_cuda(), #x " must be a CUDA tensor")
-#define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
-#define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
+using namespace at;
 
-constexpr int TILE_SIZE = 128;
-constexpr int NUM_THREADS = 4;
-
-void fused_assignment_cpu(
-    const float* x,
-    const float* clusters,
-    const float* bn_weight,
-    const float* bn_bias,
-    const float* bn_mean,
-    const float* bn_var,
-    float* output,
+// Define the fused_assignment_kernel function for CPU
+void fused_assignment_kernel_cpu(
+    const Tensor& x,
+    const Tensor& clusters,
+    const Tensor& bn_weight,
+    const Tensor& bn_bias,
+    const Tensor& bn_mean,
+    const Tensor& bn_var,
+    Tensor& output,
     int64_t start_idx,
     int64_t chunk_size,
     int64_t D,
     int64_t KplusG,
     bool is_training) {
     
-    #pragma omp parallel for num_threads(NUM_THREADS)
+    #pragma omp parallel for collapse(2)
     for (int64_t row = start_idx; row < start_idx + chunk_size; ++row) {
-        float smem[KplusG];
-        float smem_max[KplusG];
-        float smem_sum[KplusG];
-        
-        // Initialize shared memory arrays
-        for (int i = 0; i < KplusG; ++i) {
-            smem[i] = 0.0f;
-            smem_max[i] = -std::numeric_limits<float>::infinity();
-            smem_sum[i] = 0.0f;
+        float sum[KplusG];
+        #pragma omp simd
+        for (int64_t col = 0; col < KplusG; ++col) {
+            sum[col] = 0.0f;
+            for (int64_t i = 0; i < D; ++i) {
+                sum[col] += x[row * D + i] * clusters[i * KplusG + col];
+            }
         }
-        
-        // Compute matmul row
-        for (int i = 0; i < D; ++i) {
-            smem[i] += x[row * D + i] * clusters[i * KplusG + i];
-        }
-        
-        // Apply BN
-        for (int i = 0; i < KplusG; ++i) {
-            float val = smem[i];
+
+        // Apply Batch Normalization
+        for (int64_t col = 0; col < KplusG; ++col) {
+            float val = sum[col];
             if (!is_training) {
-                val = (val - bn_mean[i]) * bn_weight[i] / std::sqrt(bn_var[i] + 1e-5f) + bn_bias[i];
+                val = (val - bn_mean[col].item<float>()) * bn_weight[col].item<float>() / std::sqrt(bn_var[col].item<float>() + 1e-5f) + bn_bias[col].item<float>();
             }
-            smem[i] = val;
+            output[row * KplusG + col] = val;
         }
-        
-        // Softmax reduction with improved memory access pattern
-        for (int i = 0; i < KplusG; ++i) {
-            smem_max[i] = fmaxf(smem_max[i], smem[i]);
+
+        // Softmax reduction
+        float max_val = -INFINITY;
+        for (int64_t col = 0; col < KplusG; ++col) {
+            max_val = std::max(max_val, output[row * KplusG + col]);
         }
-        
-        // Reduce max values
-        for (int s = KplusG / 2; s > 0; s >>= 1) {
-            for (int i = 0; i < KplusG; ++i) {
-                if (i + s < KplusG) {
-                    smem_max[i] = fmaxf(smem_max[i], smem_max[i + s]);
-                }
-            }
+
+        float sum_exp = 0.0f;
+        for (int64_t col = 0; col < KplusG; ++col) {
+            output[row * KplusG + col] = std::exp(output[row * KplusG + col] - max_val);
+            sum_exp += output[row * KplusG + col];
         }
-        
-        float max_val = smem_max[0];
-        
-        // Compute softmax
-        for (int i = 0; i < KplusG; ++i) {
-            smem_sum[i] = expf(smem[i] - max_val);
+
+        for (int64_t col = 0; col < KplusG; ++col) {
+            output[row * KplusG + col] /= sum_exp;
         }
-        
-        // Reduce sum values
-        for (int s = KplusG / 2; s > 0; s >>= 1) {
-            for (int i = 0; i < KplusG; ++i) {
-                if (i + s < KplusG) {
-                    smem_sum[i] += smem_sum[i + s];
-                }
-            }
-        }
-        
-        output[row * KplusG] = smem[0] / smem_sum[0];
     }
 }
 
-torch::Tensor forward(
-    torch::Tensor x,
-    torch::Tensor clusters,
-    torch::Tensor clusters2,
-    torch::Tensor bn_weight,
-    torch::Tensor bn_bias,
-    torch::Tensor bn_running_mean,
-    torch::Tensor bn_running_var,
+// Define the forward function for CPU
+Tensor forward_cpu(
+    Tensor x,
+    Tensor clusters,
+    Tensor clusters2,
+    Tensor bn_weight,
+    Tensor bn_bias,
+    Tensor bn_running_mean,
+    Tensor bn_running_var,
     int64_t feature_size,
     int64_t cluster_size,
     bool is_training) {
     
-    CHECK_INPUT(x);
-    CHECK_INPUT(clusters);
-    CHECK_INPUT(clusters2);
-    CHECK_INPUT(bn_weight);
-    CHECK_INPUT(bn_bias);
-    CHECK_INPUT(bn_running_mean);
-    CHECK_INPUT(bn_running_var);
-
     int64_t B = x.size(0);
     int64_t N = x.size(1);
     int64_t D = feature_size;
@@ -116,18 +81,17 @@ torch::Tensor forward(
     x = x.reshape({-1, D});
     auto assignment = torch::empty({BxN, KplusG}, x.options());
 
-    // Process data in chunks using multiple threads
-    for (int64_t chunk_start = 0; chunk_start < BxN; chunk_start += TILE_SIZE) {
-        int64_t current_chunk_size = std::min(static_cast<int64_t>(TILE_SIZE), BxN - chunk_start);
-        
-        fused_assignment_cpu(
-            x.data_ptr<float>(),
-            clusters.data_ptr<float>(),
-            bn_weight.data_ptr<float>(),
-            bn_bias.data_ptr<float>(),
-            bn_running_mean.data_ptr<float>(),
-            bn_running_var.data_ptr<float>(),
-            assignment.data_ptr<float>(),
+    // Process data in chunks
+    for (int64_t chunk_start = 0; chunk_start < BxN; chunk_start += 1024) {
+        int64_t current_chunk_size = std::min(static_cast<int64_t>(1024), BxN - chunk_start);
+        fused_assignment_kernel_cpu(
+            x,
+            clusters,
+            bn_weight,
+            bn_bias,
+            bn_running_mean,
+            bn_running_var,
+            assignment,
             chunk_start,
             current_chunk_size,
             D,
@@ -154,5 +118,5 @@ torch::Tensor forward(
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &forward, "NetVLAD forward with OpenMP");
+    m.def("forward", &forward_cpu, "NetVLAD forward on CPU");
 }

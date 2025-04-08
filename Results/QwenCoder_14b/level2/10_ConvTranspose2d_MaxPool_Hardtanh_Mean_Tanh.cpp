@@ -1,26 +1,27 @@
 #include <torch/extension.h>
-#include <omp.h>
+#include <vector>
+#include <algorithm>
 #include <cmath>
-#include <limits>
+#include <omp.h>
 
-#define WARP_SIZE 32
+using namespace torch;
 
 // Function to perform warp-level reduction for max pooling
-float warp_reduce_max(float val) {
-    #pragma omp parallel for reduction(max:val)
-    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
-        val = std::max(val, val);
+float warp_reduce_max(const std::vector<float>& vals) {
+    float max_val = -FLT_MAX;
+    for (const auto& val : vals) {
+        max_val = std::max(max_val, val);
     }
-    return val;
+    return max_val;
 }
 
 // Function to perform warp-level reduction for sum
-float warp_reduce_sum(float val) {
-    #pragma omp parallel for reduction(+:val)
-    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
-        val += val;
+float warp_reduce_sum(const std::vector<float>& vals) {
+    float sum_val = 0.0f;
+    for (const auto& val : vals) {
+        sum_val += val;
     }
-    return val;
+    return sum_val;
 }
 
 void conv_transpose_maxpool_mean_cpu(
@@ -43,7 +44,7 @@ void conv_transpose_maxpool_mean_cpu(
         for (int c_out = 0; c_out < out_channels; ++c_out) {
             for (int h_pool_out = 0; h_pool_out < H_pool_out; ++h_pool_out) {
                 for (int w_pool_out = 0; w_pool_out < W_pool_out; ++w_pool_out) {
-                    float max_val = -std::numeric_limits<float>::max();
+                    float max_val = -FLT_MAX;
                     float sum_val = 0.0f;
                     int valid_count = 0;
 
@@ -77,29 +78,29 @@ void conv_transpose_maxpool_mean_cpu(
                         }
                     }
 
-                    // Reduce max value
-                    max_val = warp_reduce_max(max_val);
                     output[(n * out_channels + c_out) * H_pool_out * W_pool_out + h_pool_out * W_pool_out + w_pool_out] = max_val;
-
-                    // Compute mean
-                    sum_val = warp_reduce_sum(sum_val);
-                    mean_output[n * out_channels + c_out] = sum_val / valid_count;
+                    mean_output[n * out_channels + c_out] += sum_val / valid_count;
                 }
             }
         }
     }
+
+    #pragma omp parallel for
+    for (int i = 0; i < N * out_channels; ++i) {
+        mean_output[i] /= H_pool_out * W_pool_out;
+    }
 }
 
-torch::Tensor forward(
-    torch::Tensor x,
+Tensor forward(
+    Tensor x,
     int64_t stride,
     int64_t padding,
     int64_t maxpool_kernel_size,
     int64_t maxpool_stride,
     double hardtanh_min,
     double hardtanh_max,
-    torch::Tensor conv_transpose,
-    torch::Tensor conv_transpose_bias
+    Tensor conv_transpose,
+    Tensor conv_transpose_bias
 ) {
     const int N = x.size(0);
     const int in_channels = x.size(1);

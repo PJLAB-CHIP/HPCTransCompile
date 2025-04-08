@@ -1,0 +1,19 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((13, 13, 18, 2), "float32"), adaptive_pool_max: T.Buffer((13, 13, 8, 8), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused_ax2_fused in T.parallel(1352):
+            for ax3 in range(8):
+                adaptive_pool_max_1 = T.Buffer((10816,), data=adaptive_pool_max.data)
+                adaptive_pool_max_1[ax0_ax1_fused_ax2_fused * 8 + ax3] = T.float32(-3.4028234663852886e+38)
+                for rv0, rv1 in T.grid(T.Let(T.Let(T.Select((cse_var_2 * 2 + 2) % 8 == 0, cse_var_1, cse_var_1 + 1) - cse_var_2 * 18 // 8, where={cse_var_1: (cse_var_2 * 9 + 9) // 4}), where={cse_var_2: ax0_ax1_fused_ax2_fused % 8}), T.Let(T.Select((ax3 * 2 + 2) % 8 == 0, cse_var_3, cse_var_3 + 1) - ax3 // 4, where={cse_var_3: (ax3 + 1) // 4})):
+                    cse_var_2 = T.int32()
+                    cse_var_1 = T.int32()
+                    cse_var_3 = T.int32()
+                    cse_var_4: T.int32 = ax0_ax1_fused_ax2_fused * 8 + ax3
+                    data_1 = T.Buffer((6084,), data=data.data)
+                    adaptive_pool_max_1[cse_var_4] = T.max(adaptive_pool_max_1[cse_var_4], data_1[ax0_ax1_fused_ax2_fused // 8 * 36 + ax0_ax1_fused_ax2_fused % 8 * 18 // 8 * 2 + rv0 * 2 + ax3 // 4 + rv1])

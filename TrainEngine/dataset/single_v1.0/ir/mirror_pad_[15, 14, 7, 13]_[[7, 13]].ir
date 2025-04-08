@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((7, 13), "float32"), MirrorPadInput: T.Buffer((10, 16), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0 in T.parallel(10):
+            for i1 in range(16):
+                MirrorPadInput_1 = T.Buffer((160,), data=MirrorPadInput.data)
+                data_1 = T.Buffer((91,), data=data.data)
+                MirrorPadInput_1[i0 * 16 + i1] = data_1[T.if_then_else(8 <= i0, 14 - i0, T.if_then_else(i0 < 1, 0 - i0, i0 - 1)) * 13 + T.if_then_else(i1 == 15, 27 - i1, T.if_then_else(i1 < 2, 1 - i1, i1 - 2))]

@@ -1,9 +1,7 @@
 #include <torch/extension.h>
-#include <omp.h>
+#include <vector>
+#include <cmath>
 
-#define TILE_SIZE 16
-
-// CPU version of the 2D convolution with atomic operations optimization
 void conv2d_cpu(const float* input, const float* weight, const float* bias,
                  float* output, int N, int C, int H, int W,
                  int K, int P, int stride) {
@@ -33,54 +31,6 @@ void conv2d_cpu(const float* input, const float* weight, const float* bias,
     }
 }
 
-// Optimized VGG16 forward pass using the custom optimized convolution
-torch::Tensor optimized_vgg16_forward_cpu(
-    torch::Tensor x,
-    std::vector<torch::Tensor> conv_weights,
-    std::vector<torch::Tensor> conv_biases,
-    std::vector<torch::Tensor> fc_weights,
-    std::vector<torch::Tensor> fc_biases,
-    bool is_training
-) {
-    const int N = x.size(0);
-    const int C = x.size(1);
-    const int H = x.size(2);
-    const int W = x.size(3);
-    const int K = conv_weights[0].size(0);
-    const int P = conv_weights[0].size(2) / 2;
-
-    auto output = torch::empty({N, K, H, W}, x.options());
-
-    conv2d_cpu(x.data_ptr<float>(), conv_weights[0].data_ptr<float>(), conv_biases[0].data_ptr<float>(),
-               output.data_ptr<float>(), N, C, H, W, K, P, 1);
-
-    auto current = torch::relu(output);
-
-    for (int i = 1; i < 13; ++i) {
-        current = torch::conv2d(current, conv_weights[i], conv_biases[i], /*stride=*/1, /*padding=*/1);
-        current = torch::relu(current);
-        // Apply max pooling after every block except the first layer of block 1
-        if (i == 1 || i == 3 || i == 6 || i == 9 || i == 12) {
-            current = torch::max_pool2d(current, /*kernel_size=*/2, /*stride=*/2);
-        }
-    }
-
-    current = current.flatten(1);
-    current = torch::linear(current, fc_weights[0], fc_biases[0]);
-    current = torch::relu(current);
-    if (is_training) {
-        current = torch::dropout(current, /*p=*/0.0, /*train=*/true);
-    }
-    current = torch::linear(current, fc_weights[1], fc_biases[1]);
-    current = torch::relu(current);
-    if (is_training) {
-        current = torch::dropout(current, /*p=*/0.0, /*train=*/true);
-    }
-    current = torch::linear(current, fc_weights[2], fc_biases[2]);
-
-    return current;
-}
-
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &optimized_vgg16_forward_cpu, "Optimized VGG16 forward (CPU)");
+    m.def("forward", &conv2d_cpu, "Convolutional 2D CPU");
 }

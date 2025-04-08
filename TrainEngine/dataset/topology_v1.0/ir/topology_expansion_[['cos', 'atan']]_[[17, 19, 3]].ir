@@ -1,0 +1,17 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((17, 19, 3), "float32"), compute: T.Buffer((17, 19, 3), "float32"), compute_1: T.Buffer((17, 19, 3), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((969,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(969):
+            compute_2 = T.Buffer((969,), data=compute.data)
+            compute_2[i0_i1_fused_i2_fused] = T.cos(ph_0_1[i0_i1_fused_i2_fused])
+        for i0_i1_fused in T.parallel(323):
+            for i2 in range(3):
+                cse_var_1: T.int32 = i0_i1_fused * 3 + i2
+                compute_2 = T.Buffer((969,), data=compute_1.data)
+                compute_2[cse_var_1] = T.atan(ph_0_1[cse_var_1])

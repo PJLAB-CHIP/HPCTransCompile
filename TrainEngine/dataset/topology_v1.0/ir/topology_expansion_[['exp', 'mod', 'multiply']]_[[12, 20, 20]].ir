@@ -1,0 +1,15 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((12, 20, 20), "float32"), T_multiply: T.Buffer((12, 20, 20), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused_ax2_fused in T.parallel(4800):
+            compute = T.allocate([1], "float32", "global")
+            compute_1 = T.Buffer((1,), data=compute, align=4)
+            ph_0_1 = T.Buffer((4800,), data=ph_0.data)
+            compute_1[0] = T.exp(ph_0_1[ax0_ax1_fused_ax2_fused])
+            T_multiply_1 = T.Buffer((4800,), data=T_multiply.data)
+            T_multiply_1[ax0_ax1_fused_ax2_fused] = T.truncmod(ph_0_1[ax0_ax1_fused_ax2_fused], compute_1[0]) * ph_0_1[ax0_ax1_fused_ax2_fused]

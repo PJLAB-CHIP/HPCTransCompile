@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((18, 14, 14, 1), "float32"), compute: T.Buffer((18, 14, 14, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0 in T.parallel(18):
+            for i1, i2 in T.grid(14, 14):
+                cse_var_1: T.int32 = i0 * 196 + i1 * 14 + i2
+                compute_1 = T.Buffer((3528,), data=compute.data)
+                data_1 = T.Buffer((3528,), data=data.data)
+                compute_1[cse_var_1] = T.rsqrt(data_1[cse_var_1])

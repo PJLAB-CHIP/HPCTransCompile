@@ -1,0 +1,23 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((4, 8, 6), "float32"), compute: T.Buffer((4, 8, 6), "float32"), T_divide: T.Buffer((4, 8, 6), "float32"), T_divide_1: T.Buffer((4, 8, 6), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((192,), data=ph_0.data)
+        for i0 in T.parallel(4):
+            for i1, i2 in T.grid(8, 6):
+                cse_var_1: T.int32 = i0 * 48 + i1 * 6 + i2
+                compute_1 = T.Buffer((192,), data=compute.data)
+                compute_1[cse_var_1] = T.atan(ph_0_1[cse_var_1])
+        for ax0_ax1_fused_ax2_fused in T.parallel(192):
+            T_divide_2 = T.Buffer((192,), data=T_divide.data)
+            T_divide_2[ax0_ax1_fused_ax2_fused] = T.fabs(ph_0_1[ax0_ax1_fused_ax2_fused]) / ph_0_1[ax0_ax1_fused_ax2_fused]
+        for ax0_ax1_fused_ax2_fused in T.parallel(192):
+            compute_1 = T.allocate([1], "float32", "global")
+            compute_2 = T.Buffer((1,), data=compute_1, align=4)
+            compute_2[0] = T.exp(ph_0_1[ax0_ax1_fused_ax2_fused])
+            T_divide_2 = T.Buffer((192,), data=T_divide_1.data)
+            T_divide_2[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] / compute_2[0]

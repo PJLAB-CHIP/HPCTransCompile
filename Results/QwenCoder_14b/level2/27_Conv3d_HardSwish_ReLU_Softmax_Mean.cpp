@@ -1,26 +1,28 @@
 #include <torch/extension.h>
 #include <vector>
 #include <cmath>
-#include <omp.h>
+#include <limits>
 
-// Constants for HardSwish
-const float hswish_offset = 3.0f;
-const float hswish_cap = 6.0f;
-const float hswish_div = 1.0f / 6.0f;
+// Define the block size for spatial dimension processing
+#define BLOCK_SIZE 256
 
-// Function to apply HardSwish, ReLU, and Softmax
+// Constants for HardSwish parameters
+const float d_hswish_constants[2] = {3.0f, 6.0f};
+const float d_hswish_div = 1.0f / 6.0f;
+
+// Function to apply HardSwish, ReLU, and Softmax in three passes over the channel dimension.
 void fused_cpu_kernel(const float* input, float* output, int batch_size, int channels, int spatial_size) {
     #pragma omp parallel for collapse(2)
-    for (int b = 0; b < batch_size; ++b) {
-        for (int s = 0; s < spatial_size; ++s) {
+    for (int batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
+        for (int spatial_idx = 0; spatial_idx < spatial_size; ++spatial_idx) {
             float max_val = -std::numeric_limits<float>::max();
 
             // Pass 1: Compute maximum activation value across channels for numerical stability
             for (int c = 0; c < channels; ++c) {
-                int idx = (b * channels + c) * spatial_size + s;
+                int idx = (batch_idx * channels + c) * spatial_size + spatial_idx;
                 float x = input[idx];
-                float relu6 = std::fmin(std::fmax(x + hswish_offset, 0.0f), hswish_cap);
-                float hswish = x * relu6 * hswish_div;
+                float relu6 = std::fmin(std::fmax(x + d_hswish_constants[0], 0.0f), d_hswish_constants[1]);
+                float hswish = x * relu6 * d_hswish_div;
                 float act = std::fmax(hswish, 0.0f);
                 if (act > max_val) {
                     max_val = act;
@@ -31,10 +33,10 @@ void fused_cpu_kernel(const float* input, float* output, int batch_size, int cha
 
             // Pass 2: Compute exponentials and accumulate the sum, store exp values temporarily in output
             for (int c = 0; c < channels; ++c) {
-                int idx = (b * channels + c) * spatial_size + s;
+                int idx = (batch_idx * channels + c) * spatial_size + spatial_idx;
                 float x = input[idx];
-                float relu6 = std::fmin(std::fmax(x + hswish_offset, 0.0f), hswish_cap);
-                float hswish = x * relu6 * hswish_div;
+                float relu6 = std::fmin(std::fmax(x + d_hswish_constants[0], 0.0f), d_hswish_constants[1]);
+                float hswish = x * relu6 * d_hswish_div;
                 float act = std::fmax(hswish, 0.0f);
                 float exp_val = std::exp(act - max_val);
                 sum_exp += exp_val;
@@ -43,7 +45,7 @@ void fused_cpu_kernel(const float* input, float* output, int batch_size, int cha
 
             // Pass 3: Normalize the exponentials to obtain softmax probabilities
             for (int c = 0; c < channels; ++c) {
-                int idx = (b * channels + c) * spatial_size + s;
+                int idx = (batch_idx * channels + c) * spatial_size + spatial_idx;
                 output[idx] = output[idx] / sum_exp;
             }
         }
@@ -51,6 +53,7 @@ void fused_cpu_kernel(const float* input, float* output, int batch_size, int cha
 }
 
 // Module forward function: combines conv3d, the fused activation and softmax kernel, and mean reduction
+// The softmax is applied over the channel dimension after reformatting the tensor.
 torch::Tensor module_forward(
     torch::Tensor x,
     torch::Tensor conv_weight,
@@ -74,7 +77,7 @@ torch::Tensor module_forward(
     // Allocate intermediate tensor for softmax result
     torch::Tensor x_softmax = torch::empty_like(x);
 
-    // Apply fused kernel
+    // Apply the fused CPU kernel
     fused_cpu_kernel(x.data_ptr<float>(), x_softmax.data_ptr<float>(), batch_size, channels, spatial_size);
 
     // Reshape back to original dimensions and compute mean over spatial dims
@@ -83,5 +86,5 @@ torch::Tensor module_forward(
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &module_forward, "Fused CPU module forward with OpenMP parallelization");
+    m.def("forward", &module_forward, "Fused CPU module forward with HardSwish, ReLU, and Softmax");
 }

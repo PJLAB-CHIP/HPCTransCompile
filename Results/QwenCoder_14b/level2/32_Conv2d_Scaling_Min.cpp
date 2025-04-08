@@ -1,7 +1,7 @@
 #include <torch/extension.h>
 #include <vector>
 #include <cfloat>
-#include <omp.h>
+#include <algorithm>
 
 #define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
 
@@ -70,7 +70,7 @@ void conv_scale_min_cpu(
                     }
                     
                     conv_sum *= scale_factor;
-                    min_val = fminf(min_val, conv_sum);
+                    min_val = std::min(min_val, conv_sum);
                 }
                 
                 const int out_idx = n * out_h * out_w + oh * out_w + ow;

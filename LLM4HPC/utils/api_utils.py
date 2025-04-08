@@ -55,6 +55,9 @@ def load_model_and_tokenizer(model_name,device,use_lora=False):
             torch_dtype=torch.float16,
             load_in_4bit=True
         ).to(device)
+        if use_lora:
+            model = merge_lora_model(model_name,model)
+            print('Merge Model Success!')
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH.DeepSeekCoder_Lite)
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         tokenizer.pad_token = tokenizer.eos_token
@@ -67,6 +70,9 @@ def load_model_and_tokenizer(model_name,device,use_lora=False):
             # torch_dtype=torch.float16,
             load_in_4bit=True
         ).to(device)
+        if use_lora:
+            model = merge_lora_model(model_name,model)
+            print('Merge Model Success!')
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH.LingCoder,trust_remote_code=True)
         # tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         tokenizer.pad_token = tokenizer.eos_token
@@ -79,6 +85,9 @@ def load_model_and_tokenizer(model_name,device,use_lora=False):
             torch_dtype=torch.float16,
             load_in_4bit=True
         ).to(device)
+        if use_lora:
+            model = merge_lora_model(model_name,model)
+            print('Merge Model Success!')
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH.OpenCoder,trust_remote_code=True)
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         tokenizer.pad_token = tokenizer.eos_token
@@ -115,7 +124,7 @@ def load_model_and_tokenizer(model_name,device,use_lora=False):
 def local_call(model_name,system_prompt,base_prompt,device,use_lora,is_save=True):
     model,tokenizer = load_model_and_tokenizer(model_name,device,use_lora)
     prompt = f'{system_prompt}\n\n{base_prompt}'
-    print(prompt)
+    # print(prompt)
     if model_name == 'QwenCoder_14b':
         # Generate
         inputs = tokenizer(prompt,return_tensors='pt').to(device)
@@ -129,6 +138,8 @@ def local_call(model_name,system_prompt,base_prompt,device,use_lora,is_save=True
         generated_content = tokenizer.decode(outputs[0], skip_special_tokens=True)
         pattern = re.escape(prompt)
         generated_content = re.sub(f'^{pattern}', '', generated_content, count=1).strip()
+        # TODO:二次提取
+        # generated_content作为输入 -> tokenizer -> model.generate
     elif model_name == 'DeepSeekCoder_Lite':
         messages=[
             { 'role': 'user', 'content': prompt}

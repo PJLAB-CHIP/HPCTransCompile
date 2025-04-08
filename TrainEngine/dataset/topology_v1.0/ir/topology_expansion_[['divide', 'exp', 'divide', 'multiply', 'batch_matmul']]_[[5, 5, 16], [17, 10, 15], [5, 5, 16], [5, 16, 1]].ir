@@ -1,0 +1,32 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((5, 5, 16), "float32"), ph_3: T.Buffer((5, 5, 16), "float32"), ph_8: T.Buffer((5, 16, 1), "float32"), T_divide: T.Buffer((5, 5, 16), "float32"), T_multiply: T.Buffer((5, 5, 16), "float32"), T_batch_matmul_NN: T.Buffer((5, 5, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        compute = T.allocate([400], "float32", "global")
+        auto_scheduler_layout_transform = T.allocate([80], "float32", "global")
+        ph_0_1 = T.Buffer((400,), data=ph_0.data)
+        for ax0_ax1_fused_ax2_fused in T.parallel(400):
+            T_divide_1 = T.Buffer((400,), data=T_divide.data)
+            ph_3_1 = T.Buffer((400,), data=ph_3.data)
+            T_divide_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] / ph_3_1[ax0_ax1_fused_ax2_fused]
+        compute_1 = T.Buffer((400,), data=compute)
+        for i0_i1_fused_i2_fused in T.parallel(400):
+            compute_1[i0_i1_fused_i2_fused] = T.exp(ph_0_1[i0_i1_fused_i2_fused])
+        for ax0_ax1_fused_ax2_fused in T.parallel(400):
+            T_multiply_1 = T.Buffer((400,), data=T_multiply.data)
+            T_multiply_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] / compute_1[ax0_ax1_fused_ax2_fused] * ph_0_1[ax0_ax1_fused_ax2_fused]
+        auto_scheduler_layout_transform_1 = T.Buffer((80,), data=auto_scheduler_layout_transform)
+        for ax4, ax7, ax8 in T.grid(8, 2, 5):
+            ph_8_1 = T.Buffer((80,), data=ph_8.data)
+            auto_scheduler_layout_transform_1[ax4 * 10 + ax7 * 5 + ax8] = ph_8_1[ax8 * 16 + ax4 * 2 + ax7]
+        T_batch_matmul_NN_1 = T.Buffer((25,), data=T_batch_matmul_NN.data)
+        for b_inner_init, i_inner_init in T.grid(5, 5):
+            T_batch_matmul_NN_1[b_inner_init * 5 + i_inner_init] = T.float32(0)
+        for k_outer, k_inner, b_inner, i_inner in T.grid(8, 2, 5, 5):
+            cse_var_2: T.int32 = b_inner * 5 + i_inner
+            cse_var_1: T.int32 = b_inner * 80 + i_inner * 16 + k_outer * 2 + k_inner
+            T_batch_matmul_NN_1[cse_var_2] = T_batch_matmul_NN_1[cse_var_2] + ph_0_1[cse_var_1] / compute_1[cse_var_1] * auto_scheduler_layout_transform_1[k_outer * 10 + k_inner * 5 + b_inner]

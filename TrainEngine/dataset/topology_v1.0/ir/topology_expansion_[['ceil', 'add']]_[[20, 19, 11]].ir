@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((20, 19, 11), "float32"), T_add: T.Buffer((20, 19, 11), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(380):
+            for ax2 in range(11):
+                cse_var_1: T.int32 = ax0_ax1_fused * 11 + ax2
+                T_add_1 = T.Buffer((4180,), data=T_add.data)
+                ph_0_1 = T.Buffer((4180,), data=ph_0.data)
+                T_add_1[cse_var_1] = ph_0_1[cse_var_1] + T.ceil(ph_0_1[cse_var_1])

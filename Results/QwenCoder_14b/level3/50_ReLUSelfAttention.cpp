@@ -3,8 +3,8 @@
 #include <vector>
 #include <cmath>
 #include <limits>
-#include <omp.h>
 
+// Function to apply shared bias kernel on CPU
 void shared_bias_cpu(
     float* att,
     const float* bias,
@@ -42,7 +42,7 @@ at::Tensor forward(
     const int64_t T = x.size(1);
     const int64_t C = x.size(2);
     const int64_t hs = C / n_head;
-    const float scale = 1.0f / sqrtf(hs);
+    const float scale = 1.0f / std::sqrt(hs);
 
     // Compute qkv projections
     at::Tensor qkv = at::addmm(c_attn_bias, x.view({B*T, C}), c_attn_weight.t()).view({B, T, 3*C});
@@ -59,7 +59,7 @@ at::Tensor forward(
     at::Tensor bias_slice = bias.slice(2, 0, T).slice(3, 0, T).contiguous();
     const float* bias_data = bias_slice.data_ptr<float>();
 
-    // Apply shared bias
+    // Apply shared bias kernel on CPU
     shared_bias_cpu(
         att.data_ptr<float>(),
         bias_data,

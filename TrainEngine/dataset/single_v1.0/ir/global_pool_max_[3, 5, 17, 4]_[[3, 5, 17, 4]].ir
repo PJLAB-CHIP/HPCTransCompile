@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((3, 5, 17, 4), "float32"), adaptive_pool_max: T.Buffer((3, 5, 1, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused_ax2_fused in T.parallel(15):
+            adaptive_pool_max_1 = T.Buffer((15,), data=adaptive_pool_max.data)
+            adaptive_pool_max_1[ax0_ax1_fused_ax2_fused] = T.float32(-3.4028234663852886e+38)
+            for rv0, rv1 in T.grid(17, 4):
+                data_1 = T.Buffer((1020,), data=data.data)
+                adaptive_pool_max_1[ax0_ax1_fused_ax2_fused] = T.max(adaptive_pool_max_1[ax0_ax1_fused_ax2_fused], data_1[ax0_ax1_fused_ax2_fused * 68 + rv0 * 4 + rv1])

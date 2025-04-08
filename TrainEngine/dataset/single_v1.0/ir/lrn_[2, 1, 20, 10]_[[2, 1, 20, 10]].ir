@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((2, 1, 20, 10), "float32"), T_divide: T.Buffer((2, 1, 20, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(2):
+            tensor = T.allocate([1], "float32", "global")
+            for ax2, ax3 in T.grid(20, 10):
+                cse_var_1: T.int32 = ax0 * 200 + ax2 * 10 + ax3
+                tensor_1 = T.Buffer((1,), data=tensor, align=4)
+                tensor_1[0] = T.float32(0)
+                data_1 = T.Buffer((400,), data=data.data)
+                tensor_1[0] = tensor_1[0] + data_1[cse_var_1] * data_1[cse_var_1]
+                T_divide_1 = T.Buffer((400,), data=T_divide.data)
+                T_divide_1[cse_var_1] = data_1[cse_var_1] / T.pow(T.float32(2) + T.float32(9.9999997473787516e-05) * tensor_1[0], T.float32(0.75))

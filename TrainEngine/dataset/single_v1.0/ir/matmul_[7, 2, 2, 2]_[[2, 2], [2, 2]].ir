@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(left_matrix: T.Buffer((2, 2), "float32"), right_matrix: T.Buffer((2, 2), "float32"), T_matmul: T.Buffer((2, 2), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax1_outer_outer_outer in range(2):
+            T_matmul_1 = T.Buffer((4,), data=T_matmul.data)
+            for ax0_inner_init in range(2):
+                T_matmul_1[ax0_inner_init * 2 + ax1_outer_outer_outer] = T.float32(0)
+            for k_inner, ax0_inner in T.grid(2, 2):
+                cse_var_2: T.int32 = ax0_inner * 2
+                cse_var_1: T.int32 = cse_var_2 + ax1_outer_outer_outer
+                left_matrix_1 = T.Buffer((4,), data=left_matrix.data)
+                right_matrix_1 = T.Buffer((4,), data=right_matrix.data)
+                T_matmul_1[cse_var_1] = T_matmul_1[cse_var_1] + left_matrix_1[cse_var_2 + k_inner] * right_matrix_1[k_inner * 2 + ax1_outer_outer_outer]

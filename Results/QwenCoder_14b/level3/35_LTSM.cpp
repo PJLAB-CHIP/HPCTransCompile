@@ -1,5 +1,6 @@
 #include <torch/extension.h>
 #include <cmath>
+#include <vector>
 #include <omp.h>
 
 namespace {
@@ -44,20 +45,21 @@ void linear_stride_kernel_cpu(
     int out_dim,
     int batch_size
 ) {
-#pragma omp parallel for collapse(2)
-    for(int b = 0; b < batch_size; ++b) {
-        for(int o = 0; o < out_dim; ++o) {
-            float sum = 0.0f;
-            const float* w_row = &weight[o * in_dim];
-            const float* x_row = &input[b * in_dim];
-            
-            for(int i = 0; i < in_dim; ++i) {
-                sum += x_row[i] * w_row[i];
-            }
-            
-            if(bias) sum += bias[o];
-            output[b * out_dim + o] = sum;
+#pragma omp parallel for
+    for(int idx = 0; idx < batch_size * out_dim; ++idx) {
+        const int b = idx / out_dim;
+        const int o = idx % out_dim;
+        
+        float sum = 0.0f;
+        const float* w_row = &weight[o * in_dim];
+        const float* x_row = &input[b * in_dim];
+        
+        for(int i = 0; i < in_dim; ++i) {
+            sum += x_row[i] * w_row[i];
         }
+        
+        if(bias) sum += bias[o];
+        output[idx] = sum;
     }
 }
 

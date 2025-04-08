@@ -1,0 +1,12 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(packed_out: T.Buffer((1, 2, 1, 13, 2), "float32"), output_unpack: T.Buffer((1, 4, 1, 13), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for c, w in T.grid(4, 13):
+            output_unpack_1 = T.Buffer((52,), data=output_unpack.data)
+            packed_out_1 = T.Buffer((52,), data=packed_out.data)
+            output_unpack_1[c * 13 + w] = packed_out_1[c // 2 * 26 + w * 2 + c % 2]

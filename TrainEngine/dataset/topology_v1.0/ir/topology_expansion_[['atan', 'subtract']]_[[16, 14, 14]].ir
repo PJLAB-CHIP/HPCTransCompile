@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((16, 14, 14), "float32"), T_subtract: T.Buffer((16, 14, 14), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(224):
+            for ax2 in range(14):
+                cse_var_1: T.int32 = ax0_ax1_fused * 14 + ax2
+                T_subtract_1 = T.Buffer((3136,), data=T_subtract.data)
+                ph_0_1 = T.Buffer((3136,), data=ph_0.data)
+                T_subtract_1[cse_var_1] = ph_0_1[cse_var_1] - T.atan(ph_0_1[cse_var_1])

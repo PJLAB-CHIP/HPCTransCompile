@@ -1,0 +1,26 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((16, 17, 17, 12), "float32"), adaptive_pool_avg: T.Buffer((16, 17, 8, 8), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(16):
+            adaptive_pool_sum = T.allocate([64], "float32", "global")
+            for ax1 in range(17):
+                adaptive_pool_sum_1 = T.Buffer((64,), data=adaptive_pool_sum)
+                for ax2, ax3 in T.grid(8, 8):
+                    adaptive_pool_sum_1[ax2 * 8 + ax3] = T.float32(0)
+                    for rv0, rv1 in T.grid(T.Let(T.Select((ax2 + 1) % 8 == 0, cse_var_1, cse_var_1 + 1) - ax2 * 2, where={cse_var_1: (ax2 * 17 + 17) // 8}), T.Let(T.Select((ax3 * 4 + 4) % 8 == 0, cse_var_2, cse_var_2 + 1) - ax3 * 12 // 8, where={cse_var_2: (ax3 * 3 + 3) // 2})):
+                        cse_var_1 = T.int32()
+                        cse_var_2 = T.int32()
+                        cse_var_3: T.int32 = ax2 * 8 + ax3
+                        data_1 = T.Buffer((55488,), data=data.data)
+                        adaptive_pool_sum_1[cse_var_3] = adaptive_pool_sum_1[cse_var_3] + data_1[ax0 * 3468 + ax1 * 204 + ax2 * 24 + rv0 * 12 + ax3 * 12 // 8 + rv1]
+                for ax2, ax3 in T.grid(8, 8):
+                    cse_var_6: T.int32 = ax2 * 8
+                    cse_var_5: T.int32 = (ax2 * 17 + 17) // 8
+                    cse_var_4: T.int32 = (ax3 * 3 + 3) // 2
+                    adaptive_pool_avg_1 = T.Buffer((17408,), data=adaptive_pool_avg.data)
+                    adaptive_pool_avg_1[ax0 * 1088 + ax1 * 64 + cse_var_6 + ax3] = adaptive_pool_sum_1[cse_var_6 + ax3] / (T.Cast("float32", T.Select((ax2 + 1) % 8 == 0, cse_var_5, cse_var_5 + 1) - ax2 * 2) * T.Cast("float32", T.Select((ax3 * 4 + 4) % 8 == 0, cse_var_4, cse_var_4 + 1) - ax3 * 12 // 8))

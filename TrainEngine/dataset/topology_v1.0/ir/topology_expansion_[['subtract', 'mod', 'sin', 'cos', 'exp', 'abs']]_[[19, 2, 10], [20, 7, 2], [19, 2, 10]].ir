@@ -1,0 +1,26 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((19, 2, 10), "float32"), ph_3: T.Buffer((19, 2, 10), "float32"), T_mod: T.Buffer((19, 2, 10), "float32"), compute: T.Buffer((19, 2, 10), "float32"), compute_1: T.Buffer((19, 2, 10), "float32"), compute_2: T.Buffer((19, 2, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((380,), data=ph_0.data)
+        for i0_i1_fused in T.parallel(38):
+            for i2 in range(10):
+                cse_var_1: T.int32 = i0_i1_fused * 10 + i2
+                compute_3 = T.Buffer((380,), data=compute.data)
+                compute_3[cse_var_1] = T.cos(T.sin(ph_0_1[cse_var_1]))
+        for i0_i1_fused in T.parallel(38):
+            for i2 in range(10):
+                cse_var_2: T.int32 = i0_i1_fused * 10 + i2
+                compute_3 = T.Buffer((380,), data=compute_1.data)
+                compute_3[cse_var_2] = T.exp(T.sin(ph_0_1[cse_var_2]))
+        ph_3_1 = T.Buffer((380,), data=ph_3.data)
+        for ax0_ax1_fused_ax2_fused in T.parallel(380):
+            T_mod_1 = T.Buffer((380,), data=T_mod.data)
+            T_mod_1[ax0_ax1_fused_ax2_fused] = T.truncmod(ph_0_1[ax0_ax1_fused_ax2_fused], ph_3_1[ax0_ax1_fused_ax2_fused])
+        for i0_i1_fused_i2_fused in T.parallel(380):
+            compute_3 = T.Buffer((380,), data=compute_2.data)
+            compute_3[i0_i1_fused_i2_fused] = T.fabs(ph_0_1[i0_i1_fused_i2_fused] - ph_3_1[i0_i1_fused_i2_fused])

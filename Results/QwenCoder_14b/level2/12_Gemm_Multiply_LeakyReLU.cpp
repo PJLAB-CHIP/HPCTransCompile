@@ -1,19 +1,22 @@
 #include <torch/extension.h>
-#include <omp.h>
+#include <pybind11/pybind11.h>
+#include <vector>
+#include <algorithm>
 
-float warp_reduce_sum(float val) {
-    #pragma omp parallel for reduction(+:val)
+// Function to perform warp reduction sum on CPU
+float warp_reduce_sum_cpu(float val) {
     for (int offset = 16; offset > 0; offset /= 2) {
         val += val;
     }
     return val;
 }
 
-void module_fn_cpu(
-    const float* x,
-    const float* weight,
-    const float* bias,
-    float* output,
+// CPU version of the module_fn_kernel
+void module_fn_kernel_cpu(
+    const std::vector<float>& x,
+    const std::vector<float>& weight,
+    const std::vector<float>& bias,
+    std::vector<float>& output,
     const int batch_size,
     const int in_features,
     const int out_features,
@@ -23,15 +26,15 @@ void module_fn_cpu(
     #pragma omp parallel for collapse(2)
     for (int row = 0; row < batch_size; ++row) {
         for (int col = 0; col < out_features; ++col) {
-            const float* x_row = x + row * in_features;
-            const float* weight_col = weight + col * in_features;
+            const float* x_row = &x[row * in_features];
+            const float* weight_col = &weight[col * in_features];
             
             float thread_sum = 0.0f;
             for (int k = 0; k < in_features; ++k) {
                 thread_sum += x_row[k] * weight_col[k];
             }
             
-            float sum = warp_reduce_sum(thread_sum);
+            float sum = warp_reduce_sum_cpu(thread_sum);
             
             sum += bias[col];
             sum *= multiplier;
@@ -40,7 +43,7 @@ void module_fn_cpu(
     }
 }
 
-torch::Tensor module_fn_forward(
+torch::Tensor module_fn_forward_cpu(
     torch::Tensor x,
     float multiplier,
     float negative_slope,
@@ -60,11 +63,16 @@ torch::Tensor module_fn_forward(
 
     auto output = torch::zeros({batch_size, out_features}, x.options());
 
-    module_fn_cpu(
-        x.data_ptr<float>(),
-        weight.data_ptr<float>(),
-        bias.data_ptr<float>(),
-        output.data_ptr<float>(),
+    std::vector<float> x_vec = x.accessor<float, 2>().flatten().vec();
+    std::vector<float> weight_vec = weight.accessor<float, 2>().flatten().vec();
+    std::vector<float> bias_vec = bias.accessor<float, 1>().vec();
+    std::vector<float> output_vec(batch_size * out_features);
+
+    module_fn_kernel_cpu(
+        x_vec,
+        weight_vec,
+        bias_vec,
+        output_vec,
         batch_size,
         in_features,
         out_features,
@@ -72,9 +80,13 @@ torch::Tensor module_fn_forward(
         negative_slope
     );
 
+    for (int i = 0; i < output_vec.size(); ++i) {
+        output.accessor<float, 2>()(i / out_features, i % out_features) = output_vec[i];
+    }
+
     return output;
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("forward", &module_fn_forward, "Module function forward CPU with warp primitives");
+    m.def("forward", &module_fn_forward_cpu, "Module function forward CPU");
 }

@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((3, 10), "float32"), PadInput: T.Buffer((6, 13), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(78):
+            cse_var_1: T.int32 = i0_i1_fused % 13
+            PadInput_1 = T.Buffer((78,), data=PadInput.data)
+            data_1 = T.Buffer((30,), data=data.data)
+            PadInput_1[i0_i1_fused] = T.if_then_else(13 <= i0_i1_fused and i0_i1_fused < 52 and 2 <= cse_var_1 and cse_var_1 < 12, data_1[i0_i1_fused // 13 * 10 + cse_var_1 - 12], T.float32(0))
