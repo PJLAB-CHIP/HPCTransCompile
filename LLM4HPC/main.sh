@@ -1,9 +1,26 @@
 #### QwenCoder_14b ####
-#!/bin/bash
 
-python main.py --model_name QwenCoder_14b --level level2 --action translation_c --device cuda:1 --range left --use_lora True
+set -e
 
-python main.py --model_name QwenCoder_14b --level level1 --action translation_c --device cuda:0 --range left --use_lora True
+export CUDA_VISIBLE_DEVICES=1
+
+# # tmux opencoder-infer
+# python main.py --model_name OpenCoder --level level1 --action translation_c --device cuda:1 --range left
+# python main.py --model_name OpenCoder --level level2 --action translation_c --device cuda:1 --range left  --use_lora True
+
+# # tmux opencoder-infer-2 [DONE]
+# python main.py --model_name OpenCoder --level level3 --action translation_c --device cuda:2 --range left --use_lora True
+
+# # tmux opencoder-infer-3
+python main.py --model_name DeepSeekCoder_Lite --level level1 --action translation_c --device cuda:0 --range left --use_lora True
+# python main.py --model_name DeepSeekCoder_Lite --level level2 --action translation_c --device cuda:4 --range left --use_lora True
+
+# # tmux opencoder-infer-4
+# python main.py --model_name DeepSeekCoder_Lite --level level3 --action translation_c --device cuda:5 --range left --use_lora True
+# python main.py --model_name DeepSeekCoder_Lite --level level1 --action translation_c --device cuda:5 --range left
+# python main.py --model_name DeepSeekCoder_Lite --level level2 --action translation_c --device cuda:5 --range left
+# python main.py --model_name DeepSeekCoder_Lite --level level3 --action translation_c --device cuda:5 --range left
+
 # python main.py --model_name QwenCoder_14b --level level2 --action translation_c --device cuda:4 --range all
 # python main.py --model_name QwenCoder_14b --level level3 --action translation_c --device cuda:5 --range all
 

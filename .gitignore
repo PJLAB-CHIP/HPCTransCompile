@@ -1,7 +1,8 @@
 Results/
 LLM4HPC/results
 LLM4HPC/benchmark
-LLM4HPC/AI_CUDA_Engineer
+LLM4HPC/AI_CUDA_Engineer/*
+!LLM4HPC/AI_CUDA_Engineer/prompts
 LLM4HPC/AI-CUDA-Engineer-Archive/
 OpSample/
 __pycache__
@@ -9,3 +10,6 @@ __pycache__
 *.pdf
 nohup.out
 checkpoint*
+/HPCTransEval
+.vscode
+/tmp

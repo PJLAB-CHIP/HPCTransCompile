@@ -39,6 +39,7 @@ def print_trainable_parameters(model):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=str, default='QwenCoder_14b.yaml', help='Path to the config file')
+parser.add_argument('--ratio',type=int,default=100)
 args = parser.parse_args()
 
 config_dir = './config/'
@@ -99,6 +100,8 @@ def main():
     model_path = config.model.model_path
     dataset = load_dataset("json",data_files=data_path,split="train")
     print('====Dataset====')
+    if args.ratio != 100:
+        dataset = dataset.train_test_split(test_size=args.ratio/100,seed=42)['test']
     print(dataset)
     print('=========')
     # Model & Tokenizer
@@ -148,7 +151,7 @@ def main():
     start_time = time.time()
     trainer.train()
 
-    trainer.model.save_pretrained(os.path.join(config.model.lora_save_model, config.model.model_name))
+    trainer.model.save_pretrained(os.path.join(config.model.lora_save_model, f'{config.model.model_name}_{args.ratio}'))
     model.config.use_cache = True
     end_time = time.time()
     print("训练结束")

@@ -1,0 +1,5 @@
+```cuda
+{EXAMPLES}
+```
+
+Now, translate the CUDA kernel code into CPU C code. Print only ONE single C function implementation,

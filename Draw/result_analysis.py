@@ -8,7 +8,7 @@ import csv
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name',type=str,default='QwenCoder_14b_lora')
+    parser.add_argument('--model_name',type=str,default='QwenCoder_14b_75')
     parser.add_argument('--level',type=str,default='level3')
     return parser.parse_args()
 

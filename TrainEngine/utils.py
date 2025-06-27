@@ -3,29 +3,25 @@ import json
 
 PROMPT = """You are a software engineer tasked with translating CUDA kernel code into C++ CPU code.
 
-Translate the CUDA kernel code (in <cuda> tags) into C++ CPU code.
+Translate the CUDA kernel code (in "```cuda" tags) into C++ CPU code.
 
 <instructions> 
 - Write C++ code that performs the **exact same operation** as the CUDA kernel code. 
 - Ensure that the CPU implementation preserves all numerical precision and functionality. 
 - The code must be written in a multi-threaded manner using **OpenMP** or another CPU parallelism library, if appropriate. 
 - Pay attention to the differences in data type definitions between CUDA and CPU platforms.
-- Return the code between `<cpu></cpu>` tags. 
+- Return the code in "```cpu" tags. 
 </instructions>
 
-<cuda>
-```cpp
+```cuda
 {CUDA_CODE}
 ```
-</cuda>
 
 Now, translate the CUDA kernel code into C++ CPU code."""
 
-COMPLETION = """<cpu>
-```cpp
+COMPLETION = """```cpp
 {CPU_CODE}
 ```
-</cpu>
 """
 
 

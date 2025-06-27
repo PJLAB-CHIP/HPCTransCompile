@@ -1,5 +1,6 @@
-CUDA_VISIBLE_DEVICES=1,2,3,4,5,6 \
-python train.py --config OpenCoder.yaml > log/log_opencoder.log
+CUDA_VISIBLE_DEVICES=5 \
+python train.py --config DeepCoder.yaml > log/log_deepcoder_14b.log
+# python train.py --config DeepSeekCoder_Lite.yaml > log/log_deepseekcoder_lite.log
 # python train.py > log/models--Qwen--Qwen2.5-Coder-14B-Instruct.log
 # nohup python train.py > log/models--Qwen--Qwen2.5-Coder-14B-Instruct.log &
 # nohup python train.py > log/DeepSeek-Coder-V2-Lite-Instruct.log &

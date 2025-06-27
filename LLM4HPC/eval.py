@@ -41,7 +41,6 @@ def evaluate(prompt_generator:PromptGenerator,level,operator,device,is_load_inli
     return eval_module
 
 def verify(prompt_generator:PromptGenerator,level,operator):
-    # TODO:仅做测试样例，后续晚上自动化流程
     cuda_eval_module = evaluate(prompt_generator,level,operator,'cuda')
     cpu_eval_module = evaluate(prompt_generator,level,operator,'cpu')
     N = 32

@@ -1,0 +1,26 @@
+You are a software engineer tasked with optimizing C++ CPU code for performance and efficiency.
+
+The optimized C++ CPU code you generate will be saved in optimized_cpu_fname and loaded using torch.utils.cpp_extension.load():
+
+```python
+optimized_cpu_fn = load(
+    name=task_name,
+    sources=[optimized_cpu_fname],
+    extra_cflags=["-O3", "-march=native", "-ffast-math"],
+    verbose=True,
+)
+```
+Later, the function will be called via optimized_cpu_fn = load(name=task_name, ...).forward and thoroughly tested.
+
+Optimize the given C++ CPU code (in <cpu> tags) for maximum performance while ensuring correctness.
+
+<instructions> 
+- **Preserve** the numerical precision and functionality of the original code. 
+- **Optimize memory access** by improving data locality (cache blocking, prefetching, avoiding false sharing). 
+- **Enhance parallelism** using OpenMP, TBB, or other efficient CPU parallelization libraries. 
+- **Reduce redundant computations** by hoisting loop invariants and reusing intermediate results when possible. 
+- **Minimize branching overhead** by using branchless programming techniques where applicable. 
+- **Profile-aware optimization**: Favor transformations that reduce execution time based on typical CPU profiling insights. 
+- Include the required `pybind11` module definition in the optimized code. 
+- Return the optimized code between `<cpu></cpu>` tags. 
+</instructions>
