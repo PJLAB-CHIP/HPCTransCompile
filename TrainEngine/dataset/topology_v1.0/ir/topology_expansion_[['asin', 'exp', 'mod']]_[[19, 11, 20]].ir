@@ -1,0 +1,25 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((19, 11, 20), "float32"), compute: T.Buffer((19, 11, 20), "float32"), T_mod: T.Buffer((19, 11, 20), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((4180,), data=ph_0.data)
+        for i0 in T.parallel(19):
+            for i1, i2 in T.grid(11, 20):
+                cse_var_1: T.int32 = i0 * 220 + i1 * 20 + i2
+                compute_1 = T.Buffer((4180,), data=compute.data)
+                compute_1[cse_var_1] = T.asin(ph_0_1[cse_var_1])
+        for ax0 in T.parallel(19):
+            compute_1 = T.allocate([220], "float32", "global")
+            compute_2 = T.Buffer((220,), data=compute_1)
+            for i1, i2 in T.grid(11, 20):
+                cse_var_2: T.int32 = i1 * 20
+                compute_2[cse_var_2 + i2] = T.exp(ph_0_1[ax0 * 220 + cse_var_2 + i2])
+            for ax1, ax2 in T.grid(11, 20):
+                cse_var_4: T.int32 = ax1 * 20
+                cse_var_3: T.int32 = ax0 * 220 + cse_var_4 + ax2
+                T_mod_1 = T.Buffer((4180,), data=T_mod.data)
+                T_mod_1[cse_var_3] = T.truncmod(compute_2[cse_var_4 + ax2], ph_0_1[cse_var_3])

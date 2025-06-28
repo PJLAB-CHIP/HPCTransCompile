@@ -1,0 +1,26 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((2, 5, 2), "float32"), ph_4: T.Buffer((2, 2, 1), "float32"), compute: T.Buffer((2, 5, 2), "float32"), T_batch_matmul_NN: T.Buffer((2, 5, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([4], "float32", "global")
+        ph_0_1 = T.Buffer((20,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(20):
+            compute_1 = T.Buffer((20,), data=compute.data)
+            compute_1[i0_i1_fused_i2_fused] = T.asin(ph_0_1[i0_i1_fused_i2_fused])
+        auto_scheduler_layout_transform_1 = T.Buffer((4,), data=auto_scheduler_layout_transform, align=16)
+        for ax0_ax1_fused_ax2_fused in T.parallel(2):
+            for ax4 in range(2):
+                cse_var_1: T.int32 = ax0_ax1_fused_ax2_fused * 2 + ax4
+                ph_4_1 = T.Buffer((4,), data=ph_4.data)
+                auto_scheduler_layout_transform_1[cse_var_1] = ph_4_1[cse_var_1]
+        for b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused in T.parallel(2):
+            T_batch_matmul_NN_1 = T.Buffer((10,), data=T_batch_matmul_NN.data)
+            for i_outer_inner_init in range(5):
+                T_batch_matmul_NN_1[b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused * 5 + i_outer_inner_init] = T.float32(0)
+            for k_outer, i_outer_inner in T.grid(2, 5):
+                cse_var_2: T.int32 = b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused * 5 + i_outer_inner
+                T_batch_matmul_NN_1[cse_var_2] = T_batch_matmul_NN_1[cse_var_2] + T.asinh(ph_0_1[b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused * 10 + i_outer_inner * 2 + k_outer]) * auto_scheduler_layout_transform_1[b_outer_outer_outer_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused * 2 + k_outer]

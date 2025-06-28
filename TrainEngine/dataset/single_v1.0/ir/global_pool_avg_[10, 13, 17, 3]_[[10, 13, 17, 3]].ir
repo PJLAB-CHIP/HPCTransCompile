@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((10, 13, 17, 3), "float32"), adaptive_pool_avg: T.Buffer((10, 13, 1, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(10):
+            adaptive_pool_sum = T.allocate([1], "float32", "global")
+            for ax1 in range(13):
+                adaptive_pool_sum_1 = T.Buffer((1,), data=adaptive_pool_sum, align=4)
+                adaptive_pool_sum_1[0] = T.float32(0)
+                for rv0, rv1 in T.grid(17, 3):
+                    data_1 = T.Buffer((6630,), data=data.data)
+                    adaptive_pool_sum_1[0] = adaptive_pool_sum_1[0] + data_1[ax0 * 663 + ax1 * 51 + rv0 * 3 + rv1]
+                adaptive_pool_avg_1 = T.Buffer((130,), data=adaptive_pool_avg.data)
+                adaptive_pool_avg_1[ax0 * 13 + ax1] = adaptive_pool_sum_1[0] * T.float32(0.019607843137254902)

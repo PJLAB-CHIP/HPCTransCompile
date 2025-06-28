@@ -1,0 +1,24 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((17, 15, 7), "float32"), ph_8: T.Buffer((17, 7, 1), "float32"), compute: T.Buffer((17, 15, 7), "float32"), T_batch_matmul_NN: T.Buffer((17, 15, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([119], "float32", "global")
+        ph_0_1 = T.Buffer((1785,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(1785):
+            compute_1 = T.Buffer((1785,), data=compute.data)
+            compute_1[i0_i1_fused_i2_fused] = T.asinh(T.truncmod(ph_0_1[i0_i1_fused_i2_fused], ph_0_1[i0_i1_fused_i2_fused] + ph_0_1[i0_i1_fused_i2_fused] * T.fabs(ph_0_1[i0_i1_fused_i2_fused]) / ph_0_1[i0_i1_fused_i2_fused]))
+        auto_scheduler_layout_transform_1 = T.Buffer((119,), data=auto_scheduler_layout_transform)
+        for ax4, ax8 in T.grid(7, 17):
+            ph_8_1 = T.Buffer((119,), data=ph_8.data)
+            auto_scheduler_layout_transform_1[ax4 * 17 + ax8] = ph_8_1[ax8 * 7 + ax4]
+        T_batch_matmul_NN_1 = T.Buffer((255,), data=T_batch_matmul_NN.data)
+        for i_outer_inner_init, b_inner_init, i_inner_init in T.grid(5, 17, 3):
+            T_batch_matmul_NN_1[b_inner_init * 15 + i_outer_inner_init * 3 + i_inner_init] = T.float32(0)
+        for k_outer, i_outer_inner, b_inner, i_inner in T.grid(7, 5, 17, 3):
+            cse_var_2: T.int32 = b_inner * 15 + i_outer_inner * 3 + i_inner
+            cse_var_1: T.int32 = b_inner * 105 + i_outer_inner * 21 + i_inner * 7 + k_outer
+            T_batch_matmul_NN_1[cse_var_2] = T_batch_matmul_NN_1[cse_var_2] + T.truncmod(ph_0_1[cse_var_1], ph_0_1[cse_var_1] + ph_0_1[cse_var_1] * T.fabs(ph_0_1[cse_var_1]) / ph_0_1[cse_var_1]) * auto_scheduler_layout_transform_1[k_outer * 17 + b_inner]

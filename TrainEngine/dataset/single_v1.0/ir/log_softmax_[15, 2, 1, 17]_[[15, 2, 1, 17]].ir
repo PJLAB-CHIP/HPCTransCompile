@@ -1,0 +1,25 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((15, 2, 1, 17), "float32"), compute: T.Buffer((15, 2, 1, 17), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_softmax_maxelem = T.allocate([30], "float32", "global")
+        compute_1 = T.allocate([1], "float32", "global")
+        T_softmax_maxelem_1 = T.Buffer((30,), data=T_softmax_maxelem)
+        data_1 = T.Buffer((510,), data=data.data)
+        for i0, i1 in T.grid(15, 2):
+            T_softmax_maxelem_1[i0 * 2 + i1] = T.float32(-3.4028234663852886e+38)
+            for k in range(17):
+                cse_var_1: T.int32 = i0 * 2 + i1
+                T_softmax_maxelem_1[cse_var_1] = T.max(T_softmax_maxelem_1[cse_var_1], data_1[i0 * 34 + i1 * 17 + k])
+        for i3_outer_outer_inner, i0_outer_inner, i1_outer_inner in T.grid(17, 15, 2):
+            cse_var_2: T.int32 = i0_outer_inner * 34 + i1_outer_inner * 17 + i3_outer_outer_inner
+            compute_2 = T.Buffer((1,), data=compute_1, align=4)
+            compute_2[0] = T.float32(0)
+            for k in range(17):
+                compute_2[0] = compute_2[0] + T.exp(data_1[i0_outer_inner * 34 + i1_outer_inner * 17 + k] - T_softmax_maxelem_1[i0_outer_inner * 2 + i1_outer_inner])
+            compute_3 = T.Buffer((510,), data=compute.data)
+            compute_3[cse_var_2] = data_1[cse_var_2] - T_softmax_maxelem_1[i0_outer_inner * 2 + i1_outer_inner] - T.log(compute_2[0])

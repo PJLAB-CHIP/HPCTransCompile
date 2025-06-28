@@ -1,0 +1,8 @@
+
+    extern "C" __global__ void __launch_bounds__(36) default_function_kernel(float* __restrict__ data, float* __restrict__ resize) {
+  resize[((((int)blockIdx.x) * 36) + ((int)threadIdx.x))] = data[((((((int)blockIdx.x) / 40) * 360) + (((((int)blockIdx.x) % 40) / 2) * 18)) + (((int)threadIdx.x) / 2))];
+}
+
+
+    Translate the above CUDA code to CPU C code, the input tensor shape is [[11, 1, 20, 18]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
+    

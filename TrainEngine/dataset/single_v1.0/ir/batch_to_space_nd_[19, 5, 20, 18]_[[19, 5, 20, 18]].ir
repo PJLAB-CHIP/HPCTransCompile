@@ -1,0 +1,24 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((19, 5, 20, 18), "float32"), T_strided_slice: T.Buffer((4, 10, 40, 18), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused_ax2_fused in T.parallel(1600):
+            T_reshape = T.allocate([18], "float32", "global")
+            T_reshape_1 = T.allocate([18], "float32", "global")
+            T_transpose = T.allocate([1], "float32", "global")
+            T_reshape_2 = T.Buffer((18,), data=T_reshape)
+            for ax5 in range(18):
+                data_1 = T.Buffer((34200,), data=data.data)
+                T_reshape_2[ax5] = data_1[ax0_ax1_fused_ax2_fused % 80 // 40 * 14400 + ax0_ax1_fused_ax2_fused % 2 * 7200 + ax0_ax1_fused_ax2_fused // 80 * 360 + ax0_ax1_fused_ax2_fused % 40 // 2 * 18 + ax5]
+            T_reshape_3 = T.Buffer((18,), data=T_reshape_1)
+            for ax3 in range(18):
+                T_transpose_1 = T.Buffer((1,), data=T_transpose, align=4)
+                T_transpose_1[0] = T_reshape_2[ax3]
+                T_reshape_3[ax3] = T_transpose_1[0]
+            for ax3 in range(18):
+                T_strided_slice_1 = T.Buffer((28800,), data=T_strided_slice.data)
+                T_strided_slice_1[ax0_ax1_fused_ax2_fused * 18 + ax3] = T_reshape_3[ax3]

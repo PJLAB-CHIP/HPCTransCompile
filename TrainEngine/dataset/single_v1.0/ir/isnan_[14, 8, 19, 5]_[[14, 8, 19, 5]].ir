@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((14, 8, 19, 5), "float32"), compute: T.Buffer((14, 8, 19, 5), "bool")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(112):
+            for i2, i3_s in T.grid(19, 5):
+                cse_var_1: T.int32 = i0_i1_fused * 95 + i2 * 5 + i3_s
+                compute_1 = T.Buffer((10640,), "int8", data=compute.data)
+                data_1 = T.Buffer((10640,), data=data.data)
+                compute_1[cse_var_1] = T.Cast("int8", T.isnan(data_1[cse_var_1]))

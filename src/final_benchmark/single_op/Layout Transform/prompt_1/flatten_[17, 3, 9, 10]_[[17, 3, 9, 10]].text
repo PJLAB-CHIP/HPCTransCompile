@@ -1,0 +1,10 @@
+
+    Task: Translate the given CUDA code to its equivalent High performace CPU C code.  
+    Context: You are provided with a CUDA code snippet that needs to be translated into CPU C code. The translation should preserve the same functionality as much as possible. Focus on translating the CUDA-specific parallel constructs into the constructs supported by CPU, such as using OpenMP for parallelism. The resulting CPU C code should be complete and ready to compile. 
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(30) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 30) + ((int)threadIdx.x))] = data[((((int)blockIdx.x) * 30) + ((int)threadIdx.x))];
+}
+
+
+    Ihe input tensor shape is [[17, 3, 9, 10]] respectively, Print only single C function implementation, end with comment '|End-of-Code|'.
+    

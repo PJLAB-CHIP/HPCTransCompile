@@ -1,0 +1,19 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((12, 5, 4, 17), "float32"), data_red: T.Buffer((), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        data_red_rf = T.allocate([16], "float32", "global")
+        data_red_rf_1 = T.Buffer((16,), data=data_red_rf)
+        for k0_k1_fused_k2_fused_k3_fused_inner_init in range(16):
+            data_red_rf_1[k0_k1_fused_k2_fused_k3_fused_inner_init] = T.float32(0)
+        for k0_k1_fused_k2_fused_k3_fused_outer, k0_k1_fused_k2_fused_k3_fused_inner in T.grid(255, 16):
+            data_1 = T.Buffer((4080,), data=data.data)
+            data_red_rf_1[k0_k1_fused_k2_fused_k3_fused_inner] = data_red_rf_1[k0_k1_fused_k2_fused_k3_fused_inner] + data_1[k0_k1_fused_k2_fused_k3_fused_outer * 16 + k0_k1_fused_k2_fused_k3_fused_inner]
+        data_red_1 = T.Buffer((1,), data=data_red.data)
+        data_red_1[0] = T.float32(0)
+        for k0_k1_fused_k2_fused_k3_fused_inner_v in range(16):
+            data_red_1[0] = data_red_1[0] + data_red_rf_1[k0_k1_fused_k2_fused_k3_fused_inner_v]

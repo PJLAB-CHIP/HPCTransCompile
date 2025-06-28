@@ -1,0 +1,8 @@
+
+    extern "C" __global__ void __launch_bounds__(32) default_function_kernel(float* __restrict__ T_add, float* __restrict__ data, float* __restrict__ data_1) {
+  T_add[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = (sqrtf(data[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]) + __cosf(data_1[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]));
+}
+
+
+    Translate the above CUDA code to CPU C code, the input tensor shape is [[14, 4, 7, 16], [14, 4, 7, 16]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
+    

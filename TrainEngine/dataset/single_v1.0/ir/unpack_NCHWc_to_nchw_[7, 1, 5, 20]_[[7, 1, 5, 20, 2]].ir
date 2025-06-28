@@ -1,0 +1,12 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(packed_out: T.Buffer((7, 1, 5, 20, 2), "float32"), output_unpack: T.Buffer((7, 2, 5, 20), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for n_c_fused_h_fused_w_fused in T.parallel(1400):
+            output_unpack_1 = T.Buffer((1400,), data=output_unpack.data)
+            packed_out_1 = T.Buffer((1400,), data=packed_out.data)
+            output_unpack_1[n_c_fused_h_fused_w_fused] = packed_out_1[n_c_fused_h_fused_w_fused // 200 * 200 + n_c_fused_h_fused_w_fused % 100 * 2 + n_c_fused_h_fused_w_fused % 200 // 100]

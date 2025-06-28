@@ -1,0 +1,27 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((12, 1, 5, 10), "float32"), T_softmax_norm: T.Buffer((12, 1, 5, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(12):
+            T_softmax_exp = T.allocate([10], "float32", "global")
+            T_softmax_maxelem = T.allocate([1], "float32", "global")
+            T_softmax_expsum = T.allocate([1], "float32", "global")
+            for i2, i3 in T.grid(5, 10):
+                T_softmax_exp_1 = T.Buffer((10,), data=T_softmax_exp, align=32)
+                for i3_1 in range(10):
+                    T_softmax_maxelem_1 = T.Buffer((1,), data=T_softmax_maxelem, align=4)
+                    T_softmax_maxelem_1[0] = T.float32(-3.4028234663852886e+38)
+                    data_1 = T.Buffer((600,), data=data.data)
+                    for k in range(10):
+                        T_softmax_maxelem_1[0] = T.max(T_softmax_maxelem_1[0], data_1[i0_i1_fused * 50 + i2 * 10 + k])
+                    T_softmax_exp_1[i3_1] = T.exp(data_1[i0_i1_fused * 50 + i2 * 10 + i3_1] - T_softmax_maxelem_1[0])
+                T_softmax_expsum_1 = T.Buffer((1,), data=T_softmax_expsum, align=4)
+                T_softmax_expsum_1[0] = T.float32(0)
+                for k in range(10):
+                    T_softmax_expsum_1[0] = T_softmax_expsum_1[0] + T_softmax_exp_1[k]
+                T_softmax_norm_1 = T.Buffer((600,), data=T_softmax_norm.data)
+                T_softmax_norm_1[i0_i1_fused * 50 + i2 * 10 + i3] = T_softmax_exp_1[i3] / T_softmax_expsum_1[0]

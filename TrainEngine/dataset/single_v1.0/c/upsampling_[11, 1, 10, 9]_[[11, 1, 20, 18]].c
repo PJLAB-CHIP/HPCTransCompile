@@ -1,0 +1,11 @@
+void default_function_kernel(float* data, float* resize) {
+  #pragma omp parallel for
+  for (int32_t i0 = 0; i0 < 11; ++i0) {
+    for (int32_t i2 = 0; i2 < 40; ++i2) {
+      for (int32_t i3 = 0; i3 < 36; ++i3) {
+        resize[(((i0 * 1440) + (i2 * 36)) + i3)] = data[(((i0 * 360) + ((i2 / 2) * 18)) + (i3 / 2))];
+      }
+    }
+  }
+}
+

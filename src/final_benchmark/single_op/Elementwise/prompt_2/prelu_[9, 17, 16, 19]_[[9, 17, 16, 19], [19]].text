@@ -1,0 +1,8 @@
+
+    extern "C" __global__ void __launch_bounds__(38) default_function_kernel(float* __restrict__ Scale, float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 38) + ((int)threadIdx.x))] = ((0.000000e+00f < data[((((int)blockIdx.x) * 38) + ((int)threadIdx.x))]) ? data[((((int)blockIdx.x) * 38) + ((int)threadIdx.x))] : (data[((((int)blockIdx.x) * 38) + ((int)threadIdx.x))] * Scale[(((int)threadIdx.x) % 19)]));
+}
+
+
+    Translate the above CUDA code to CPU C code, the input tensor shape is [[9, 17, 16, 19], [19]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
+    

@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((2, 1, 15, 16), "float32"), Scale: T.Buffer((1,), "float32"), Shift: T.Buffer((1,), "float32"), ScaleShift: T.Buffer((2, 1, 15, 16), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i_outer_outer_outer, j_outer_outer_outer, j_outer_outer_inner, i_outer_inner, j_outer_inner, b_inner in T.grid(3, 4, 2, 5, 2, 2):
+            cse_var_1: T.int32 = b_inner * 240 + i_outer_outer_outer * 80 + i_outer_inner * 16 + j_outer_outer_outer * 4 + j_outer_outer_inner * 2 + j_outer_inner
+            ScaleShift_1 = T.Buffer((480,), data=ScaleShift.data)
+            data_1 = T.Buffer((480,), data=data.data)
+            ScaleShift_1[cse_var_1] = data_1[cse_var_1] * Scale[0] + Shift[0]

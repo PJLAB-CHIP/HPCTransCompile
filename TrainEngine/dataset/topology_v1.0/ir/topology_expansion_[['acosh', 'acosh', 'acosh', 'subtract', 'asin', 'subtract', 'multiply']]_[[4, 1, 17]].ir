@@ -1,0 +1,25 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((4, 1, 17), "float32"), compute: T.Buffer((4, 1, 17), "float32"), T_subtract: T.Buffer((4, 1, 17), "float32"), T_subtract_1: T.Buffer((4, 1, 17), "float32"), T_multiply: T.Buffer((4, 1, 17), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((68,), data=ph_0.data)
+        for i0 in T.parallel(4):
+            for i2 in range(17):
+                cse_var_1: T.int32 = i0 * 17 + i2
+                compute_1 = T.Buffer((68,), data=compute.data)
+                compute_1[cse_var_1] = T.acosh(ph_0_1[cse_var_1])
+        for ax0_ax1_fused_ax2_fused in T.parallel(68):
+            T_subtract_2 = T.Buffer((68,), data=T_subtract.data)
+            T_subtract_2[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] - T.acosh(T.acosh(ph_0_1[ax0_ax1_fused_ax2_fused]))
+        for ax0 in T.parallel(4):
+            for ax2 in range(17):
+                cse_var_2: T.int32 = ax0 * 17 + ax2
+                T_subtract_2 = T.Buffer((68,), data=T_subtract_1.data)
+                T_subtract_2[cse_var_2] = T.asin(ph_0_1[cse_var_2]) - ph_0_1[cse_var_2]
+        for ax0_ax1_fused_ax2_fused in T.parallel(68):
+            T_multiply_1 = T.Buffer((68,), data=T_multiply.data)
+            T_multiply_1[ax0_ax1_fused_ax2_fused] = T.asin(ph_0_1[ax0_ax1_fused_ax2_fused]) * ph_0_1[ax0_ax1_fused_ax2_fused]

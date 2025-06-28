@@ -1,0 +1,96 @@
+
+    Task: Translate the given CUDA code to its equivalent high-performance CPU C code.
+    Context: You are provided with a CUDA code snippet that needs to be translated into CPU C code. The translation should preserve the same functionality as much as possible. Focus on translating the CUDA-specific parallel constructs into constructs supported by the CPU, such as using OpenMP for parallelism. The resulting CPU C code should be complete and ready to compile.
+
+    Example 1:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(18) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 18) + ((int)threadIdx.x))] = atanf(data[((((int)blockIdx.x) * 18) + ((int)threadIdx.x))]);
+}
+
+
+    Input Tensor Shape: [[17, 12, 7, 9]]
+    Output C Code: void default_function_kernel(float* compute, float* data) {
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_i2_fused = 0; i0_i1_fused_i2_fused < 1428; ++i0_i1_fused_i2_fused) {
+    for (int32_t i3_s = 0; i3_s < 9; ++i3_s) {
+      compute[((i0_i1_fused_i2_fused * 9) + i3_s)] = atanf(data[((i0_i1_fused_i2_fused * 9) + i3_s)]);
+    }
+  }
+}
+
+
+    //|End-of-Code|
+
+    Example 2:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(2) default_function_kernel(float* __restrict__ T_matmul, float* __restrict__ left_matrix, float* __restrict__ right_matrix) {
+  float T_matmul_local[2];
+  __shared__ float left_matrix_shared[4];
+  __shared__ float right_matrix_shared[4];
+  T_matmul_local[0] = 0.000000e+00f;
+  T_matmul_local[1] = 0.000000e+00f;
+  for (int ax0_ax1_fused_outer_outer = 0; ax0_ax1_fused_outer_outer < 2; ++ax0_ax1_fused_outer_outer) {
+    left_matrix_shared[((ax0_ax1_fused_outer_outer * 2) + ((int)threadIdx.x))] = left_matrix[((ax0_ax1_fused_outer_outer * 2) + ((int)threadIdx.x))];
+  }
+  for (int ax0_ax1_fused_outer_outer_1 = 0; ax0_ax1_fused_outer_outer_1 < 2; ++ax0_ax1_fused_outer_outer_1) {
+    right_matrix_shared[((ax0_ax1_fused_outer_outer_1 * 2) + ((int)threadIdx.x))] = right_matrix[((ax0_ax1_fused_outer_outer_1 * 2) + ((int)threadIdx.x))];
+  }
+  __syncthreads();
+  for (int k_inner = 0; k_inner < 2; ++k_inner) {
+    T_matmul_local[0] = (T_matmul_local[0] + (left_matrix_shared[((((int)threadIdx.x) * 2) + k_inner)] * right_matrix_shared[(k_inner * 2)]));
+    T_matmul_local[1] = (T_matmul_local[1] + (left_matrix_shared[((((int)threadIdx.x) * 2) + k_inner)] * right_matrix_shared[((k_inner * 2) + 1)]));
+  }
+  T_matmul[(((int)threadIdx.x) * 2)] = T_matmul_local[0];
+  T_matmul[((((int)threadIdx.x) * 2) + 1)] = T_matmul_local[1];
+}
+
+
+    Input Tensor Shape: [[2, 2], [2, 2]]
+    Output C Code: void default_function_kernel(float* T_matmul, float* left_matrix, float* right_matrix) {
+  for (int32_t ax1_outer_outer_outer = 0; ax1_outer_outer_outer < 2; ++ax1_outer_outer_outer) {
+    for (int32_t ax0_inner_init = 0; ax0_inner_init < 2; ++ax0_inner_init) {
+      T_matmul[((ax0_inner_init * 2) + ax1_outer_outer_outer)] = 0.000000e+00f;
+    }
+    for (int32_t k_inner = 0; k_inner < 2; ++k_inner) {
+      for (int32_t ax0_inner = 0; ax0_inner < 2; ++ax0_inner) {
+        T_matmul[((ax0_inner * 2) + ax1_outer_outer_outer)] = (T_matmul[((ax0_inner * 2) + ax1_outer_outer_outer)] + (left_matrix[((ax0_inner * 2) + k_inner)] * right_matrix[((k_inner * 2) + ax1_outer_outer_outer)]));
+      }
+    }
+  }
+}
+
+
+    //|End-of-Code|
+
+    Now translate the following CUDA code to its equivalent high-performance CPU C code:
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(32) default_function_kernel_1(float* __restrict__ T_softmax_expsum, float* __restrict__ T_softmax_maxelem, float* __restrict__ data) {
+  if (((((int)blockIdx.x) * 8) + (((int)threadIdx.x) >> 2)) < 195) {
+    T_softmax_expsum[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = 0.000000e+00f;
+  }
+  for (int k = 0; k < 15; ++k) {
+    if (((((int)blockIdx.x) * 8) + (((int)threadIdx.x) >> 2)) < 195) {
+        int v_ = ((int)(floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) + 1.270000e+02f)) << 23;
+      T_softmax_expsum[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] = (T_softmax_expsum[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))] + max(((*(float *)(&(v_))) * ((((((((((((((1.987569e-04f * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.398200e-03f) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 8.333452e-03f) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 4.166580e-02f) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.666667e-01f) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 5.000000e-01f) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) * (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + (max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.000000e+00f)), (data[(((((int)blockIdx.x) * 480) + (((int)threadIdx.x) * 15)) + k)] - T_softmax_maxelem[((((int)blockIdx.x) * 32) + ((int)threadIdx.x))])));
+    }
+  }
+}
+
+extern "C" __global__ void __launch_bounds__(52) default_function_kernel_2(float* __restrict__ T_softmax_expsum, float* __restrict__ T_softmax_maxelem, float* __restrict__ T_softmax_norm, float* __restrict__ data) {
+    int v_ = ((int)(floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) + 1.270000e+02f)) << 23;
+  T_softmax_norm[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] = (max(((*(float *)(&(v_))) * ((((((((((((((1.987569e-04f * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.398200e-03f) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 8.333452e-03f) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 4.166580e-02f) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.666667e-01f) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 5.000000e-01f) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) * (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + (max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) - (floorf(((max(min((data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]), 8.837627e+01f), -8.837626e+01f) * 1.442695e+00f) + 5.000000e-01f)) * 6.931472e-01f))) + 1.000000e+00f)), (data[((((int)blockIdx.x) * 52) + ((int)threadIdx.x))] - T_softmax_maxelem[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)])) / T_softmax_expsum[(((((int)blockIdx.x) * 52) + ((int)threadIdx.x)) / 15)]);
+}
+
+extern "C" __global__ void __launch_bounds__(64) default_function_kernel(float* __restrict__ T_softmax_maxelem, float* __restrict__ data) {
+  if (((((int)blockIdx.x) * 16) + (((int)threadIdx.x) >> 2)) < 195) {
+    T_softmax_maxelem[((((int)blockIdx.x) * 64) + ((int)threadIdx.x))] = -3.402823e+38f;
+  }
+  for (int k = 0; k < 15; ++k) {
+    if (((((int)blockIdx.x) * 16) + (((int)threadIdx.x) >> 2)) < 195) {
+      T_softmax_maxelem[((((int)blockIdx.x) * 64) + ((int)threadIdx.x))] = max(T_softmax_maxelem[((((int)blockIdx.x) * 64) + ((int)threadIdx.x))], data[(((((int)blockIdx.x) * 960) + (((int)threadIdx.x) * 15)) + k)]);
+    }
+  }
+}
+
+
+    Input Tensor Shape: [[13, 20, 3, 15]]
+    Print only a single C function implementation, ending with the comment '|End-of-Code|'.
+    

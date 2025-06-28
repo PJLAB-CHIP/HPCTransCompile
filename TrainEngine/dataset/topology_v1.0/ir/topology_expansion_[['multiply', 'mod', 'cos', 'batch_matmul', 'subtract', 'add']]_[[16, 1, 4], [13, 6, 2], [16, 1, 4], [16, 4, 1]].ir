@@ -1,0 +1,34 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((16, 1, 4), "float32"), ph_3: T.Buffer((16, 1, 4), "float32"), ph_7: T.Buffer((16, 4, 1), "float32"), T_mod: T.Buffer((16, 1, 4), "float32"), T_batch_matmul_NN: T.Buffer((16, 1, 1), "float32"), T_subtract: T.Buffer((16, 1, 4), "float32"), T_add: T.Buffer((16, 1, 4), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([64], "float32", "global")
+        ph_0_1 = T.Buffer((64,), data=ph_0.data)
+        ph_3_1 = T.Buffer((64,), data=ph_3.data)
+        for ax0 in T.parallel(16):
+            for ax2 in range(4):
+                cse_var_1: T.int32 = ax0 * 4 + ax2
+                T_mod_1 = T.Buffer((64,), data=T_mod.data)
+                T_mod_1[cse_var_1] = T.truncmod(ph_0_1[cse_var_1], ph_3_1[cse_var_1])
+        auto_scheduler_layout_transform_1 = T.Buffer((64,), data=auto_scheduler_layout_transform)
+        for ax0_ax1_fused in T.parallel(16):
+            for ax2 in range(4):
+                cse_var_2: T.int32 = ax0_ax1_fused * 4 + ax2
+                ph_7_1 = T.Buffer((64,), data=ph_7.data)
+                auto_scheduler_layout_transform_1[cse_var_2] = ph_7_1[cse_var_2]
+        for b_i_fused_j_fused in T.parallel(16):
+            T_batch_matmul_NN_1 = T.Buffer((16,), data=T_batch_matmul_NN.data)
+            T_batch_matmul_NN_1[b_i_fused_j_fused] = T.float32(0)
+            for k in range(4):
+                cse_var_3: T.int32 = b_i_fused_j_fused * 4 + k
+                T_batch_matmul_NN_1[b_i_fused_j_fused] = T_batch_matmul_NN_1[b_i_fused_j_fused] + T.cos(ph_0_1[cse_var_3]) * auto_scheduler_layout_transform_1[cse_var_3]
+        for ax0_ax1_fused_ax2_fused in T.parallel(64):
+            T_subtract_1 = T.Buffer((64,), data=T_subtract.data)
+            T_subtract_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] * ph_3_1[ax0_ax1_fused_ax2_fused] - ph_0_1[ax0_ax1_fused_ax2_fused]
+        for ax0_ax1_fused_ax2_fused in T.parallel(64):
+            T_add_1 = T.Buffer((64,), data=T_add.data)
+            T_add_1[ax0_ax1_fused_ax2_fused] = ph_0_1[ax0_ax1_fused_ax2_fused] * ph_3_1[ax0_ax1_fused_ax2_fused] + ph_0_1[ax0_ax1_fused_ax2_fused]

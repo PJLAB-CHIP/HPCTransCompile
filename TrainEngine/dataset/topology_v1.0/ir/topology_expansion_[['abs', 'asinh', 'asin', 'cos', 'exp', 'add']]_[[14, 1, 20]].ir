@@ -1,0 +1,31 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((14, 1, 20), "float32"), compute: T.Buffer((14, 1, 20), "float32"), compute_1: T.Buffer((14, 1, 20), "float32"), compute_2: T.Buffer((14, 1, 20), "float32"), T_add: T.Buffer((14, 1, 20), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((280,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(280):
+            compute_3 = T.Buffer((280,), data=compute.data)
+            compute_3[i0_i1_fused_i2_fused] = T.fabs(ph_0_1[i0_i1_fused_i2_fused])
+        for i0 in T.parallel(14):
+            for i2 in range(20):
+                cse_var_1: T.int32 = i0 * 20 + i2
+                compute_3 = T.Buffer((280,), data=compute_1.data)
+                compute_3[cse_var_1] = T.asin(T.asinh(ph_0_1[cse_var_1]))
+        for i0 in T.parallel(14):
+            for i2 in range(20):
+                cse_var_2: T.int32 = i0 * 20 + i2
+                compute_3 = T.Buffer((280,), data=compute_2.data)
+                compute_3[cse_var_2] = T.cos(ph_0_1[cse_var_2])
+        for ax0 in T.parallel(14):
+            compute_3 = T.allocate([20], "float32", "global")
+            compute_4 = T.Buffer((20,), data=compute_3)
+            for i2 in range(20):
+                compute_4[i2] = T.exp(ph_0_1[ax0 * 20 + i2])
+            for ax2 in range(20):
+                cse_var_3: T.int32 = ax0 * 20 + ax2
+                T_add_1 = T.Buffer((280,), data=T_add.data)
+                T_add_1[cse_var_3] = compute_4[ax2] + ph_0_1[cse_var_3]

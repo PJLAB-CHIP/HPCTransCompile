@@ -1,0 +1,5 @@
+<cpu>  
+{EXAMPLES}  
+</cpu>  
+
+Now, optimize the C++ CPU code for maximum performance.

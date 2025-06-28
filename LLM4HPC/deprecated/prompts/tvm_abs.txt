@@ -1,0 +1,7 @@
+Rewrite the following CUDA code to a version that can run on the CPU, while maintaining the performance of the original code, taking into account the differences between different hardware:
+
+```c
+extern "C" __global__ void __launch_bounds__(64) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 64) + ((int)threadIdx.x))] = fabsf(data[((((int)blockIdx.x) * 64) + ((int)threadIdx.x))]);
+}
+```

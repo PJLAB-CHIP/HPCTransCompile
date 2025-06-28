@@ -1,0 +1,7 @@
+Rewrite the following CUDA code to a version that can run on the CPU, while maintaining the performance of the original code, taking into account the differences between different hardware:
+
+```c
+extern "C" __global__ void __launch_bounds__(4) default_function_kernel(int* __restrict__ T_shape) {
+  T_shape[((int)threadIdx.x)] = ((((int)threadIdx.x) == 3) ? 11 : ((((int)threadIdx.x) == 2) ? 1 : ((((int)threadIdx.x) == 1) ? 5 : 14)));
+}
+```

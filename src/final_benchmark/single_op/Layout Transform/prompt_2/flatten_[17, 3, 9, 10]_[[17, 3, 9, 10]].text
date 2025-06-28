@@ -1,0 +1,8 @@
+
+    extern "C" __global__ void __launch_bounds__(30) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
+  compute[((((int)blockIdx.x) * 30) + ((int)threadIdx.x))] = data[((((int)blockIdx.x) * 30) + ((int)threadIdx.x))];
+}
+
+
+    Translate the above CUDA code to CPU C code, the input tensor shape is [[17, 3, 9, 10]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
+    

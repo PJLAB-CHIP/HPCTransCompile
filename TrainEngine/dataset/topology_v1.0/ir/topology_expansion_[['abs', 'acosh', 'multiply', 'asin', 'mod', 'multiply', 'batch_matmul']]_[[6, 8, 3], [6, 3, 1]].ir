@@ -1,0 +1,31 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((6, 8, 3), "float32"), ph_8: T.Buffer((6, 3, 1), "float32"), compute: T.Buffer((6, 8, 3), "float32"), T_multiply: T.Buffer((6, 8, 3), "float32"), T_multiply_1: T.Buffer((6, 8, 3), "float32"), T_batch_matmul_NN: T.Buffer((6, 8, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([18], "float32", "global")
+        ph_0_1 = T.Buffer((144,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(144):
+            compute_1 = T.Buffer((144,), data=compute.data)
+            compute_1[i0_i1_fused_i2_fused] = T.fabs(ph_0_1[i0_i1_fused_i2_fused])
+        for ax0_ax1_fused_ax2_fused in T.parallel(144):
+            T_multiply_2 = T.Buffer((144,), data=T_multiply.data)
+            T_multiply_2[ax0_ax1_fused_ax2_fused] = T.acosh(ph_0_1[ax0_ax1_fused_ax2_fused]) * ph_0_1[ax0_ax1_fused_ax2_fused]
+        for ax0_ax1_fused_ax2_fused in T.parallel(144):
+            T_multiply_2 = T.Buffer((144,), data=T_multiply_1.data)
+            T_multiply_2[ax0_ax1_fused_ax2_fused] = T.truncmod(ph_0_1[ax0_ax1_fused_ax2_fused], T.asin(ph_0_1[ax0_ax1_fused_ax2_fused])) * ph_0_1[ax0_ax1_fused_ax2_fused]
+        auto_scheduler_layout_transform_1 = T.Buffer((18,), data=auto_scheduler_layout_transform)
+        for ax5, ax7 in T.grid(6, 3):
+            cse_var_1: T.int32 = ax5 * 3 + ax7
+            ph_8_1 = T.Buffer((18,), data=ph_8.data)
+            auto_scheduler_layout_transform_1[cse_var_1] = ph_8_1[cse_var_1]
+        T_batch_matmul_NN_1 = T.Buffer((48,), data=T_batch_matmul_NN.data)
+        for b_outer_inner_init, i_outer_inner_init, i_inner_init in T.grid(6, 2, 4):
+            T_batch_matmul_NN_1[b_outer_inner_init * 8 + i_outer_inner_init * 4 + i_inner_init] = T.float32(0)
+        for b_outer_inner, i_outer_inner, k_inner, i_inner in T.grid(6, 2, 3, 4):
+            cse_var_3: T.int32 = b_outer_inner * 8 + i_outer_inner * 4 + i_inner
+            cse_var_2: T.int32 = b_outer_inner * 24 + i_outer_inner * 12 + i_inner * 3 + k_inner
+            T_batch_matmul_NN_1[cse_var_3] = T_batch_matmul_NN_1[cse_var_3] + T.truncmod(ph_0_1[cse_var_2], T.asin(ph_0_1[cse_var_2])) * auto_scheduler_layout_transform_1[b_outer_inner * 3 + k_inner]

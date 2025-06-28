@@ -1,0 +1,5 @@
+<pytorch> 
+{EXAMPLES} 
+</pytorch> 
+
+Now, translate the PyTorch code into CUDA kernel code.

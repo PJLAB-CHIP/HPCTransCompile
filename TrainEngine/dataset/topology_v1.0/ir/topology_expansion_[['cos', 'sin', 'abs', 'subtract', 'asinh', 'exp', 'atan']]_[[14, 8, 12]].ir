@@ -1,0 +1,25 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((14, 8, 12), "float32"), compute: T.Buffer((14, 8, 12), "float32"), T_subtract: T.Buffer((14, 8, 12), "float32"), compute_1: T.Buffer((14, 8, 12), "float32"), compute_2: T.Buffer((14, 8, 12), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        ph_0_1 = T.Buffer((1344,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(1344):
+            compute_3 = T.Buffer((1344,), data=compute.data)
+            compute_3[i0_i1_fused_i2_fused] = T.cos(ph_0_1[i0_i1_fused_i2_fused])
+        for ax0 in T.parallel(14):
+            for ax1, ax2 in T.grid(8, 12):
+                cse_var_1: T.int32 = ax0 * 96 + ax1 * 12 + ax2
+                T_subtract_1 = T.Buffer((1344,), data=T_subtract.data)
+                T_subtract_1[cse_var_1] = ph_0_1[cse_var_1] - T.fabs(T.sin(ph_0_1[cse_var_1]))
+        for i0_i1_fused_i2_fused in T.parallel(1344):
+            compute_3 = T.Buffer((1344,), data=compute_1.data)
+            compute_3[i0_i1_fused_i2_fused] = T.exp(T.asinh(ph_0_1[i0_i1_fused_i2_fused]))
+        for i0_i1_fused in T.parallel(112):
+            for i2 in range(12):
+                cse_var_2: T.int32 = i0_i1_fused * 12 + i2
+                compute_3 = T.Buffer((1344,), data=compute_2.data)
+                compute_3[cse_var_2] = T.atan(T.asinh(ph_0_1[cse_var_2]))

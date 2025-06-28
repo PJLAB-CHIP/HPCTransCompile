@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((20, 18, 6), "float32"), compute: T.Buffer((20, 18, 6), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0 in T.parallel(20):
+            for i1, i2 in T.grid(18, 6):
+                cse_var_1: T.int32 = i0 * 108 + i1 * 6 + i2
+                compute_1 = T.Buffer((2160,), data=compute.data)
+                ph_0_1 = T.Buffer((2160,), data=ph_0.data)
+                compute_1[cse_var_1] = T.exp(ph_0_1[cse_var_1] * T.acos(ph_0_1[cse_var_1]))

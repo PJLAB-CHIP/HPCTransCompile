@@ -1,0 +1,13 @@
+
+    Task: Translate the given CUDA code to its equivalent High performace CPU C code.  
+    Context: You are provided with a CUDA code snippet that needs to be translated into CPU C code. The translation should preserve the same functionality as much as possible. Focus on translating the CUDA-specific parallel constructs into the constructs supported by CPU, such as using OpenMP for parallelism. The resulting CPU C code should be complete and ready to compile. 
+    Input CUDA Code: extern "C" __global__ void __launch_bounds__(22) default_function_kernel(float* __restrict__ adaptive_pool_max, float* __restrict__ data) {
+  adaptive_pool_max[((int)threadIdx.x)] = -3.402823e+38f;
+  for (int rv0 = 0; rv0 < 4; ++rv0) {
+    adaptive_pool_max[((int)threadIdx.x)] = max(adaptive_pool_max[((int)threadIdx.x)], data[((((int)threadIdx.x) * 4) + rv0)]);
+  }
+}
+
+
+    Ihe input tensor shape is [[11, 2, 4, 1]] respectively, Print only single C function implementation, end with comment '|End-of-Code|'.
+    

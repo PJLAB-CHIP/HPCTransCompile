@@ -1,0 +1,26 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((16, 8, 14), "float32"), compute: T.Buffer((16, 8, 14), "float32"), compute_1: T.Buffer((16, 8, 14), "float32"), T_mod: T.Buffer((16, 8, 14), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        compute_2 = T.allocate([1792], "float32", "global")
+        ph_0_1 = T.Buffer((1792,), data=ph_0.data)
+        for i0_i1_fused_i2_fused in T.parallel(1792):
+            compute_3 = T.Buffer((1792,), data=compute.data)
+            compute_3[i0_i1_fused_i2_fused] = T.fabs(ph_0_1[i0_i1_fused_i2_fused])
+        compute_3 = T.Buffer((1792,), data=compute_2)
+        for i0_i1_fused_i2_fused in T.parallel(1792):
+            compute_3[i0_i1_fused_i2_fused] = T.exp(T.acos(ph_0_1[i0_i1_fused_i2_fused]))
+        for i0_i1_fused in T.parallel(128):
+            for i2 in range(14):
+                cse_var_1: T.int32 = i0_i1_fused * 14 + i2
+                compute_4 = T.Buffer((1792,), data=compute_1.data)
+                compute_4[cse_var_1] = T.atanh(T.truncmod(ph_0_1[cse_var_1], ph_0_1[cse_var_1] / compute_3[cse_var_1]))
+        for ax0 in T.parallel(16):
+            for ax1, ax2 in T.grid(8, 14):
+                cse_var_2: T.int32 = ax0 * 112 + ax1 * 14 + ax2
+                T_mod_1 = T.Buffer((1792,), data=T_mod.data)
+                T_mod_1[cse_var_2] = T.truncmod(T.truncmod(ph_0_1[cse_var_2], ph_0_1[cse_var_2] / compute_3[cse_var_2]), ph_0_1[cse_var_2])

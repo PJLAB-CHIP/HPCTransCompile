@@ -1,0 +1,1 @@
+Propose a new CUDA kernel (including name, code, thought) which aims to reduce the runtime of the operation, while ensuring the kernel returns the correct result.

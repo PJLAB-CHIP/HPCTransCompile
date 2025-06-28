@@ -1,0 +1,15 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((9, 12, 8), "float32"), ph_3: T.Buffer((9, 12, 8), "float32"), T_subtract: T.Buffer((9, 12, 8), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(108):
+            for ax2 in range(8):
+                cse_var_1: T.int32 = ax0_ax1_fused * 8 + ax2
+                T_subtract_1 = T.Buffer((864,), data=T_subtract.data)
+                ph_0_1 = T.Buffer((864,), data=ph_0.data)
+                ph_3_1 = T.Buffer((864,), data=ph_3.data)
+                T_subtract_1[cse_var_1] = ph_0_1[cse_var_1] - ph_3_1[cse_var_1]

@@ -1,0 +1,28 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph_0: T.Buffer((4, 1, 19), "float32"), ph_4: T.Buffer((4, 19, 1), "float32"), ph_6: T.Buffer((4, 1, 19), "float32"), T_batch_matmul_NN: T.Buffer((4, 1, 1), "float32"), compute: T.Buffer((4, 1, 19), "float32"), compute_1: T.Buffer((4, 1, 19), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        auto_scheduler_layout_transform = T.allocate([19], "float32", "global")
+        auto_scheduler_layout_transform_1 = T.Buffer((19,), data=auto_scheduler_layout_transform)
+        for ax2 in range(19):
+            ph_4_1 = T.Buffer((76,), data=ph_4.data)
+            auto_scheduler_layout_transform_1[ax2] = ph_4_1[ax2]
+        ph_0_1 = T.Buffer((76,), data=ph_0.data)
+        for b in T.parallel(4):
+            T_batch_matmul_NN_1 = T.Buffer((4,), data=T_batch_matmul_NN.data)
+            T_batch_matmul_NN_1[b] = T.float32(0)
+            for k in range(19):
+                T_batch_matmul_NN_1[b] = T_batch_matmul_NN_1[b] + T.acosh(ph_0_1[b * 19 + k]) * auto_scheduler_layout_transform_1[k]
+        for i0 in T.parallel(4):
+            for i2 in range(19):
+                cse_var_1: T.int32 = i0 * 19 + i2
+                compute_2 = T.Buffer((76,), data=compute.data)
+                ph_6_1 = T.Buffer((76,), data=ph_6.data)
+                compute_2[cse_var_1] = T.fabs(ph_0_1[cse_var_1] - ph_6_1[cse_var_1])
+        for i0_i1_fused_i2_fused in T.parallel(76):
+            compute_2 = T.Buffer((76,), data=compute_1.data)
+            compute_2[i0_i1_fused_i2_fused] = T.atan(T.asinh(ph_0_1[i0_i1_fused_i2_fused]))

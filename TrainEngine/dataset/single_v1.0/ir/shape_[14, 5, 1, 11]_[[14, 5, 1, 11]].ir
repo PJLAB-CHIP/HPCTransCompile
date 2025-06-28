@@ -1,0 +1,10 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((14, 5, 1, 11), "float32"), T_shape: T.Buffer((4,), "int32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(4):
+            T_shape[ax0] = T.if_then_else(ax0 == 3, 11, T.if_then_else(ax0 == 2, 1, T.if_then_else(ax0 == 1, 5, 14)))

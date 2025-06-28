@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((7, 20, 5, 1), "float32"), T_sign: T.Buffer((7, 20, 5, 1), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0 in T.parallel(7):
+            for ax1, ax2 in T.grid(20, 5):
+                cse_var_1: T.int32 = ax0 * 100 + ax1 * 5 + ax2
+                T_sign_1 = T.Buffer((700,), data=T_sign.data)
+                data_1 = T.Buffer((700,), data=data.data)
+                T_sign_1[cse_var_1] = T.if_then_else(T.float32(0) < data_1[cse_var_1], T.float32(1), T.Select(data_1[cse_var_1] < T.float32(0), T.float32(-1), T.float32(0)))

@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((15, 5, 20, 19), "float32"), Scale: T.Buffer((5,), "float32"), Shift: T.Buffer((5,), "float32"), ScaleShift: T.Buffer((15, 5, 20, 19), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for b_outer_outer_outer_c_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_c_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused in T.parallel(57):
+            for c_outer_inner, i_outer_inner, b_inner in T.grid(5, 20, 5):
+                cse_var_1: T.int32 = b_outer_outer_outer_c_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_c_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused // 19 * 9500 + b_inner * 1900 + c_outer_inner * 380 + i_outer_inner * 19 + b_outer_outer_outer_c_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused_b_outer_outer_inner_fused_c_outer_outer_inner_fused_i_outer_outer_inner_fused_j_outer_outer_inner_fused % 19
+                ScaleShift_1 = T.Buffer((28500,), data=ScaleShift.data)
+                data_1 = T.Buffer((28500,), data=data.data)
+                ScaleShift_1[cse_var_1] = data_1[cse_var_1] * Scale[c_outer_inner] + Shift[c_outer_inner]

@@ -1,0 +1,17 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((17, 2, 7, 20, 11), "float32"), Scale: T.Buffer((2, 11), "float32"), Shift: T.Buffer((2, 11), "float32"), ScaleShift: T.Buffer((17, 2, 7, 20, 11), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused in T.parallel(340):
+            for cb_outer_outer_inner, cc_outer_inner, i_outer_inner in T.grid(11, 2, 7):
+                cse_var_2: T.int32 = cc_outer_inner * 11 + cb_outer_outer_inner
+                cse_var_1: T.int32 = b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused // 20 * 3080 + cc_outer_inner * 1540 + i_outer_inner * 220 + b_outer_outer_outer_cc_outer_outer_outer_fused_i_outer_outer_outer_fused_j_outer_outer_outer_fused % 20 * 11 + cb_outer_outer_inner
+                ScaleShift_1 = T.Buffer((52360,), data=ScaleShift.data)
+                data_1 = T.Buffer((52360,), data=data.data)
+                Scale_1 = T.Buffer((22,), data=Scale.data)
+                Shift_1 = T.Buffer((22,), data=Shift.data)
+                ScaleShift_1[cse_var_1] = data_1[cse_var_1] * Scale_1[cse_var_2] + Shift_1[cse_var_2]

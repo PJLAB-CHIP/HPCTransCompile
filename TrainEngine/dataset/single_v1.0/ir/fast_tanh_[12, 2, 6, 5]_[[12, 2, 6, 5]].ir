@@ -1,0 +1,14 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((12, 2, 6, 5), "float32"), T_fast_tanh: T.Buffer((12, 2, 6, 5), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(24):
+            for ax2, ax3 in T.grid(6, 5):
+                cse_var_1: T.int32 = ax0_ax1_fused * 30 + ax2 * 5 + ax3
+                T_fast_tanh_1 = T.Buffer((720,), data=T_fast_tanh.data)
+                data_1 = T.Buffer((720,), data=data.data)
+                T_fast_tanh_1[cse_var_1] = T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.float32(-2.76076847742355e-16) + T.float32(2.0001879048247699e-13)) + T.float32(-8.60467152213735e-11)) + T.float32(5.1222970903711401e-08)) + T.float32(1.4857223571797901e-05)) + T.float32(0.00063726192887543596)) + T.float32(0.0048935245589178597)) / (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * (T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.max(T.float32(-9), T.min(T.float32(9), data_1[cse_var_1])) * T.float32(1.1982583946670199e-06) + T.float32(0.000118534705686654)) + T.float32(0.0022684346324390002)) + T.float32(0.0048935251855438504))
