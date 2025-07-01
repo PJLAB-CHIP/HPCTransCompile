@@ -1,0 +1,583 @@
+abs(x)
+
+Take absolute value of the input of x, element-wise.
+
+acos(x)
+
+Take arc cos of input x.
+
+acosh(x)
+
+Take arc cosh of input x.
+
+add(lhs, rhs)
+
+Addition with auto-broadcasting
+
+adv_index(data, indices)
+
+Numpy style indexing with tensors.
+
+all(data[, axis, keepdims])
+
+Logical AND of array elements over a given axis or a list of axes
+
+any(data[, axis, keepdims])
+
+Logical OR of array elements over a given axis or a list of axes
+
+arange(start[, stop, step, dtype])
+
+Creates a tensor with evenly spaced values within a given interval.
+
+argmax(data[, axis, keepdims, select_last_index])
+
+Returns the indices of the maximum values along an axis.
+
+argmin(data[, axis, keepdims, select_last_index])
+
+Returns the indices of the minimum values along an axis.
+
+argsort(data[, valid_count, axis, ...])
+
+Performs sorting along the given axis and returns an array of indices having the same shape as an input array that index data in sorted order.
+
+argwhere(output_shape, condition)
+
+Find the indices of elements of a tensor that are non-zero.
+
+asin(x)
+
+Take arc sin of input x.
+
+asinh(x)
+
+Take arc sinh of input x.
+
+atan(x)
+
+Take atan of input x.
+
+atanh(x)
+
+Take atanh of input x.
+
+binary_search(ib, sequence_offset, ...)
+
+Common IR generator for binary search used by CPU and GPU backends.
+
+bitwise_and(lhs, rhs)
+
+Compute element-wise bitwise and of data.
+
+bitwise_not(data)
+
+Compute element-wise bitwise not of data.
+
+bitwise_or(lhs, rhs)
+
+Compute element-wise bitwise or of data.
+
+bitwise_xor(lhs, rhs)
+
+Compute element-wise bitwise xor of data.
+
+broadcast_to(data, shape)
+
+Broadcast the src to the target shape
+
+cast(x, dtype[, span])
+
+Cast input to specified data type.
+
+ceil(x)
+
+Take ceil of input x.
+
+ceil_log2(x)
+
+Compute integer ceil log2 with a special code path for vulkan SPIR-V does not support log2 on fp64.
+
+clip(x, a_min, a_max)
+
+Clip (limit) the values in an array.
+
+collapse_sum(data, target_shape)
+
+Return a summation of data to the given shape.
+
+concatenate(a_tuple[, axis])
+
+Join a sequence of arrays along an existing axis.
+
+const_vector(vector[, name])
+
+convert a const numpy 1-dimensional vector to tvm tensor
+
+cos(x)
+
+Take cos of input x.
+
+cosh(x)
+
+Take cosh of input x.
+
+cumprod(data[, axis, dtype, exclusive])
+
+Numpy style cumprod op.
+
+cumsum(data[, axis, dtype, exclusive])
+
+Numpy style cumsum op.
+
+decl_buffer(shape[, dtype, name, data, ...])
+
+Declare a new symbolic buffer.
+
+dft(re_data, im_data, inverse)
+
+Computes the discrete Fourier transform of input (calculation along the last axis).
+
+div(a, b[, span])
+
+Compute a / b as in C/C++ semantics.
+
+divide(lhs, rhs)
+
+Division with auto-broadcasting
+
+dynamic_strided_slice(a, begin, end, ...)
+
+Slice of an array.
+
+einsum(subscripts, *operand)
+
+Evaluates the Einstein summation convention on the operands.
+
+elemwise_sum(xs)
+
+Perform element-wise sum on inputs
+
+equal(lhs, rhs)
+
+Compute (lhs==rhs) with auto-broadcasting
+
+erf(x)
+
+Take gauss error function of input x.
+
+erf_legalize(attrs, inputs, types)
+
+Legalizes ERF op.
+
+exp(x)
+
+Take exponential of input x.
+
+expand_dims(a, axis[, num_newaxis])
+
+Expand the shape of an array.
+
+expand_like(a, shape_like, axis)
+
+Expand an input array with the shape of second array.
+
+extern(shape, inputs, fcompute[, name, ...])
+
+Compute several tensors via an extern function.
+
+fast_erf(x)
+
+Take gauss error function of input x using fast_erf implementation.
+
+fast_exp(x)
+
+Take exponential of input x using fast_exp implementation
+
+fast_tanh(x)
+
+Take hyperbolic tangent of input x using fast_tanh implementation
+
+fixed_point_multiply(x, multiplier, shift)
+
+Fixed point multiplication between data and a fixed point constant expressed as multiplier * 2^(-shift), where multiplier is a Q-number with 31 fractional bits
+
+fixed_point_multiply_per_axis(x, y, lshift, ...)
+
+Fixed point multiplication between data and a fixed point constant expressed as multiplier * 2^(-shift), where multiplier is a Q-number with 31 fractional bits
+
+flip(a[, axis])
+
+Flip/reverse elements of an array in a particular axis.
+
+floor(x)
+
+Take floor of input x.
+
+floor_divide(lhs, rhs)
+
+Floor division with auto-broadcasting
+
+floor_mod(lhs, rhs)
+
+Floor modulus with auto-broadcasting
+
+floordiv(a, b[, span])
+
+Compute the floordiv of two expressions.
+
+floormod(a, b[, span])
+
+Compute the floormod of two expressions.
+
+full(shape, dtype, fill_value)
+
+Fill tensor with fill_value
+
+full_like(x, fill_value)
+
+Construct a tensor with same shape as input tensor,
+
+gather(data, axis, indices)
+
+Gather values along given axis from given indices.
+
+gather_nd(a, indices)
+
+Gather elements from a n-dimension array..
+
+get_const_tuple(in_tuple)
+
+Verifies input tuple is IntImm or Var, returns tuple of int or Var.
+
+greater(lhs, rhs)
+
+Compute (lhs>rhs) with auto-broadcasting
+
+greater_equal(lhs, rhs)
+
+Compute (lhs>=rhs) with auto-broadcasting
+
+hybrid_argwhere_1d(output_shape, condition)
+
+Find the indices of elements of a 1-D tensor that are non-zero.
+
+hybrid_argwhere_2d(output_shape, condition)
+
+Find the indices of elements of a 2-D tensor that are non-zero.
+
+hybrid_argwhere_3d(output_shape, condition)
+
+Find the indices of elements of a 3-D tensor that are non-zero.
+
+hybrid_argwhere_4d(output_shape, condition)
+
+Find the indices of elements of a 4-D tensor that are non-zero.
+
+hybrid_argwhere_5d(output_shape, condition)
+
+Find the indices of elements of a 5-D tensor that are non-zero.
+
+identity(x)
+
+Take identity of input x.
+
+invert_permutation(data)
+
+Computes the inverse permutation of data.
+
+isfinite(x)
+
+Check if value of x is finite, element-wise.
+
+isinf(x)
+
+Check if value of x is infinite, element-wise.
+
+isnan(x)
+
+Check if value of x is NaN, element-wise.
+
+layout_transform(array, src_layout, dst_layout)
+
+Transform the layout according to src_layout and dst_layout
+
+left_shift(lhs, rhs)
+
+Left shift with auto-broadcasting
+
+less(lhs, rhs)
+
+Compute (lhs<rhs) with auto-broadcasting
+
+less_equal(lhs, rhs)
+
+Compute (lhs<=rhs) with auto-broadcasting
+
+log(x)
+
+Take logarithm of input x.
+
+log10(x)
+
+Take logarithm to the base 10 of input x.
+
+log2(x)
+
+Take logarithm to the base 2 of input x.
+
+logical_and(lhs, rhs)
+
+Compute element-wise logical and of data.
+
+logical_not(data)
+
+Compute element-wise logical not of data.
+
+logical_or(lhs, rhs)
+
+Compute element-wise logical or of data.
+
+logical_xor(lhs, rhs)
+
+Compute element-wise logical xor of data.
+
+make_idx(b, e, s, z, i)
+
+Return the array position in the selection that corresponds to an array position in the full array.
+
+matmul(a, b[, transp_a, transp_b])
+
+Creates an operation that calculates a matrix multiplication (row-major notation): A(i, k) * B(k, j) if trans_a == trans_b, the usual transposed combinations, otherwise
+
+matrix_set_diag(data, diagonal[, k, align])
+
+Returns a tensor with the diagonals of input tensor replaced with the provided diagonal values.
+
+max(data[, axis, keepdims])
+
+Maximum of array elements over a given axis or a list of axes
+
+maximum(lhs, rhs)
+
+Take element-wise maximum of two tensors with auto-broadcasting
+
+meshgrid(a_tuple, indexing)
+
+Create coordinate matrices from coordinate vectors.
+
+min(data[, axis, keepdims])
+
+Minimum of array elements over a given axis or a list of axes
+
+minimum(lhs, rhs)
+
+Take element-wise maximum of two tensors with auto-broadcasting
+
+mod(lhs, rhs)
+
+Modulus with auto-broadcasting
+
+multiply(lhs, rhs)
+
+Multiplication with auto-broadcasting
+
+ndarray_size(array[, dtype])
+
+Get the number of elements of input array
+
+negative(x)
+
+Take negation of input x.
+
+not_equal(lhs, rhs)
+
+Compute (lhs!=rhs) with auto-broadcasting
+
+one_hot(indices, on_value, off_value, depth, ...)
+
+Returns a one-hot tensor where the locations repsented by indices take value on_value, other locations take value off_value.
+
+power(lhs, rhs)
+
+Power with auto-broadcasting
+
+prod(data[, axis, keepdims])
+
+Product of array elements over a given axis or a list of axes
+
+reinterpret(x, dtype)
+
+Reinterpret input to specified data type.
+
+repeat(a, repeats, axis)
+
+Repeats elements of an array.
+
+reshape(a, newshape)
+
+Reshape the array
+
+reverse_sequence(a, seq_lengths[, seq_axis, ...])
+
+Reverse the tensor for variable length slices.
+
+right_shift(lhs, rhs)
+
+Right shift with auto-broadcasting
+
+round(x)
+
+Round elements of x to nearest integer.
+
+rsqrt(x)
+
+Take inverse square root of input x.
+
+scanop(data, binop, identity_value, op_name)
+
+Cumulative binary operator (scan) with similar axis behavior as np.cumsum and np.cumprod.
+
+scatter_elements(data, indices, updates[, ...])
+
+Scatter elements from updates to corresponding indices of copied data.
+
+scatter_nd(data, indices, updates, mode)
+
+Scatter elements from a n-dimension array.
+
+searchsorted(sorted_sequence, values[, ...])
+
+Find indices where elements should be inserted to maintain order.
+
+sequence_mask(data, valid_length[, ...])
+
+Sets all elements outside the expected length of the sequence to a constant value.
+
+shape(array[, dtype])
+
+Get the shape of input array
+
+sigmoid(x)
+
+Take sigmoid tanh of input x.
+
+sign(x)
+
+Returns -1, 0, 1 based on sign of x.
+
+sin(x)
+
+Take sin of input x.
+
+sinh(x)
+
+Take sinh of input x.
+
+sliding_window(data, axis, window_shape, strides)
+
+Slide a window over the data tensor.
+
+sort(data[, axis, is_ascend])
+
+Performs sorting along the given axis and returns an array in sorted order.
+
+sparse_reshape(sparse_indices, prev_shape, ...)
+
+Reshape a Sparse Tensor
+
+sparse_to_dense(sparse_indices, ...[, ...])
+
+Converts a sparse representation into a dense tensor.
+
+split(ary, indices_or_sections[, axis])
+
+Split an array into multiple sub-arrays.
+
+sqrt(x)
+
+Take square root of input x.
+
+squeeze(a[, axis])
+
+Remove single-dimensional entries from the shape of an array.
+
+stack(a, axis)
+
+Repeats the whole array multiple times.
+
+stft(data, n_fft, hop_length, win_length, ...)
+
+The STFT computes the Fourier transform of short overlapping windows of the input.
+
+strided_set(a, v, begin, end[, strides])
+
+Set slice of an array.
+
+strided_slice(a, begin, end[, strides, ...])
+
+Slice of an array.
+
+subtract(lhs, rhs)
+
+Subtraction with auto-broadcasting
+
+sum(data[, axis, keepdims])
+
+Sum of array elements over a given axis or a list of axes
+
+take(a, indices[, axis, batch_dims, mode])
+
+Take elements from an array along an axis.
+
+take_legalize(attrs, inputs, types)
+
+Legalizes dyn.topk op.
+
+tan(x)
+
+Take tan of input x.
+
+tanh(x)
+
+Take hyperbolic tanh of input x.
+
+tensordot(a, b, axes)
+
+A generalization of matrix multiplication to tensor.
+
+tile(a, reps)
+
+Repeats the whole array multiple times.
+
+topk(data[, k, axis, ret_type, is_ascend, dtype])
+
+Get the top k elements in an input tensor along the given axis.
+
+transpose(a[, axes])
+
+Permute the dimensions of an array.
+
+trilu(data, k, upper)
+
+Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor.
+
+trunc(x)
+
+Take truncated value of the input of x, element-wise.
+
+unique(data[, is_sorted, return_counts])
+
+Find the unique elements of a 1-D tensor.
+
+unravel_index(indices, shape)
+
+Convert a flat index or array of flat indices into a tuple of coordinate arrays.
+
+where(condition, x, y)
+
+Get the elements, either from x or y, depending on the condition.
+
+within_index(b, e, s, i)
+
+Return a boolean value that indicates if i is within the given index.

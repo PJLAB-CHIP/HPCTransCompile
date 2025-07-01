@@ -1,0 +1,1388 @@
+[
+    {
+        "op_name": "abs",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take absolute value of the input of x, element-wise."
+    },
+    {
+        "op_name": "acos",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take arc cos of input x."
+    },
+    {
+        "op_name": "acosh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take arc cosh of input x."
+    },
+    {
+        "op_name": "add",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Addition with auto-broadcasting"
+    },
+    {
+        "op_name": "adv_index",
+        "necessary_params": [
+            "data",
+            "indices"
+        ],
+        "optional_params": [],
+        "description": "Numpy style indexing with tensors."
+    },
+    {
+        "op_name": "all",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Logical AND of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "any",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Logical OR of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "arange",
+        "necessary_params": [
+            "start"
+        ],
+        "optional_params": [
+            "stop",
+            "step",
+            "dtype"
+        ],
+        "description": "Creates a tensor with evenly spaced values within a given interval."
+    },
+    {
+        "op_name": "argmax",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims",
+            "select_last_index"
+        ],
+        "description": "Returns the indices of the maximum values along an axis."
+    },
+    {
+        "op_name": "argmin",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims",
+            "select_last_index"
+        ],
+        "description": "Returns the indices of the minimum values along an axis."
+    },
+    {
+        "op_name": "argsort",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "valid_count",
+            "axis"
+        ],
+        "description": "Performs sorting along the given axis and returns an array of indices having the same shape as an input array that index data in sorted order."
+    },
+    {
+        "op_name": "argwhere",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a tensor that are non-zero."
+    },
+    {
+        "op_name": "asin",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take arc sin of input x."
+    },
+    {
+        "op_name": "asinh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take arc sinh of input x."
+    },
+    {
+        "op_name": "atan",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take atan of input x."
+    },
+    {
+        "op_name": "atanh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take atanh of input x."
+    },
+    {
+        "op_name": "binary_search",
+        "necessary_params": [
+            "ib",
+            "sequence_offset"
+        ],
+        "optional_params": [],
+        "description": "Common IR generator for binary search used by CPU and GPU backends."
+    },
+    {
+        "op_name": "bitwise_and",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise bitwise and of data."
+    },
+    {
+        "op_name": "bitwise_not",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise bitwise not of data."
+    },
+    {
+        "op_name": "bitwise_or",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise bitwise or of data."
+    },
+    {
+        "op_name": "bitwise_xor",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise bitwise xor of data."
+    },
+    {
+        "op_name": "broadcast_to",
+        "necessary_params": [
+            "data",
+            "shape"
+        ],
+        "optional_params": [],
+        "description": "Broadcast the src to the target shape"
+    },
+    {
+        "op_name": "cast",
+        "necessary_params": [
+            "x",
+            "dtype"
+        ],
+        "optional_params": [
+            "span"
+        ],
+        "description": "Cast input to specified data type."
+    },
+    {
+        "op_name": "ceil",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take ceil of input x."
+    },
+    {
+        "op_name": "ceil_log2",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Compute integer ceil log2 with a special code path for vulkan SPIR-V does not support log2 on fp64."
+    },
+    {
+        "op_name": "clip",
+        "necessary_params": [
+            "x",
+            "a_min",
+            "a_max"
+        ],
+        "optional_params": [],
+        "description": "Clip (limit) the values in an array."
+    },
+    {
+        "op_name": "collapse_sum",
+        "necessary_params": [
+            "data",
+            "target_shape"
+        ],
+        "optional_params": [],
+        "description": "Return a summation of data to the given shape."
+    },
+    {
+        "op_name": "concatenate",
+        "necessary_params": [
+            "a_tuple"
+        ],
+        "optional_params": [
+            "axis"
+        ],
+        "description": "Join a sequence of arrays along an existing axis."
+    },
+    {
+        "op_name": "const_vector",
+        "necessary_params": [
+            "vector"
+        ],
+        "optional_params": [
+            "name"
+        ],
+        "description": "convert a const numpy 1-dimensional vector to tvm tensor"
+    },
+    {
+        "op_name": "cos",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take cos of input x."
+    },
+    {
+        "op_name": "cosh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take cosh of input x."
+    },
+    {
+        "op_name": "cumprod",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "dtype",
+            "exclusive"
+        ],
+        "description": "Numpy style cumprod op."
+    },
+    {
+        "op_name": "cumsum",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "dtype",
+            "exclusive"
+        ],
+        "description": "Numpy style cumsum op."
+    },
+    {
+        "op_name": "decl_buffer",
+        "necessary_params": [
+            "shape"
+        ],
+        "optional_params": [
+            "dtype",
+            "name",
+            "data"
+        ],
+        "description": "Declare a new symbolic buffer."
+    },
+    {
+        "op_name": "dft",
+        "necessary_params": [
+            "re_data",
+            "im_data",
+            "inverse"
+        ],
+        "optional_params": [],
+        "description": "Computes the discrete Fourier transform of input (calculation along the last axis)."
+    },
+    {
+        "op_name": "div",
+        "necessary_params": [
+            "a",
+            "b"
+        ],
+        "optional_params": [
+            "span"
+        ],
+        "description": "Compute a / b as in C/C++ semantics."
+    },
+    {
+        "op_name": "divide",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Division with auto-broadcasting"
+    },
+    {
+        "op_name": "dynamic_strided_slice",
+        "necessary_params": [
+            "a",
+            "begin",
+            "end"
+        ],
+        "optional_params": [],
+        "description": "Slice of an array."
+    },
+    {
+        "op_name": "einsum",
+        "necessary_params": [
+            "subscripts",
+            "*operand"
+        ],
+        "optional_params": [],
+        "description": "Evaluates the Einstein summation convention on the operands."
+    },
+    {
+        "op_name": "elemwise_sum",
+        "necessary_params": [
+            "xs"
+        ],
+        "optional_params": [],
+        "description": "Perform element-wise sum on inputs"
+    },
+    {
+        "op_name": "equal",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs==rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "erf",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take gauss error function of input x."
+    },
+    {
+        "op_name": "erf_legalize",
+        "necessary_params": [
+            "attrs",
+            "inputs",
+            "types"
+        ],
+        "optional_params": [],
+        "description": "Legalizes ERF op."
+    },
+    {
+        "op_name": "exp",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take exponential of input x."
+    },
+    {
+        "op_name": "expand_dims",
+        "necessary_params": [
+            "a",
+            "axis"
+        ],
+        "optional_params": [
+            "num_newaxis"
+        ],
+        "description": "Expand the shape of an array."
+    },
+    {
+        "op_name": "expand_like",
+        "necessary_params": [
+            "a",
+            "shape_like",
+            "axis"
+        ],
+        "optional_params": [],
+        "description": "Expand an input array with the shape of second array."
+    },
+    {
+        "op_name": "extern",
+        "necessary_params": [
+            "shape",
+            "inputs",
+            "fcompute"
+        ],
+        "optional_params": [
+            "name"
+        ],
+        "description": "Compute several tensors via an extern function."
+    },
+    {
+        "op_name": "fast_erf",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take gauss error function of input x using fast_erf implementation."
+    },
+    {
+        "op_name": "fast_exp",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take exponential of input x using fast_exp implementation"
+    },
+    {
+        "op_name": "fast_tanh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take hyperbolic tangent of input x using fast_tanh implementation"
+    },
+    {
+        "op_name": "fixed_point_multiply",
+        "necessary_params": [
+            "x",
+            "multiplier",
+            "shift"
+        ],
+        "optional_params": [],
+        "description": "Fixed point multiplication between data and a fixed point constant expressed as multiplier * 2^(-shift), where multiplier is a Q-number with 31 fractional bits"
+    },
+    {
+        "op_name": "fixed_point_multiply_per_axis",
+        "necessary_params": [
+            "x",
+            "y",
+            "lshift"
+        ],
+        "optional_params": [],
+        "description": "Fixed point multiplication between data and a fixed point constant expressed as multiplier * 2^(-shift), where multiplier is a Q-number with 31 fractional bits"
+    },
+    {
+        "op_name": "flip",
+        "necessary_params": [
+            "a"
+        ],
+        "optional_params": [
+            "axis"
+        ],
+        "description": "Flip/reverse elements of an array in a particular axis."
+    },
+    {
+        "op_name": "floor",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take floor of input x."
+    },
+    {
+        "op_name": "floor_divide",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Floor division with auto-broadcasting"
+    },
+    {
+        "op_name": "floor_mod",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Floor modulus with auto-broadcasting"
+    },
+    {
+        "op_name": "floordiv",
+        "necessary_params": [
+            "a",
+            "b"
+        ],
+        "optional_params": [
+            "span"
+        ],
+        "description": "Compute the floordiv of two expressions."
+    },
+    {
+        "op_name": "floormod",
+        "necessary_params": [
+            "a",
+            "b"
+        ],
+        "optional_params": [
+            "span"
+        ],
+        "description": "Compute the floormod of two expressions."
+    },
+    {
+        "op_name": "full",
+        "necessary_params": [
+            "shape",
+            "dtype",
+            "fill_value"
+        ],
+        "optional_params": [],
+        "description": "Fill tensor with fill_value"
+    },
+    {
+        "op_name": "full_like",
+        "necessary_params": [
+            "x",
+            "fill_value"
+        ],
+        "optional_params": [],
+        "description": "Construct a tensor with same shape as input tensor,"
+    },
+    {
+        "op_name": "gather",
+        "necessary_params": [
+            "data",
+            "axis",
+            "indices"
+        ],
+        "optional_params": [],
+        "description": "Gather values along given axis from given indices."
+    },
+    {
+        "op_name": "gather_nd",
+        "necessary_params": [
+            "a",
+            "indices"
+        ],
+        "optional_params": [],
+        "description": "Gather elements from a n-dimension array.."
+    },
+    {
+        "op_name": "get_const_tuple",
+        "necessary_params": [
+            "in_tuple"
+        ],
+        "optional_params": [],
+        "description": "Verifies input tuple is IntImm or Var, returns tuple of int or Var."
+    },
+    {
+        "op_name": "greater",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs>rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "greater_equal",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs>=rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "hybrid_argwhere_1d",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a 1-D tensor that are non-zero."
+    },
+    {
+        "op_name": "hybrid_argwhere_2d",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a 2-D tensor that are non-zero."
+    },
+    {
+        "op_name": "hybrid_argwhere_3d",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a 3-D tensor that are non-zero."
+    },
+    {
+        "op_name": "hybrid_argwhere_4d",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a 4-D tensor that are non-zero."
+    },
+    {
+        "op_name": "hybrid_argwhere_5d",
+        "necessary_params": [
+            "output_shape",
+            "condition"
+        ],
+        "optional_params": [],
+        "description": "Find the indices of elements of a 5-D tensor that are non-zero."
+    },
+    {
+        "op_name": "identity",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take identity of input x."
+    },
+    {
+        "op_name": "invert_permutation",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [],
+        "description": "Computes the inverse permutation of data."
+    },
+    {
+        "op_name": "isfinite",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Check if value of x is finite, element-wise."
+    },
+    {
+        "op_name": "isinf",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Check if value of x is infinite, element-wise."
+    },
+    {
+        "op_name": "isnan",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Check if value of x is NaN, element-wise."
+    },
+    {
+        "op_name": "layout_transform",
+        "necessary_params": [
+            "array",
+            "src_layout",
+            "dst_layout"
+        ],
+        "optional_params": [],
+        "description": "Transform the layout according to src_layout and dst_layout"
+    },
+    {
+        "op_name": "left_shift",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Left shift with auto-broadcasting"
+    },
+    {
+        "op_name": "less",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs<rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "less_equal",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs<=rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "log",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take logarithm of input x."
+    },
+    {
+        "op_name": "log10",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take logarithm to the base 10 of input x."
+    },
+    {
+        "op_name": "log2",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take logarithm to the base 2 of input x."
+    },
+    {
+        "op_name": "logical_and",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise logical and of data."
+    },
+    {
+        "op_name": "logical_not",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise logical not of data."
+    },
+    {
+        "op_name": "logical_or",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise logical or of data."
+    },
+    {
+        "op_name": "logical_xor",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute element-wise logical xor of data."
+    },
+    {
+        "op_name": "make_idx",
+        "necessary_params": [
+            "b",
+            "e",
+            "s",
+            "z",
+            "i"
+        ],
+        "optional_params": [],
+        "description": "Return the array position in the selection that corresponds to an array position in the full array."
+    },
+    {
+        "op_name": "matmul",
+        "necessary_params": [
+            "a",
+            "b"
+        ],
+        "optional_params": [
+            "transp_a",
+            "transp_b"
+        ],
+        "description": "Creates an operation that calculates a matrix multiplication (row-major notation): A(i, k) * B(k, j) if trans_a == trans_b, the usual transposed combinations, otherwise"
+    },
+    {
+        "op_name": "matrix_set_diag",
+        "necessary_params": [
+            "data",
+            "diagonal"
+        ],
+        "optional_params": [
+            "k",
+            "align"
+        ],
+        "description": "Returns a tensor with the diagonals of input tensor replaced with the provided diagonal values."
+    },
+    {
+        "op_name": "max",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Maximum of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "maximum",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Take element-wise maximum of two tensors with auto-broadcasting"
+    },
+    {
+        "op_name": "meshgrid",
+        "necessary_params": [
+            "a_tuple",
+            "indexing"
+        ],
+        "optional_params": [],
+        "description": "Create coordinate matrices from coordinate vectors."
+    },
+    {
+        "op_name": "min",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Minimum of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "minimum",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Take element-wise maximum of two tensors with auto-broadcasting"
+    },
+    {
+        "op_name": "mod",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Modulus with auto-broadcasting"
+    },
+    {
+        "op_name": "multiply",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Multiplication with auto-broadcasting"
+    },
+    {
+        "op_name": "ndarray_size",
+        "necessary_params": [
+            "array"
+        ],
+        "optional_params": [
+            "dtype"
+        ],
+        "description": "Get the number of elements of input array"
+    },
+    {
+        "op_name": "negative",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take negation of input x."
+    },
+    {
+        "op_name": "not_equal",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Compute (lhs!=rhs) with auto-broadcasting"
+    },
+    {
+        "op_name": "one_hot",
+        "necessary_params": [
+            "indices",
+            "on_value",
+            "off_value",
+            "depth"
+        ],
+        "optional_params": [],
+        "description": "Returns a one-hot tensor where the locations repsented by indices take value on_value, other locations take value off_value."
+    },
+    {
+        "op_name": "power",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Power with auto-broadcasting"
+    },
+    {
+        "op_name": "prod",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Product of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "reinterpret",
+        "necessary_params": [
+            "x",
+            "dtype"
+        ],
+        "optional_params": [],
+        "description": "Reinterpret input to specified data type."
+    },
+    {
+        "op_name": "repeat",
+        "necessary_params": [
+            "a",
+            "repeats",
+            "axis"
+        ],
+        "optional_params": [],
+        "description": "Repeats elements of an array."
+    },
+    {
+        "op_name": "reshape",
+        "necessary_params": [
+            "a",
+            "newshape"
+        ],
+        "optional_params": [],
+        "description": "Reshape the array"
+    },
+    {
+        "op_name": "reverse_sequence",
+        "necessary_params": [
+            "a",
+            "seq_lengths"
+        ],
+        "optional_params": [
+            "seq_axis"
+        ],
+        "description": "Reverse the tensor for variable length slices."
+    },
+    {
+        "op_name": "right_shift",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Right shift with auto-broadcasting"
+    },
+    {
+        "op_name": "round",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Round elements of x to nearest integer."
+    },
+    {
+        "op_name": "rsqrt",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take inverse square root of input x."
+    },
+    {
+        "op_name": "scanop",
+        "necessary_params": [
+            "data",
+            "binop",
+            "identity_value",
+            "op_name"
+        ],
+        "optional_params": [],
+        "description": "Cumulative binary operator (scan) with similar axis behavior as np.cumsum and np.cumprod."
+    },
+    {
+        "op_name": "scatter_elements",
+        "necessary_params": [
+            "data",
+            "indices",
+            "updates"
+        ],
+        "optional_params": [],
+        "description": "Scatter elements from updates to corresponding indices of copied data."
+    },
+    {
+        "op_name": "scatter_nd",
+        "necessary_params": [
+            "data",
+            "indices",
+            "updates",
+            "mode"
+        ],
+        "optional_params": [],
+        "description": "Scatter elements from a n-dimension array."
+    },
+    {
+        "op_name": "searchsorted",
+        "necessary_params": [
+            "sorted_sequence",
+            "values"
+        ],
+        "optional_params": [],
+        "description": "Find indices where elements should be inserted to maintain order."
+    },
+    {
+        "op_name": "sequence_mask",
+        "necessary_params": [
+            "data",
+            "valid_length"
+        ],
+        "optional_params": [],
+        "description": "Sets all elements outside the expected length of the sequence to a constant value."
+    },
+    {
+        "op_name": "shape",
+        "necessary_params": [
+            "array"
+        ],
+        "optional_params": [
+            "dtype"
+        ],
+        "description": "Get the shape of input array"
+    },
+    {
+        "op_name": "sigmoid",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take sigmoid tanh of input x."
+    },
+    {
+        "op_name": "sign",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Returns -1, 0, 1 based on sign of x."
+    },
+    {
+        "op_name": "sin",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take sin of input x."
+    },
+    {
+        "op_name": "sinh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take sinh of input x."
+    },
+    {
+        "op_name": "sliding_window",
+        "necessary_params": [
+            "data",
+            "axis",
+            "window_shape",
+            "strides"
+        ],
+        "optional_params": [],
+        "description": "Slide a window over the data tensor."
+    },
+    {
+        "op_name": "sort",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "is_ascend"
+        ],
+        "description": "Performs sorting along the given axis and returns an array in sorted order."
+    },
+    {
+        "op_name": "sparse_reshape",
+        "necessary_params": [
+            "sparse_indices",
+            "prev_shape"
+        ],
+        "optional_params": [],
+        "description": "Reshape a Sparse Tensor"
+    },
+    {
+        "op_name": "sparse_to_dense",
+        "necessary_params": [
+            "sparse_indices"
+        ],
+        "optional_params": [],
+        "description": "Converts a sparse representation into a dense tensor."
+    },
+    {
+        "op_name": "split",
+        "necessary_params": [
+            "ary",
+            "indices_or_sections"
+        ],
+        "optional_params": [
+            "axis"
+        ],
+        "description": "Split an array into multiple sub-arrays."
+    },
+    {
+        "op_name": "sqrt",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take square root of input x."
+    },
+    {
+        "op_name": "squeeze",
+        "necessary_params": [
+            "a"
+        ],
+        "optional_params": [
+            "axis"
+        ],
+        "description": "Remove single-dimensional entries from the shape of an array."
+    },
+    {
+        "op_name": "stack",
+        "necessary_params": [
+            "a",
+            "axis"
+        ],
+        "optional_params": [],
+        "description": "Repeats the whole array multiple times."
+    },
+    {
+        "op_name": "stft",
+        "necessary_params": [
+            "data",
+            "n_fft",
+            "hop_length",
+            "win_length"
+        ],
+        "optional_params": [],
+        "description": "The STFT computes the Fourier transform of short overlapping windows of the input."
+    },
+    {
+        "op_name": "strided_set",
+        "necessary_params": [
+            "a",
+            "v",
+            "begin",
+            "end"
+        ],
+        "optional_params": [
+            "strides"
+        ],
+        "description": "Set slice of an array."
+    },
+    {
+        "op_name": "strided_slice",
+        "necessary_params": [
+            "a",
+            "begin",
+            "end"
+        ],
+        "optional_params": [
+            "strides"
+        ],
+        "description": "Slice of an array."
+    },
+    {
+        "op_name": "subtract",
+        "necessary_params": [
+            "lhs",
+            "rhs"
+        ],
+        "optional_params": [],
+        "description": "Subtraction with auto-broadcasting"
+    },
+    {
+        "op_name": "sum",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "axis",
+            "keepdims"
+        ],
+        "description": "Sum of array elements over a given axis or a list of axes"
+    },
+    {
+        "op_name": "take",
+        "necessary_params": [
+            "a",
+            "indices"
+        ],
+        "optional_params": [
+            "axis",
+            "batch_dims",
+            "mode"
+        ],
+        "description": "Take elements from an array along an axis."
+    },
+    {
+        "op_name": "take_legalize",
+        "necessary_params": [
+            "attrs",
+            "inputs",
+            "types"
+        ],
+        "optional_params": [],
+        "description": "Legalizes dyn.topk op."
+    },
+    {
+        "op_name": "tan",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take tan of input x."
+    },
+    {
+        "op_name": "tanh",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take hyperbolic tanh of input x."
+    },
+    {
+        "op_name": "tensordot",
+        "necessary_params": [
+            "a",
+            "b",
+            "axes"
+        ],
+        "optional_params": [],
+        "description": "A generalization of matrix multiplication to tensor."
+    },
+    {
+        "op_name": "tile",
+        "necessary_params": [
+            "a",
+            "reps"
+        ],
+        "optional_params": [],
+        "description": "Repeats the whole array multiple times."
+    },
+    {
+        "op_name": "topk",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "k",
+            "axis",
+            "ret_type",
+            "is_ascend",
+            "dtype"
+        ],
+        "description": "Get the top k elements in an input tensor along the given axis."
+    },
+    {
+        "op_name": "transpose",
+        "necessary_params": [
+            "a"
+        ],
+        "optional_params": [
+            "axes"
+        ],
+        "description": "Permute the dimensions of an array."
+    },
+    {
+        "op_name": "trilu",
+        "necessary_params": [
+            "data",
+            "k",
+            "upper"
+        ],
+        "optional_params": [],
+        "description": "Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor."
+    },
+    {
+        "op_name": "trunc",
+        "necessary_params": [
+            "x"
+        ],
+        "optional_params": [],
+        "description": "Take truncated value of the input of x, element-wise."
+    },
+    {
+        "op_name": "unique",
+        "necessary_params": [
+            "data"
+        ],
+        "optional_params": [
+            "is_sorted",
+            "return_counts"
+        ],
+        "description": "Find the unique elements of a 1-D tensor."
+    },
+    {
+        "op_name": "unravel_index",
+        "necessary_params": [
+            "indices",
+            "shape"
+        ],
+        "optional_params": [],
+        "description": "Convert a flat index or array of flat indices into a tuple of coordinate arrays."
+    },
+    {
+        "op_name": "where",
+        "necessary_params": [
+            "condition",
+            "x",
+            "y"
+        ],
+        "optional_params": [],
+        "description": "Get the elements, either from x or y, depending on the condition."
+    },
+    {
+        "op_name": "within_index",
+        "necessary_params": [
+            "b",
+            "e",
+            "s",
+            "i"
+        ],
+        "optional_params": [],
+        "description": "Return a boolean value that indicates if i is within the given index."
+    }
+]
