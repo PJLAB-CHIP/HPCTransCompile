@@ -1,8 +1,0 @@
-
-    extern "C" __global__ void __launch_bounds__(20) default_function_kernel(float* __restrict__ compute, float* __restrict__ data) {
-  compute[((((int)blockIdx.x) * 20) + ((int)threadIdx.x))] = asinhf(data[((((int)blockIdx.x) * 20) + ((int)threadIdx.x))]);
-}
-
-
-    Translate the above CUDA code to CPU C code, the input tensor shape is [[4, 4, 15, 19]] respectively. Print only single C code function implementation, end with comment "|End-of-Code|".
-    

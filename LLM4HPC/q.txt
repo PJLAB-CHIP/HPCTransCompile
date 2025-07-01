@@ -1,4 +1,0 @@
-scalar_t需要强制指定
-openmp注意位置，如果认为复杂循序才加；不能作用在size上面
-内部调用torch的aten kernel，不能加openmp
-float4
