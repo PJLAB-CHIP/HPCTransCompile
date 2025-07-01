@@ -1,0 +1,30 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((11, 22, 33, 44), "float32"), T_transpose: T.Buffer((20, 90, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_softmax_maxelem = T.allocate([1800], "float32", "global")
+        compute = T.allocate([1800], "float32", "global")
+        T_softmax_maxelem_1 = T.Buffer((1800,), data=T_softmax_maxelem)
+        ph_1 = T.Buffer((351384,), data=ph.data)
+        for i0, i1 in T.grid(20, 90):
+            T_softmax_maxelem_1[i0 * 90 + i1] = T.float32(-3.4028234663852886e+38)
+            for k in range(10):
+                cse_var_2: T.int32 = i0 * 90 + i1
+                cse_var_1: T.int32 = i0 * 31944 + k * 1452 + i1 // 9 * 44 + i1 % 9
+                T_softmax_maxelem_1[cse_var_2] = T.max(T_softmax_maxelem_1[cse_var_2], T.if_then_else(10 <= i0, ph_1[cse_var_1 - 269026], ph_1[cse_var_1 + 16973]))
+        compute_1 = T.Buffer((1800,), data=compute)
+        for i0, i1 in T.grid(20, 90):
+            compute_1[i0 * 90 + i1] = T.float32(0)
+            for k in range(10):
+                cse_var_4: T.int32 = i0 * 90 + i1
+                cse_var_3: T.int32 = i0 * 31944 + k * 1452 + i1 // 9 * 44 + i1 % 9
+                compute_1[cse_var_4] = compute_1[cse_var_4] + T.exp(T.if_then_else(10 <= i0, ph_1[cse_var_3 - 269026], ph_1[cse_var_3 + 16973]) - T_softmax_maxelem_1[cse_var_4])
+        for ax0_ax1_fused in T.parallel(1800):
+            for ax2_inner in range(10):
+                cse_var_5: T.int32 = ax0_ax1_fused // 90 * 31944 + ax2_inner * 1452 + ax0_ax1_fused % 90 // 9 * 44 + ax0_ax1_fused % 9
+                T_transpose_1 = T.Buffer((18000,), data=T_transpose.data)
+                T_transpose_1[ax0_ax1_fused * 10 + ax2_inner] = T.if_then_else(900 <= ax0_ax1_fused, ph_1[cse_var_5 - 269026], ph_1[cse_var_5 + 16973]) - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused])

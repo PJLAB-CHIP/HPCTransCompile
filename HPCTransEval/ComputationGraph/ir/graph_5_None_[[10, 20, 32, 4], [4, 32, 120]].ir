@@ -1,0 +1,16 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((10, 20, 32, 4), "float32"), ph_1: T.Buffer((4, 32, 120), "float32"), T_power: T.Buffer((4, 32, 120), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(128):
+            for ax2_outer, ax2_inner in T.grid(8, 16):
+                if T.likely(ax2_outer * 2 + ax2_inner // 8 < 15):
+                    T_power_1 = T.Buffer((15360,), data=T_power.data)
+                    ph_2 = T.Buffer((25600,), data=ph.data)
+                    ph_3 = T.Buffer((15360,), data=ph_1.data)
+                    cse_var_1: T.int32 = ax0_ax1_fused * 120 + ax2_outer * 16 + ax2_inner
+                    T_power_1[cse_var_1] = T.pow((T.float32(11) - (ph_2[ax2_outer * 2048 + ax2_inner * 128 + ax0_ax1_fused % 32 * 4 + ax0_ax1_fused // 32] + T.float32(3))) * ph_3[cse_var_1], T.float32(2))

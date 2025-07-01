@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((11, 1, 20, 18), "float32"), resize: T.Buffer((11, 1, 40, 36), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0 in T.parallel(11):
+            for i2, i3 in T.grid(40, 36):
+                resize_1 = T.Buffer((15840,), data=resize.data)
+                data_1 = T.Buffer((3960,), data=data.data)
+                resize_1[i0 * 1440 + i2 * 36 + i3] = data_1[i0 * 360 + T.Div(i2, 2) * 18 + T.Div(i3, 2)]

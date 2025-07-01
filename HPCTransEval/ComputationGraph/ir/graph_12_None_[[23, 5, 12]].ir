@@ -1,0 +1,30 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((23, 5, 12), "float32"), T_fast_tanh: T.Buffer((3, 23, 60), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_softmax_maxelem = T.allocate([69], "float32", "global")
+        compute = T.allocate([69], "float32", "global")
+        T_softmax_maxelem_1 = T.Buffer((69,), data=T_softmax_maxelem)
+        ph_1 = T.Buffer((1380,), data=ph.data)
+        for i0, i1 in T.grid(3, 23):
+            T_softmax_maxelem_1[i0 * 23 + i1] = T.float32(-3.4028234663852886e+38)
+            for k in range(60):
+                cse_var_1: T.int32 = i0 * 23 + i1
+                T_softmax_maxelem_1[cse_var_1] = T.max(T_softmax_maxelem_1[cse_var_1], ph_1[i1 * 60 + k])
+        compute_1 = T.Buffer((69,), data=compute)
+        for i0, i1 in T.grid(3, 23):
+            compute_1[i0 * 23 + i1] = T.float32(0)
+            for k in range(60):
+                cse_var_2: T.int32 = i0 * 23 + i1
+                compute_1[cse_var_2] = compute_1[cse_var_2] + T.exp(ph_1[i1 * 60 + k] - T_softmax_maxelem_1[cse_var_2])
+        for ax0_ax1_fused in T.parallel(69):
+            for ax2_outer, ax2_inner in T.grid(4, 16):
+                if T.likely(ax2_outer * 4 + ax2_inner // 4 < 15):
+                    cse_var_4: T.int32 = ax2_outer * 16
+                    cse_var_3: T.int32 = ax0_ax1_fused % 23 * 60 + cse_var_4 + ax2_inner
+                    T_fast_tanh_1 = T.Buffer((4140,), data=T_fast_tanh.data)
+                    T_fast_tanh_1[ax0_ax1_fused * 60 + cse_var_4 + ax2_inner] = T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.float32(-2.76076847742355e-16) + T.float32(2.0001879048247699e-13)) + T.float32(-8.60467152213735e-11)) + T.float32(5.1222970903711401e-08)) + T.float32(1.4857223571797901e-05)) + T.float32(0.00063726192887543596)) + T.float32(0.0048935245589178597)) / (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * (T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.max(T.float32(-9), T.min(T.float32(9), ph_1[cse_var_3] - T_softmax_maxelem_1[ax0_ax1_fused] - T.log(compute_1[ax0_ax1_fused]))) * T.float32(1.1982583946670199e-06) + T.float32(0.000118534705686654)) + T.float32(0.0022684346324390002)) + T.float32(0.0048935251855438504))

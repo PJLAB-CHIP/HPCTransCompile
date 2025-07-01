@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(A: T.Buffer((4, 16, 32, 32), "float32"), resize: T.Buffer((4, 16, 50, 50), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(64):
+            for i2, i3_outer, i3_inner in T.grid(50, 4, 16):
+                if T.likely(i3_outer * 8 + i3_inner // 2 < 25):
+                    cse_var_4: T.int32 = i3_outer * 16
+                    cse_var_3: T.int32 = i0_i1_fused * 1024
+                    cse_var_2: T.float32 = (T.Cast("float32", i2) + T.float32(0.5)) * T.float32(0.63999998569488525) - T.float32(0.5)
+                    cse_var_1: T.float32 = (T.Cast("float32", cse_var_4 + i3_inner) + T.float32(0.5)) * T.float32(0.63999998569488525) - T.float32(0.5)
+                    resize_1 = T.Buffer((160000,), data=resize.data)
+                    A_1 = T.Buffer((65536,), data=A.data)
+                    resize_1[i0_i1_fused * 2500 + i2 * 50 + cse_var_4 + i3_inner] = (A_1[cse_var_3 + T.max(T.min(T.Cast("int32", T.floor(cse_var_2)), 31), 0) * 32 + T.max(T.min(T.Cast("int32", T.floor(cse_var_1)), 31), 0)] * (T.float32(1) - (cse_var_1 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_1))))) + A_1[cse_var_3 + T.max(T.min(T.Cast("int32", T.floor(cse_var_2)), 31), 0) * 32 + T.max(T.min(T.Cast("int32", T.floor(cse_var_1)) + 1, 31), 0)] * (cse_var_1 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_1))))) * (T.float32(1) - (cse_var_2 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_2))))) + (A_1[cse_var_3 + T.max(T.min(T.Cast("int32", T.floor(cse_var_2)) + 1, 31), 0) * 32 + T.max(T.min(T.Cast("int32", T.floor(cse_var_1)), 31), 0)] * (T.float32(1) - (cse_var_1 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_1))))) + A_1[cse_var_3 + T.max(T.min(T.Cast("int32", T.floor(cse_var_2)) + 1, 31), 0) * 32 + T.max(T.min(T.Cast("int32", T.floor(cse_var_1)) + 1, 31), 0)] * (cse_var_1 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_1))))) * (cse_var_2 - T.Cast("float32", T.Cast("int32", T.floor(cse_var_2))))

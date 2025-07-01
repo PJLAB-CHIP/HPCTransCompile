@@ -1,0 +1,160 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((2, 1000), "float32"), ph_1: T.Buffer((2, 256), "float32"), ph_2: T.Buffer((1000, 256), "float32"), ph_3: T.Buffer((256, 256), "float32"), ph_4: T.Buffer((256,), "float32"), ph_5: T.Buffer((1000, 256), "float32"), ph_6: T.Buffer((256, 256), "float32"), ph_7: T.Buffer((256,), "float32"), ph_8: T.Buffer((1000, 256), "float32"), ph_9: T.Buffer((256, 256), "float32"), ph_10: T.Buffer((256,), "float32"), ph_11: T.Buffer((256, 128), "float32"), ph_12: T.Buffer((128,), "float32"), T_add: T.Buffer((2, 128), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_matmul_NN = T.allocate([512], "float32", "global")
+        T_matmul_NN_1 = T.allocate([512], "float32", "global")
+        T_matmul_NN_2 = T.allocate([512], "float32", "global")
+        T_matmul_NN_3 = T.allocate([512], "float32", "global")
+        T_matmul_NN_4 = T.allocate([512], "float32", "global")
+        T_matmul_NN_5 = T.Buffer((512,), data=T_matmul_NN)
+        ph_13 = T.Buffer((2000,), data=ph.data)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_5[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(1000):
+                    cse_var_2: T.int32 = i1_outer * 16
+                    cse_var_1: T.int32 = i0 * 256 + cse_var_2 + i1_inner
+                    ph_14 = T.Buffer((256000,), data=ph_2.data)
+                    T_matmul_NN_5[cse_var_1] = T_matmul_NN_5[cse_var_1] + ph_13[i0 * 1000 + k] * ph_14[k * 256 + cse_var_2 + i1_inner]
+        T_matmul_NN_6 = T.Buffer((512,), data=T_matmul_NN_1)
+        ph_14 = T.Buffer((512,), data=ph_1.data)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_6[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(256):
+                    cse_var_5: T.int32 = i1_outer * 16
+                    cse_var_4: T.int32 = i0 * 256
+                    cse_var_3: T.int32 = cse_var_4 + cse_var_5 + i1_inner
+                    ph_15 = T.Buffer((65536,), data=ph_3.data)
+                    T_matmul_NN_6[cse_var_3] = T_matmul_NN_6[cse_var_3] + ph_14[cse_var_4 + k] * ph_15[k * 256 + cse_var_5 + i1_inner]
+        T_matmul_NN_7 = T.Buffer((512,), data=T_matmul_NN)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_6: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_7[cse_var_6] = T_matmul_NN_5[cse_var_6] + T_matmul_NN_6[cse_var_6]
+        T_matmul_NN_8 = T.Buffer((512,), data=T_matmul_NN)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_8: T.int32 = ax1_outer * 16
+                cse_var_7: T.int32 = ax0 * 256 + cse_var_8 + ax1_inner
+                T_matmul_NN_8[cse_var_7] = T_matmul_NN_7[cse_var_7] + ph_4[cse_var_8 + ax1_inner]
+        T_matmul_NN_9 = T.Buffer((512,), data=T_matmul_NN)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                cse_var_9: T.int32 = i0 * 256 + i1_outer * 16 + i1_inner
+                T_matmul_NN_9[cse_var_9] = T.sigmoid(T_matmul_NN_8[cse_var_9])
+        T_matmul_NN_10 = T.Buffer((512,), data=T_matmul_NN_1)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_10: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_10[cse_var_10] = T_matmul_NN_9[cse_var_10] * ph_14[cse_var_10]
+        T_matmul_NN_11 = T.Buffer((512,), data=T_matmul_NN)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_11: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_11[cse_var_11] = T.float32(1) - T_matmul_NN_9[cse_var_11]
+        T_matmul_NN_12 = T.Buffer((512,), data=T_matmul_NN_2)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_12[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(1000):
+                    cse_var_13: T.int32 = i1_outer * 16
+                    cse_var_12: T.int32 = i0 * 256 + cse_var_13 + i1_inner
+                    ph_15 = T.Buffer((256000,), data=ph_8.data)
+                    T_matmul_NN_12[cse_var_12] = T_matmul_NN_12[cse_var_12] + ph_13[i0 * 1000 + k] * ph_15[k * 256 + cse_var_13 + i1_inner]
+        T_matmul_NN_13 = T.Buffer((512,), data=T_matmul_NN_3)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_13[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(1000):
+                    cse_var_15: T.int32 = i1_outer * 16
+                    cse_var_14: T.int32 = i0 * 256 + cse_var_15 + i1_inner
+                    ph_15 = T.Buffer((256000,), data=ph_5.data)
+                    T_matmul_NN_13[cse_var_14] = T_matmul_NN_13[cse_var_14] + ph_13[i0 * 1000 + k] * ph_15[k * 256 + cse_var_15 + i1_inner]
+        T_matmul_NN_14 = T.Buffer((512,), data=T_matmul_NN_4)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_14[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(256):
+                    cse_var_18: T.int32 = i1_outer * 16
+                    cse_var_17: T.int32 = i0 * 256
+                    cse_var_16: T.int32 = cse_var_17 + cse_var_18 + i1_inner
+                    ph_15 = T.Buffer((65536,), data=ph_6.data)
+                    T_matmul_NN_14[cse_var_16] = T_matmul_NN_14[cse_var_16] + ph_14[cse_var_17 + k] * ph_15[k * 256 + cse_var_18 + i1_inner]
+        T_matmul_NN_15 = T.Buffer((512,), data=T_matmul_NN_3)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_19: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_15[cse_var_19] = T_matmul_NN_13[cse_var_19] + T_matmul_NN_14[cse_var_19]
+        T_matmul_NN_16 = T.Buffer((512,), data=T_matmul_NN_3)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_21: T.int32 = ax1_outer * 16
+                cse_var_20: T.int32 = ax0 * 256 + cse_var_21 + ax1_inner
+                T_matmul_NN_16[cse_var_20] = T_matmul_NN_15[cse_var_20] + ph_7[cse_var_21 + ax1_inner]
+        T_matmul_NN_17 = T.Buffer((512,), data=T_matmul_NN_3)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                cse_var_22: T.int32 = i0 * 256 + i1_outer * 16 + i1_inner
+                T_matmul_NN_17[cse_var_22] = T.sigmoid(T_matmul_NN_16[cse_var_22])
+        T_matmul_NN_18 = T.Buffer((512,), data=T_matmul_NN_3)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_23: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_18[cse_var_23] = T_matmul_NN_17[cse_var_23] * ph_14[cse_var_23]
+        T_matmul_NN_19 = T.Buffer((512,), data=T_matmul_NN_4)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                T_matmul_NN_19[i0 * 256 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(256):
+                    cse_var_26: T.int32 = i1_outer * 16
+                    cse_var_25: T.int32 = i0 * 256
+                    cse_var_24: T.int32 = cse_var_25 + cse_var_26 + i1_inner
+                    ph_15 = T.Buffer((65536,), data=ph_9.data)
+                    T_matmul_NN_19[cse_var_24] = T_matmul_NN_19[cse_var_24] + T_matmul_NN_18[cse_var_25 + k] * ph_15[k * 256 + cse_var_26 + i1_inner]
+        T_matmul_NN_20 = T.Buffer((512,), data=T_matmul_NN_2)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_27: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_20[cse_var_27] = T_matmul_NN_12[cse_var_27] + T_matmul_NN_19[cse_var_27]
+        T_matmul_NN_21 = T.Buffer((512,), data=T_matmul_NN_2)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_29: T.int32 = ax1_outer * 16
+                cse_var_28: T.int32 = ax0 * 256 + cse_var_29 + ax1_inner
+                T_matmul_NN_21[cse_var_28] = T_matmul_NN_20[cse_var_28] + ph_10[cse_var_29 + ax1_inner]
+        T_matmul_NN_22 = T.Buffer((512,), data=T_matmul_NN_2)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(16, 16):
+                cse_var_30: T.int32 = i0 * 256 + i1_outer * 16 + i1_inner
+                T_matmul_NN_22[cse_var_30] = T.tanh(T_matmul_NN_21[cse_var_30])
+        T_matmul_NN_23 = T.Buffer((512,), data=T_matmul_NN)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_31: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_23[cse_var_31] = T_matmul_NN_11[cse_var_31] * T_matmul_NN_22[cse_var_31]
+        T_matmul_NN_24 = T.Buffer((512,), data=T_matmul_NN_1)
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(16, 16):
+                cse_var_32: T.int32 = ax0 * 256 + ax1_outer * 16 + ax1_inner
+                T_matmul_NN_24[cse_var_32] = T_matmul_NN_10[cse_var_32] + T_matmul_NN_23[cse_var_32]
+        T_matmul_NN_25 = T.Buffer((256,), data=T_matmul_NN_3)
+        for i0 in T.parallel(2):
+            for i1_outer, i1_inner in T.grid(8, 16):
+                T_matmul_NN_25[i0 * 128 + i1_outer * 16 + i1_inner] = T.float32(0)
+                for k in range(256):
+                    cse_var_34: T.int32 = i1_outer * 16
+                    cse_var_33: T.int32 = i0 * 128 + cse_var_34 + i1_inner
+                    ph_15 = T.Buffer((32768,), data=ph_11.data)
+                    T_matmul_NN_25[cse_var_33] = T_matmul_NN_25[cse_var_33] + T_matmul_NN_24[i0 * 256 + k] * ph_15[k * 128 + cse_var_34 + i1_inner]
+        for ax0 in T.parallel(2):
+            for ax1_outer, ax1_inner in T.grid(8, 16):
+                cse_var_36: T.int32 = ax1_outer * 16
+                cse_var_35: T.int32 = ax0 * 128 + cse_var_36 + ax1_inner
+                T_add_1 = T.Buffer((256,), data=T_add.data)
+                T_add_1[cse_var_35] = T_matmul_NN_25[cse_var_35] + ph_12[cse_var_36 + ax1_inner]

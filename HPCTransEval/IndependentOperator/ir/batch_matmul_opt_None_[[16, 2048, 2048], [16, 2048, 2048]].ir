@@ -1,0 +1,52 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(x: T.Buffer((16, 2048, 2048), "float32"), y: T.Buffer((16, 2048, 2048), "float32"), T_batch_matmul_NT: T.Buffer((16, 2048, 2048), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for b_i_outer_fused_j_outer_fused in T.parallel(1048576):
+            T_batch_matmul_NT_global_rf = T.allocate([1024], "float32", "global")
+            T_batch_matmul_NT_global = T.allocate([64], "float32", "global")
+            T_batch_matmul_NT_global_rf_1 = T.Buffer((1024,), data=T_batch_matmul_NT_global_rf)
+            for k_inner, i_c_j_c_fused in T.grid(16, 64):
+                T_batch_matmul_NT_global_rf_1[k_inner * 64 + i_c_j_c_fused] = T.float32(0)
+                for k_outer in range(128):
+                    cse_var_2: T.int32 = k_outer * 16
+                    cse_var_1: T.int32 = k_inner * 64 + i_c_j_c_fused
+                    x_1 = T.Buffer((67108864,), data=x.data)
+                    y_1 = T.Buffer((67108864,), data=y.data)
+                    T_batch_matmul_NT_global_rf_1[cse_var_1] = T_batch_matmul_NT_global_rf_1[cse_var_1] + x_1[b_i_outer_fused_j_outer_fused // 256 * 16384 + i_c_j_c_fused // 8 * 2048 + cse_var_2 + k_inner] * y_1[b_i_outer_fused_j_outer_fused // 65536 * 4194304 + b_i_outer_fused_j_outer_fused % 256 * 16384 + i_c_j_c_fused % 8 * 2048 + cse_var_2 + k_inner]
+            T_batch_matmul_NT_global_1 = T.Buffer((64,), data=T_batch_matmul_NT_global)
+            for ax1, ax2 in T.grid(8, 8):
+                cse_var_3: T.int32 = ax1 * 8 + ax2
+                T_batch_matmul_NT_global_1[cse_var_3] = T.float32(0)
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 64]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 128]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 192]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 256]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 320]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 384]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 448]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 512]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 576]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 640]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 704]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 768]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 832]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 896]
+                T_batch_matmul_NT_global_1[cse_var_3] = T_batch_matmul_NT_global_1[cse_var_3] + T_batch_matmul_NT_global_rf_1[cse_var_3 + 960]
+            for i_inner in range(8):
+                cse_var_5: T.int32 = i_inner * 8
+                cse_var_4: T.int32 = b_i_outer_fused_j_outer_fused // 256 * 16384 + i_inner * 2048 + b_i_outer_fused_j_outer_fused % 256 * 8
+                T_batch_matmul_NT_1 = T.Buffer((67108864,), data=T_batch_matmul_NT.data)
+                T_batch_matmul_NT_1[cse_var_4] = T_batch_matmul_NT_global_1[cse_var_5]
+                T_batch_matmul_NT_1[cse_var_4 + 1] = T_batch_matmul_NT_global_1[cse_var_5 + 1]
+                T_batch_matmul_NT_1[cse_var_4 + 2] = T_batch_matmul_NT_global_1[cse_var_5 + 2]
+                T_batch_matmul_NT_1[cse_var_4 + 3] = T_batch_matmul_NT_global_1[cse_var_5 + 3]
+                T_batch_matmul_NT_1[cse_var_4 + 4] = T_batch_matmul_NT_global_1[cse_var_5 + 4]
+                T_batch_matmul_NT_1[cse_var_4 + 5] = T_batch_matmul_NT_global_1[cse_var_5 + 5]
+                T_batch_matmul_NT_1[cse_var_4 + 6] = T_batch_matmul_NT_global_1[cse_var_5 + 6]
+                T_batch_matmul_NT_1[cse_var_4 + 7] = T_batch_matmul_NT_global_1[cse_var_5 + 7]

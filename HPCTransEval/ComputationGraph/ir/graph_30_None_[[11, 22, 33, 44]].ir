@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((11, 22, 33, 44), "float32"), compute: T.Buffer((2, 4, 6, 8), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(8):
+            for i2, i3_inner in T.grid(6, 8):
+                compute_1 = T.Buffer((384,), data=compute.data)
+                ph_1 = T.Buffer((351384,), data=ph.data)
+                compute_1[i0_i1_fused * 48 + i2 * 8 + i3_inner] = T.exp(T.round(T.log10(ph_1[i0_i1_fused // 4 * 31944 + i0_i1_fused % 4 * 1452 + i2 * 44 + i3_inner + 149194])))

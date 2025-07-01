@@ -1,0 +1,234 @@
+void default_function_kernel(float* T_concat, float* ph, float* ph_1, float* ph_2, float* ph_3, float* ph_4, float* ph_5, float* ph_6);
+void default_function_kernel(float* T_concat, float* ph, float* ph_1, float* ph_2, float* ph_3, float* ph_4, float* ph_5, float* ph_6) {
+  float pad_temp[3244800];
+  float pool_max[3145728];
+  float conv2d_nhwc[524288];
+  float conv2d_nhwc_1[2097152];
+  float conv2d_nhwc_2[1048576];
+  #pragma omp parallel for
+  for (int32_t ax0_ax1_fused = 0; ax0_ax1_fused < 130; ++ax0_ax1_fused) {
+    for (int32_t ax2 = 0; ax2 < 130; ++ax2) {
+      for (int32_t ax3_outer = 0; ax3_outer < 12; ++ax3_outer) {
+        for (int32_t ax3_inner = 0; ax3_inner < 16; ++ax3_inner) {
+          pad_temp[((((ax0_ax1_fused * 24960) + (ax2 * 192)) + (ax3_outer * 16)) + ax3_inner)] = (((((1 <= ax0_ax1_fused) && (ax0_ax1_fused < 129)) && (1 <= ax2)) && (ax2 < 129)) ? ph[(((((ax0_ax1_fused * 24576) + (ax2 * 192)) + (ax3_outer * 16)) + ax3_inner) - 24768)] : -3.402823e+38f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t ax0_ax1_fused_1 = 0; ax0_ax1_fused_1 < 128; ++ax0_ax1_fused_1) {
+    for (int32_t ax2_1 = 0; ax2_1 < 128; ++ax2_1) {
+      for (int32_t ax3_outer_1 = 0; ax3_outer_1 < 12; ++ax3_outer_1) {
+        for (int32_t ax3_inner_1 = 0; ax3_inner_1 < 16; ++ax3_inner_1) {
+          pool_max[((((ax0_ax1_fused_1 * 24576) + (ax2_1 * 192)) + (ax3_outer_1 * 16)) + ax3_inner_1)] = -3.402823e+38f;
+          for (int32_t rv0 = 0; rv0 < 3; ++rv0) {
+            for (int32_t rv1 = 0; rv1 < 3; ++rv1) {
+              pool_max[((((ax0_ax1_fused_1 * 24576) + (ax2_1 * 192)) + (ax3_outer_1 * 16)) + ax3_inner_1)] = max(pool_max[((((ax0_ax1_fused_1 * 24576) + (ax2_1 * 192)) + (ax3_outer_1 * 16)) + ax3_inner_1)], pad_temp[((((((rv0 * 24960) + (ax0_ax1_fused_1 * 24960)) + (rv1 * 192)) + (ax2_1 * 192)) + (ax3_outer_1 * 16)) + ax3_inner_1)]);
+            }
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused = 0; nn_yy_fused < 128; ++nn_yy_fused) {
+    for (int32_t xx = 0; xx < 128; ++xx) {
+      for (int32_t ff_outer = 0; ff_outer < 2; ++ff_outer) {
+        for (int32_t ff_inner = 0; ff_inner < 16; ++ff_inner) {
+          pad_temp[((((nn_yy_fused * 4096) + (xx * 32)) + (ff_outer * 16)) + ff_inner)] = 0.000000e+00f;
+          for (int32_t rc = 0; rc < 192; ++rc) {
+            pad_temp[((((nn_yy_fused * 4096) + (xx * 32)) + (ff_outer * 16)) + ff_inner)] = (pad_temp[((((nn_yy_fused * 4096) + (xx * 32)) + (ff_outer * 16)) + ff_inner)] + (pool_max[(((nn_yy_fused * 24576) + (xx * 192)) + rc)] * ph_1[(((rc * 32) + (ff_outer * 16)) + ff_inner)]));
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused = 0; i0_i1_fused < 128; ++i0_i1_fused) {
+    for (int32_t i2 = 0; i2 < 128; ++i2) {
+      for (int32_t i3_outer = 0; i3_outer < 2; ++i3_outer) {
+        for (int32_t i3_inner = 0; i3_inner < 16; ++i3_inner) {
+          pool_max[((((i0_i1_fused * 4096) + (i2 * 32)) + (i3_outer * 16)) + i3_inner)] = max(pad_temp[((((i0_i1_fused * 4096) + (i2 * 32)) + (i3_outer * 16)) + i3_inner)], 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_1 = 0; i0_i1_fused_1 < 128; ++i0_i1_fused_1) {
+    for (int32_t i2_1 = 0; i2_1 < 128; ++i2_1) {
+      for (int32_t i3_outer_1 = 0; i3_outer_1 < 12; ++i3_outer_1) {
+        for (int32_t i3_inner_1 = 0; i3_inner_1 < 16; ++i3_inner_1) {
+          pad_temp[((((i0_i1_fused_1 * 24576) + (i2_1 * 192)) + (i3_outer_1 * 16)) + i3_inner_1)] = ph[((((i0_i1_fused_1 * 24576) + (i2_1 * 192)) + (i3_outer_1 * 16)) + i3_inner_1)];
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused_1 = 0; nn_yy_fused_1 < 128; ++nn_yy_fused_1) {
+    for (int32_t xx_1 = 0; xx_1 < 128; ++xx_1) {
+      for (int32_t ff_inner_1 = 0; ff_inner_1 < 16; ++ff_inner_1) {
+        conv2d_nhwc[(((nn_yy_fused_1 * 2048) + (xx_1 * 16)) + ff_inner_1)] = 0.000000e+00f;
+        for (int32_t rc_1 = 0; rc_1 < 192; ++rc_1) {
+          conv2d_nhwc[(((nn_yy_fused_1 * 2048) + (xx_1 * 16)) + ff_inner_1)] = (conv2d_nhwc[(((nn_yy_fused_1 * 2048) + (xx_1 * 16)) + ff_inner_1)] + (pad_temp[(((nn_yy_fused_1 * 24576) + (xx_1 * 192)) + rc_1)] * ph_2[((rc_1 * 16) + ff_inner_1)]));
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_2 = 0; i0_i1_fused_2 < 128; ++i0_i1_fused_2) {
+    for (int32_t i2_2 = 0; i2_2 < 128; ++i2_2) {
+      for (int32_t i3_inner_2 = 0; i3_inner_2 < 16; ++i3_inner_2) {
+        conv2d_nhwc[(((i0_i1_fused_2 * 2048) + (i2_2 * 16)) + i3_inner_2)] = max(conv2d_nhwc[(((i0_i1_fused_2 * 2048) + (i2_2 * 16)) + i3_inner_2)], 0.000000e+00f);
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_3 = 0; i0_i1_fused_3 < 132; ++i0_i1_fused_3) {
+    for (int32_t i2_3 = 0; i2_3 < 132; ++i2_3) {
+      for (int32_t i3_inner_3 = 0; i3_inner_3 < 16; ++i3_inner_3) {
+        pad_temp[(((i0_i1_fused_3 * 2112) + (i2_3 * 16)) + i3_inner_3)] = (((((2 <= i0_i1_fused_3) && (i0_i1_fused_3 < 130)) && (2 <= i2_3)) && (i2_3 < 130)) ? conv2d_nhwc[((((i0_i1_fused_3 * 2048) + (i2_3 * 16)) + i3_inner_3) - 4128)] : 0.000000e+00f);
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused_2 = 0; nn_yy_fused_2 < 128; ++nn_yy_fused_2) {
+    for (int32_t xx_2 = 0; xx_2 < 128; ++xx_2) {
+      for (int32_t ff_outer_1 = 0; ff_outer_1 < 2; ++ff_outer_1) {
+        for (int32_t ff_inner_2 = 0; ff_inner_2 < 16; ++ff_inner_2) {
+          conv2d_nhwc[((((nn_yy_fused_2 * 4096) + (xx_2 * 32)) + (ff_outer_1 * 16)) + ff_inner_2)] = 0.000000e+00f;
+          for (int32_t ry = 0; ry < 5; ++ry) {
+            for (int32_t rx = 0; rx < 5; ++rx) {
+              for (int32_t rc_2 = 0; rc_2 < 16; ++rc_2) {
+                conv2d_nhwc[((((nn_yy_fused_2 * 4096) + (xx_2 * 32)) + (ff_outer_1 * 16)) + ff_inner_2)] = (conv2d_nhwc[((((nn_yy_fused_2 * 4096) + (xx_2 * 32)) + (ff_outer_1 * 16)) + ff_inner_2)] + (pad_temp[(((((ry * 2112) + (nn_yy_fused_2 * 2112)) + (xx_2 * 16)) + (rx * 16)) + rc_2)] * ph_3[(((((ry * 2560) + (rx * 512)) + (rc_2 * 32)) + (ff_outer_1 * 16)) + ff_inner_2)]));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_4 = 0; i0_i1_fused_4 < 128; ++i0_i1_fused_4) {
+    for (int32_t i2_4 = 0; i2_4 < 128; ++i2_4) {
+      for (int32_t i3_outer_2 = 0; i3_outer_2 < 2; ++i3_outer_2) {
+        for (int32_t i3_inner_4 = 0; i3_inner_4 < 16; ++i3_inner_4) {
+          conv2d_nhwc[((((i0_i1_fused_4 * 4096) + (i2_4 * 32)) + (i3_outer_2 * 16)) + i3_inner_4)] = max(conv2d_nhwc[((((i0_i1_fused_4 * 4096) + (i2_4 * 32)) + (i3_outer_2 * 16)) + i3_inner_4)], 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_5 = 0; i0_i1_fused_5 < 128; ++i0_i1_fused_5) {
+    for (int32_t i2_5 = 0; i2_5 < 128; ++i2_5) {
+      for (int32_t i3_outer_3 = 0; i3_outer_3 < 12; ++i3_outer_3) {
+        for (int32_t i3_inner_5 = 0; i3_inner_5 < 16; ++i3_inner_5) {
+          pad_temp[((((i0_i1_fused_5 * 24576) + (i2_5 * 192)) + (i3_outer_3 * 16)) + i3_inner_5)] = ph[((((i0_i1_fused_5 * 24576) + (i2_5 * 192)) + (i3_outer_3 * 16)) + i3_inner_5)];
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused_3 = 0; nn_yy_fused_3 < 128; ++nn_yy_fused_3) {
+    for (int32_t xx_3 = 0; xx_3 < 128; ++xx_3) {
+      for (int32_t ff_outer_2 = 0; ff_outer_2 < 6; ++ff_outer_2) {
+        for (int32_t ff_inner_3 = 0; ff_inner_3 < 16; ++ff_inner_3) {
+          conv2d_nhwc_1[((((nn_yy_fused_3 * 12288) + (xx_3 * 96)) + (ff_outer_2 * 16)) + ff_inner_3)] = 0.000000e+00f;
+          for (int32_t rc_3 = 0; rc_3 < 192; ++rc_3) {
+            conv2d_nhwc_1[((((nn_yy_fused_3 * 12288) + (xx_3 * 96)) + (ff_outer_2 * 16)) + ff_inner_3)] = (conv2d_nhwc_1[((((nn_yy_fused_3 * 12288) + (xx_3 * 96)) + (ff_outer_2 * 16)) + ff_inner_3)] + (pad_temp[(((nn_yy_fused_3 * 24576) + (xx_3 * 192)) + rc_3)] * ph_4[(((rc_3 * 96) + (ff_outer_2 * 16)) + ff_inner_3)]));
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_6 = 0; i0_i1_fused_6 < 128; ++i0_i1_fused_6) {
+    for (int32_t i2_6 = 0; i2_6 < 128; ++i2_6) {
+      for (int32_t i3_outer_4 = 0; i3_outer_4 < 6; ++i3_outer_4) {
+        for (int32_t i3_inner_6 = 0; i3_inner_6 < 16; ++i3_inner_6) {
+          conv2d_nhwc_1[((((i0_i1_fused_6 * 12288) + (i2_6 * 96)) + (i3_outer_4 * 16)) + i3_inner_6)] = max(conv2d_nhwc_1[((((i0_i1_fused_6 * 12288) + (i2_6 * 96)) + (i3_outer_4 * 16)) + i3_inner_6)], 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_7 = 0; i0_i1_fused_7 < 130; ++i0_i1_fused_7) {
+    for (int32_t i2_7 = 0; i2_7 < 130; ++i2_7) {
+      for (int32_t i3_outer_5 = 0; i3_outer_5 < 6; ++i3_outer_5) {
+        for (int32_t i3_inner_7 = 0; i3_inner_7 < 16; ++i3_inner_7) {
+          pad_temp[((((i0_i1_fused_7 * 12480) + (i2_7 * 96)) + (i3_outer_5 * 16)) + i3_inner_7)] = (((((1 <= i0_i1_fused_7) && (i0_i1_fused_7 < 129)) && (1 <= i2_7)) && (i2_7 < 129)) ? conv2d_nhwc_1[(((((i0_i1_fused_7 * 12288) + (i2_7 * 96)) + (i3_outer_5 * 16)) + i3_inner_7) - 12384)] : 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused_4 = 0; nn_yy_fused_4 < 128; ++nn_yy_fused_4) {
+    for (int32_t xx_4 = 0; xx_4 < 128; ++xx_4) {
+      for (int32_t ff_outer_3 = 0; ff_outer_3 < 8; ++ff_outer_3) {
+        for (int32_t ff_inner_4 = 0; ff_inner_4 < 16; ++ff_inner_4) {
+          conv2d_nhwc_1[((((nn_yy_fused_4 * 16384) + (xx_4 * 128)) + (ff_outer_3 * 16)) + ff_inner_4)] = 0.000000e+00f;
+          for (int32_t ry_1 = 0; ry_1 < 3; ++ry_1) {
+            for (int32_t rx_1 = 0; rx_1 < 3; ++rx_1) {
+              for (int32_t rc_4 = 0; rc_4 < 96; ++rc_4) {
+                conv2d_nhwc_1[((((nn_yy_fused_4 * 16384) + (xx_4 * 128)) + (ff_outer_3 * 16)) + ff_inner_4)] = (conv2d_nhwc_1[((((nn_yy_fused_4 * 16384) + (xx_4 * 128)) + (ff_outer_3 * 16)) + ff_inner_4)] + (pad_temp[(((((ry_1 * 12480) + (nn_yy_fused_4 * 12480)) + (xx_4 * 96)) + (rx_1 * 96)) + rc_4)] * ph_5[(((((ry_1 * 36864) + (rx_1 * 12288)) + (rc_4 * 128)) + (ff_outer_3 * 16)) + ff_inner_4)]));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_8 = 0; i0_i1_fused_8 < 128; ++i0_i1_fused_8) {
+    for (int32_t i2_8 = 0; i2_8 < 128; ++i2_8) {
+      for (int32_t i3_outer_6 = 0; i3_outer_6 < 8; ++i3_outer_6) {
+        for (int32_t i3_inner_8 = 0; i3_inner_8 < 16; ++i3_inner_8) {
+          conv2d_nhwc_1[((((i0_i1_fused_8 * 16384) + (i2_8 * 128)) + (i3_outer_6 * 16)) + i3_inner_8)] = max(conv2d_nhwc_1[((((i0_i1_fused_8 * 16384) + (i2_8 * 128)) + (i3_outer_6 * 16)) + i3_inner_8)], 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_9 = 0; i0_i1_fused_9 < 128; ++i0_i1_fused_9) {
+    for (int32_t i2_9 = 0; i2_9 < 128; ++i2_9) {
+      for (int32_t i3_outer_7 = 0; i3_outer_7 < 12; ++i3_outer_7) {
+        for (int32_t i3_inner_9 = 0; i3_inner_9 < 16; ++i3_inner_9) {
+          pad_temp[((((i0_i1_fused_9 * 24576) + (i2_9 * 192)) + (i3_outer_7 * 16)) + i3_inner_9)] = ph[((((i0_i1_fused_9 * 24576) + (i2_9 * 192)) + (i3_outer_7 * 16)) + i3_inner_9)];
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t nn_yy_fused_5 = 0; nn_yy_fused_5 < 128; ++nn_yy_fused_5) {
+    for (int32_t xx_5 = 0; xx_5 < 128; ++xx_5) {
+      for (int32_t ff_outer_4 = 0; ff_outer_4 < 4; ++ff_outer_4) {
+        for (int32_t ff_inner_5 = 0; ff_inner_5 < 16; ++ff_inner_5) {
+          conv2d_nhwc_2[((((nn_yy_fused_5 * 8192) + (xx_5 * 64)) + (ff_outer_4 * 16)) + ff_inner_5)] = 0.000000e+00f;
+          for (int32_t rc_5 = 0; rc_5 < 192; ++rc_5) {
+            conv2d_nhwc_2[((((nn_yy_fused_5 * 8192) + (xx_5 * 64)) + (ff_outer_4 * 16)) + ff_inner_5)] = (conv2d_nhwc_2[((((nn_yy_fused_5 * 8192) + (xx_5 * 64)) + (ff_outer_4 * 16)) + ff_inner_5)] + (pad_temp[(((nn_yy_fused_5 * 24576) + (xx_5 * 192)) + rc_5)] * ph_6[(((rc_5 * 64) + (ff_outer_4 * 16)) + ff_inner_5)]));
+          }
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t i0_i1_fused_10 = 0; i0_i1_fused_10 < 128; ++i0_i1_fused_10) {
+    for (int32_t i2_10 = 0; i2_10 < 128; ++i2_10) {
+      for (int32_t i3_outer_8 = 0; i3_outer_8 < 4; ++i3_outer_8) {
+        for (int32_t i3_inner_10 = 0; i3_inner_10 < 16; ++i3_inner_10) {
+          conv2d_nhwc_2[((((i0_i1_fused_10 * 8192) + (i2_10 * 64)) + (i3_outer_8 * 16)) + i3_inner_10)] = max(conv2d_nhwc_2[((((i0_i1_fused_10 * 8192) + (i2_10 * 64)) + (i3_outer_8 * 16)) + i3_inner_10)], 0.000000e+00f);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for
+  for (int32_t ax0_ax1_fused_2 = 0; ax0_ax1_fused_2 < 128; ++ax0_ax1_fused_2) {
+    for (int32_t ax2_2 = 0; ax2_2 < 128; ++ax2_2) {
+      for (int32_t ax3_outer_2 = 0; ax3_outer_2 < 16; ++ax3_outer_2) {
+        for (int32_t ax3_inner_2 = 0; ax3_inner_2 < 16; ++ax3_inner_2) {
+          T_concat[((((ax0_ax1_fused_2 * 32768) + (ax2_2 * 256)) + (ax3_outer_2 * 16)) + ax3_inner_2)] = ((14 <= ax3_outer_2) ? pool_max[(((((ax0_ax1_fused_2 * 4096) + (ax2_2 * 32)) + (ax3_outer_2 * 16)) + ax3_inner_2) - 224)] : ((12 <= ax3_outer_2) ? conv2d_nhwc[(((((ax0_ax1_fused_2 * 4096) + (ax2_2 * 32)) + (ax3_outer_2 * 16)) + ax3_inner_2) - 192)] : ((4 <= ax3_outer_2) ? conv2d_nhwc_1[(((((ax0_ax1_fused_2 * 16384) + (ax2_2 * 128)) + (ax3_outer_2 * 16)) + ax3_inner_2) - 64)] : conv2d_nhwc_2[((((ax0_ax1_fused_2 * 8192) + (ax2_2 * 64)) + (ax3_outer_2 * 16)) + ax3_inner_2)])));
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,23 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(Re: T.Buffer((30, 40, 50), "float32"), Im: T.Buffer((30, 40, 50), "float32"), dft_cpu: T.Buffer((30, 40, 50), "float32"), dft_cpu_1: T.Buffer((30, 40, 50), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T.attr(0, "extern_scope", 0)
+        for i in T.parallel(1200):
+            for j in range(50):
+                cse_var_1: T.int32 = i * 50 + j
+                dft_cpu_2 = T.Buffer((60000,), data=dft_cpu.data)
+                dft_cpu_2[cse_var_1] = T.float32(0)
+                dft_cpu_3 = T.Buffer((60000,), data=dft_cpu_1.data)
+                dft_cpu_3[cse_var_1] = T.float32(0)
+                for k in range(50):
+                    cse_var_3: T.int32 = i * 50 + k
+                    cse_var_2: T.float32 = T.float32(-6.2831853071795862) * T.Cast("float32", j) * T.float32(0.02) * T.Cast("float32", k)
+                    Re_1 = T.Buffer((60000,), data=Re.data)
+                    Im_1 = T.Buffer((60000,), data=Im.data)
+                    dft_cpu_2[cse_var_1] = dft_cpu_2[cse_var_1] + (Re_1[cse_var_3] * T.cos(cse_var_2) - Im_1[cse_var_3] * T.sin(cse_var_2))
+                    dft_cpu_3[cse_var_1] = dft_cpu_3[cse_var_1] + (Re_1[cse_var_3] * T.sin(cse_var_2) + Im_1[cse_var_3] * T.cos(cse_var_2))

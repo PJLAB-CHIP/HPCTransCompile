@@ -1,0 +1,32 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(data: T.Buffer((64, 512), "float32"), extern: T.Buffer((64, 512), "int32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        temp_data = T.allocate([1], "float32", "global")
+        temp_index = T.allocate([1], "int32", "global")
+        T.attr(0, "extern_scope", 0)
+        for i in T.parallel(64):
+            extern_1 = T.Buffer((32768,), "int32", data=extern.data)
+            for j in range(256):
+                cse_var_1: T.int32 = j * 2
+                extern_1[i * 512 + cse_var_1] = cse_var_1
+            for k in range(256):
+                cse_var_2: T.int32 = k * 2
+                extern_1[i * 512 + cse_var_2 + 1] = cse_var_2 + 1
+            for i_0, i_1 in T.grid(512, 256):
+                cse_var_4: T.int32 = i * 512 + i_1 * 2 + i_0 % 2
+                cse_var_3: T.int32 = cse_var_4 + 1
+                data_1 = T.Buffer((32768,), data=data.data)
+                if cse_var_4 < 511 and data_1[cse_var_4] < data_1[cse_var_3]:
+                    temp_data_1 = T.Buffer((1,), data=temp_data)
+                    temp_data_1[0] = data_1[cse_var_4]
+                    data_1[cse_var_4] = data_1[cse_var_3]
+                    data_1[cse_var_3] = temp_data_1[0]
+                    temp_index_1 = T.Buffer((1,), "int32", data=temp_index)
+                    temp_index_1[0] = extern_1[cse_var_4]
+                    extern_1[cse_var_4] = extern_1[cse_var_3]
+                    extern_1[cse_var_3] = temp_index_1[0]

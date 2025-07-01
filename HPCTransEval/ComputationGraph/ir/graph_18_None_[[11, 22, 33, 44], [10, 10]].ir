@@ -1,0 +1,46 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((11, 22, 33, 44), "float32"), ph_1: T.Buffer((10, 10), "float32"), T_cast: T.Buffer((20, 10, 10, 9), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_softmax_maxelem = T.allocate([2000], "float32", "global")
+        T_softmax_expsum = T.allocate([2000], "float32", "global")
+        T_multiply_red = T.allocate([180], "float32", "global")
+        T_softmax_maxelem_1 = T.Buffer((2000,), data=T_softmax_maxelem)
+        ph_2 = T.Buffer((351384,), data=ph.data)
+        for i0, i1, i2 in T.grid(20, 10, 10):
+            T_softmax_maxelem_1[i0 * 100 + i1 * 10 + i2] = T.float32(-3.4028234663852886e+38)
+            for k in range(9):
+                cse_var_2: T.int32 = i0 * 100 + i1 * 10 + i2
+                cse_var_1: T.int32 = i0 * 31944 + i1 * 1452 + i2 * 44 + k
+                T_softmax_maxelem_1[cse_var_2] = T.max(T_softmax_maxelem_1[cse_var_2], T.if_then_else(10 <= i0, ph_2[cse_var_1 - 269026], ph_2[cse_var_1 + 16973]))
+        T_softmax_expsum_1 = T.Buffer((2000,), data=T_softmax_expsum)
+        for i0, i1, i2 in T.grid(20, 10, 10):
+            T_softmax_expsum_1[i0 * 100 + i1 * 10 + i2] = T.float32(0)
+            for k in range(9):
+                cse_var_4: T.int32 = i0 * 100 + i1 * 10 + i2
+                cse_var_3: T.int32 = i0 * 31944 + i1 * 1452 + i2 * 44 + k
+                T_softmax_expsum_1[cse_var_4] = T_softmax_expsum_1[cse_var_4] + T.exp(T.if_then_else(10 <= i0, ph_2[cse_var_3 - 269026], ph_2[cse_var_3 + 16973]) - T_softmax_maxelem_1[cse_var_4])
+        T_multiply_red_1 = T.Buffer((180,), data=T_multiply_red)
+        for ax0, ax1 in T.grid(20, 9):
+            T_multiply_red_1[ax0 * 9 + ax1] = T.float32(0)
+            for k1, k2 in T.grid(10, 10):
+                cse_var_10: T.int32 = ax0 * 31944 + k2 * 1452 + k1 * 44 + ax1
+                cse_var_9: T.bool = 10 <= ax0
+                cse_var_8: T.int32 = ax0 * 9 + ax1
+                cse_var_7: T.int32 = ax0 * 100 + k2 * 10 + k1
+                cse_var_6: T.int32 = cse_var_10 - 269026
+                cse_var_5: T.int32 = cse_var_10 + 16973
+                T_multiply_red_1[cse_var_8] = T_multiply_red_1[cse_var_8] + T.exp(T.if_then_else(cse_var_9, ph_2[cse_var_6], ph_2[cse_var_5]) - T_softmax_maxelem_1[cse_var_7]) / T_softmax_expsum_1[cse_var_7] * (T.exp(T.if_then_else(cse_var_9, ph_2[cse_var_6], ph_2[cse_var_5]) - T_softmax_maxelem_1[cse_var_7]) / T_softmax_expsum_1[cse_var_7])
+        for ax0_ax1_fused in T.parallel(200):
+            for ax2, ax3_inner in T.grid(10, 9):
+                cse_var_14: T.int32 = ax0_ax1_fused // 10
+                cse_var_13: T.int32 = ax0_ax1_fused % 10
+                cse_var_12: T.int32 = cse_var_14 * 100 + ax2 * 10 + cse_var_13
+                cse_var_11: T.int32 = cse_var_14 * 31944 + ax2 * 1452 + cse_var_13 * 44 + ax3_inner
+                T_cast_1 = T.Buffer((18000,), data=T_cast.data)
+                ph_3 = T.Buffer((100,), data=ph_1.data)
+                T_cast_1[ax0_ax1_fused * 90 + ax2 * 9 + ax3_inner] = T.exp(T.if_then_else(100 <= ax0_ax1_fused, ph_2[cse_var_11 - 269026], ph_2[cse_var_11 + 16973]) - T_softmax_maxelem_1[cse_var_12]) / T_softmax_expsum_1[cse_var_12] * ph_3[cse_var_13 * 10 + ax2] * T.rsqrt(T_multiply_red_1[cse_var_14 * 9 + ax3_inner] * T.float32(0.01) + T.float32(1.0000000000000001e-05))

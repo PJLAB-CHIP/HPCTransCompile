@@ -1,0 +1,48 @@
+void default_function_kernel(float* T_batch_matmul_NT, float* x, float* y);
+void default_function_kernel(float* T_batch_matmul_NT, float* x, float* y) {
+  #pragma omp parallel for
+  for (int32_t b_i_outer_fused_j_outer_fused = 0; b_i_outer_fused_j_outer_fused < 1048576; ++b_i_outer_fused_j_outer_fused) {
+    float T_batch_matmul_NT_global_rf[1024];
+    float T_batch_matmul_NT_global[64];
+    for (int32_t k_inner = 0; k_inner < 16; ++k_inner) {
+      for (int32_t i_c_j_c_fused = 0; i_c_j_c_fused < 64; ++i_c_j_c_fused) {
+        T_batch_matmul_NT_global_rf[((k_inner * 64) + i_c_j_c_fused)] = 0.000000e+00f;
+        for (int32_t k_outer = 0; k_outer < 128; ++k_outer) {
+          T_batch_matmul_NT_global_rf[((k_inner * 64) + i_c_j_c_fused)] = (T_batch_matmul_NT_global_rf[((k_inner * 64) + i_c_j_c_fused)] + (x[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + ((i_c_j_c_fused >> 3) * 2048)) + (k_outer * 16)) + k_inner)] * y[((((((b_i_outer_fused_j_outer_fused >> 16) * 4194304) + ((b_i_outer_fused_j_outer_fused & 255) * 16384)) + ((i_c_j_c_fused & 7) * 2048)) + (k_outer * 16)) + k_inner)]));
+        }
+      }
+    }
+    for (int32_t ax1 = 0; ax1 < 8; ++ax1) {
+      for (int32_t ax2 = 0; ax2 < 8; ++ax2) {
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = 0.000000e+00f;
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[((ax1 * 8) + ax2)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 64)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 128)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 192)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 256)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 320)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 384)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 448)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 512)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 576)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 640)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 704)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 768)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 832)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 896)]);
+        T_batch_matmul_NT_global[((ax1 * 8) + ax2)] = (T_batch_matmul_NT_global[((ax1 * 8) + ax2)] + T_batch_matmul_NT_global_rf[(((ax1 * 8) + ax2) + 960)]);
+      }
+    }
+    for (int32_t i_inner = 0; i_inner < 8; ++i_inner) {
+      T_batch_matmul_NT[((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8))] = T_batch_matmul_NT_global[(i_inner * 8)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 1)] = T_batch_matmul_NT_global[((i_inner * 8) + 1)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 2)] = T_batch_matmul_NT_global[((i_inner * 8) + 2)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 3)] = T_batch_matmul_NT_global[((i_inner * 8) + 3)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 4)] = T_batch_matmul_NT_global[((i_inner * 8) + 4)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 5)] = T_batch_matmul_NT_global[((i_inner * 8) + 5)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 6)] = T_batch_matmul_NT_global[((i_inner * 8) + 6)];
+      T_batch_matmul_NT[(((((b_i_outer_fused_j_outer_fused >> 8) * 16384) + (i_inner * 2048)) + ((b_i_outer_fused_j_outer_fused & 255) * 8)) + 7)] = T_batch_matmul_NT_global[((i_inner * 8) + 7)];
+    }
+  }
+}
+

@@ -1,0 +1,17 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(A: T.Buffer((32, 64, 64, 50), "float32"), indices: T.Buffer((2, 2, 2, 2), "float32"), T_gather_nd: T.Buffer((2, 2, 2, 64, 50), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused_ax2_fused in T.parallel(8):
+            for ax3, ax4_outer, ax4_inner in T.grid(64, 4, 16):
+                if T.likely(ax4_outer * 8 + ax4_inner // 2 < 25):
+                    cse_var_2: T.int32 = ax4_outer * 16
+                    cse_var_1: T.int32 = ax3 * 50
+                    T_gather_nd_1 = T.Buffer((25600,), data=T_gather_nd.data)
+                    A_1 = T.Buffer((6553600,), data=A.data)
+                    indices_1 = T.Buffer((16,), data=indices.data)
+                    T_gather_nd_1[ax0_ax1_fused_ax2_fused * 3200 + cse_var_1 + cse_var_2 + ax4_inner] = A_1[T.Cast("int32", indices_1[ax0_ax1_fused_ax2_fused]) * 204800 + T.Cast("int32", indices_1[ax0_ax1_fused_ax2_fused + 8]) * 3200 + cse_var_1 + cse_var_2 + ax4_inner]

@@ -1,0 +1,13 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(A: T.Buffer((2, 64, 32, 10), "float32"), T_transpose: T.Buffer((2, 32, 10, 64), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for ax0_ax1_fused in T.parallel(64):
+            for ax2, ax3_outer, ax3_inner in T.grid(10, 4, 16):
+                T_transpose_1 = T.Buffer((40960,), data=T_transpose.data)
+                A_1 = T.Buffer((40960,), data=A.data)
+                T_transpose_1[ax0_ax1_fused * 640 + ax2 * 64 + ax3_outer * 16 + ax3_inner] = A_1[ax0_ax1_fused // 32 * 20480 + ax3_outer * 5120 + ax3_inner * 320 + ax0_ax1_fused % 32 * 10 + ax2]

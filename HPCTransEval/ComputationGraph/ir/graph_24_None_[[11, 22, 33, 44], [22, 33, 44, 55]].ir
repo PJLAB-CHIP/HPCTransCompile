@@ -1,0 +1,18 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((11, 22, 33, 44), "float32"), ph_1: T.Buffer((22, 33, 44, 55), "float32"), compute: T.Buffer((10, 10, 10, 10), "float32"), T_reverse_sequence: T.Buffer((10, 10, 10, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        for i0_i1_fused in T.parallel(100):
+            for i2, i3_inner in T.grid(10, 10):
+                compute_1 = T.Buffer((10000,), data=compute.data)
+                ph_2 = T.Buffer((351384,), data=ph.data)
+                compute_1[i0_i1_fused * 100 + i2 * 10 + i3_inner] = T.atanh(ph_2[i0_i1_fused // 10 * 31944 + i0_i1_fused % 10 * 1452 + i2 * 44 + i3_inner + 16973])
+        for ax0_ax1_fused in T.parallel(100):
+            for ax2, ax3_inner in T.grid(10, 10):
+                T_reverse_sequence_1 = T.Buffer((10000,), data=T_reverse_sequence.data)
+                ph_2 = T.Buffer((1756920,), data=ph_1.data)
+                T_reverse_sequence_1[ax0_ax1_fused * 100 + ax2 * 10 + ax3_inner] = ph_2[ax0_ax1_fused // 10 * 79860 + ax0_ax1_fused % 10 * 2420 + ax3_inner + 934054 - ax2 * 55]

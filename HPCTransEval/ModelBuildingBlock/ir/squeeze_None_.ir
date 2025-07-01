@@ -1,0 +1,575 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((1, 3, 128, 128), "float32"), ph_1: T.Buffer((1, 96, 7, 7), "float32"), ph_2: T.Buffer((1, 16, 1, 1), "float32"), ph_3: T.Buffer((1, 64, 1, 1), "float32"), ph_4: T.Buffer((1, 64, 3, 3), "float32"), ph_5: T.Buffer((1, 16, 1, 1), "float32"), ph_6: T.Buffer((1, 64, 1, 1), "float32"), ph_7: T.Buffer((1, 64, 3, 3), "float32"), ph_8: T.Buffer((1, 32, 1, 1), "float32"), ph_9: T.Buffer((1, 128, 1, 1), "float32"), ph_10: T.Buffer((1, 128, 3, 3), "float32"), ph_11: T.Buffer((1, 32, 1, 1), "float32"), ph_12: T.Buffer((1, 128, 1, 1), "float32"), ph_13: T.Buffer((1, 128, 3, 3), "float32"), ph_14: T.Buffer((1, 48, 1, 1), "float32"), ph_15: T.Buffer((1, 192, 1, 1), "float32"), ph_16: T.Buffer((1, 192, 3, 3), "float32"), ph_17: T.Buffer((1, 48, 1, 1), "float32"), ph_18: T.Buffer((1, 192, 1, 1), "float32"), ph_19: T.Buffer((1, 192, 3, 3), "float32"), ph_20: T.Buffer((1, 64, 1, 1), "float32"), ph_21: T.Buffer((1, 256, 1, 1), "float32"), ph_22: T.Buffer((1, 256, 3, 3), "float32"), ph_23: T.Buffer((1, 64, 1, 1), "float32"), ph_24: T.Buffer((1, 256, 1, 1), "float32"), ph_25: T.Buffer((1, 256, 3, 3), "float32"), T_concat: T.Buffer((1, 2, 122, 122), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        pad_temp = T.allocate([49152], "float32", "global")
+        conv2d_nchw = T.allocate([29768], "float32", "global")
+        conv2d_nchw_1 = T.allocate([14400], "float32", "global")
+        pad_temp_1 = T.Buffer((49152,), data=pad_temp)
+        for i0_i1_fused in T.parallel(3):
+            for i2, i3_outer, i3_inner in T.grid(128, 8, 16):
+                cse_var_1: T.int32 = i0_i1_fused * 16384 + i2 * 128 + i3_outer * 16 + i3_inner
+                ph_26 = T.Buffer((49152,), data=ph.data)
+                pad_temp_1[cse_var_1] = ph_26[cse_var_1]
+        conv2d_nchw_2 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_2[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc, ry, rx in T.grid(3, 7, 7):
+                    cse_var_3: T.int32 = xx_outer * 16
+                    cse_var_2: T.int32 = yy * 122 + cse_var_3 + xx_inner
+                    ph_26 = T.Buffer((4704,), data=ph_1.data)
+                    conv2d_nchw_2[cse_var_2] = conv2d_nchw_2[cse_var_2] + pad_temp_1[rc * 16384 + yy * 128 + ry * 128 + cse_var_3 + xx_inner + rx] * ph_26[rc * 49 + ry * 7 + rx]
+        conv2d_nchw_3 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_4: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_3[cse_var_4] = T.max(conv2d_nchw_2[cse_var_4], T.float32(0))
+        pad_temp_2 = T.Buffer((15376,), data=pad_temp)
+        for ax2, ax3_outer, ax3_inner in T.grid(124, 8, 16):
+            if T.likely(ax3_outer * 4 + ax3_inner // 4 < 31):
+                cse_var_6: T.int32 = ax3_outer * 16
+                cse_var_5: T.int32 = cse_var_6 + ax3_inner
+                pad_temp_2[ax2 * 124 + cse_var_6 + ax3_inner] = T.if_then_else(1 <= ax2 and ax2 < 123 and 1 <= cse_var_5 and cse_var_5 < 123, conv2d_nchw_3[ax2 * 122 + cse_var_6 + ax3_inner - 123], T.float32(-3.4028234663852886e+38))
+        for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+            conv2d_nchw_4 = T.Buffer((14884,), data=conv2d_nchw)
+            if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                conv2d_nchw_4[ax2 * 122 + ax3_outer * 16 + ax3_inner] = T.float32(-3.4028234663852886e+38)
+            if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                for rv0, rv1 in T.grid(3, 3):
+                    cse_var_8: T.int32 = ax3_outer * 16
+                    cse_var_7: T.int32 = ax2 * 122 + cse_var_8 + ax3_inner
+                    conv2d_nchw_4[cse_var_7] = T.max(conv2d_nchw_4[cse_var_7], pad_temp_2[ax2 * 124 + rv0 * 124 + cse_var_8 + ax3_inner + rv1])
+        pad_temp_3 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_3[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_4 = T.Buffer((14884,), data=conv2d_nchw)
+                ph_26 = T.Buffer((16,), data=ph_2.data)
+                cse_var_9: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                pad_temp_3[cse_var_9] = pad_temp_3[cse_var_9] + conv2d_nchw_4[cse_var_9] * ph_26[0]
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                conv2d_nchw_4 = T.Buffer((14884,), data=conv2d_nchw)
+                cse_var_10: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_4[cse_var_10] = T.max(pad_temp_3[cse_var_10], T.float32(0))
+        pad_temp_4 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_4[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_4 = T.Buffer((14884,), data=conv2d_nchw)
+                ph_26 = T.Buffer((64,), data=ph_3.data)
+                cse_var_11: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                pad_temp_4[cse_var_11] = pad_temp_4[cse_var_11] + conv2d_nchw_4[cse_var_11] * ph_26[0]
+        conv2d_nchw_4 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_12: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_4[cse_var_12] = T.max(pad_temp_4[cse_var_12], T.float32(0))
+        pad_temp_5 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_13: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_5[cse_var_13] = conv2d_nchw_4[cse_var_13]
+        conv2d_nchw_5 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_5[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_15: T.int32 = xx_outer * 16
+                    cse_var_14: T.int32 = yy * 120 + cse_var_15 + xx_inner
+                    ph_26 = T.Buffer((576,), data=ph_4.data)
+                    conv2d_nchw_5[cse_var_14] = conv2d_nchw_5[cse_var_14] + pad_temp_5[yy * 122 + ry * 122 + cse_var_15 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_6 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_16: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_6[cse_var_16] = T.max(conv2d_nchw_5[cse_var_16], T.float32(0))
+        pad_temp_6 = T.Buffer((29768,), data=pad_temp)
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_18: T.int32 = ax2 * 122
+                    cse_var_17: T.int32 = ax3_outer * 16
+                    pad_temp_6[ax0_ax1_fused * 14884 + cse_var_18 + cse_var_17 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_6[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_17 + ax3_inner - 14400], conv2d_nchw_4[cse_var_18 + cse_var_17 + ax3_inner])
+        conv2d_nchw_7 = T.Buffer((29768,), data=conv2d_nchw)
+        for i0_i1_fused in T.parallel(2):
+            for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+                if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                    cse_var_19: T.int32 = i0_i1_fused * 14884 + i2 * 122 + i3_outer * 16 + i3_inner
+                    conv2d_nchw_7[cse_var_19] = pad_temp_6[cse_var_19]
+        pad_temp_7 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_7[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_22: T.int32 = yy * 122
+                    cse_var_21: T.int32 = xx_outer * 16
+                    cse_var_20: T.int32 = cse_var_22 + cse_var_21 + xx_inner
+                    ph_26 = T.Buffer((16,), data=ph_5.data)
+                    pad_temp_7[cse_var_20] = pad_temp_7[cse_var_20] + conv2d_nchw_7[rc * 14884 + cse_var_22 + cse_var_21 + xx_inner] * ph_26[rc]
+        conv2d_nchw_8 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_23: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_8[cse_var_23] = T.max(pad_temp_7[cse_var_23], T.float32(0))
+        pad_temp_8 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_24: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_8[cse_var_24] = conv2d_nchw_8[cse_var_24]
+        conv2d_nchw_9 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_9[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((64,), data=ph_6.data)
+                cse_var_25: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_9[cse_var_25] = conv2d_nchw_9[cse_var_25] + pad_temp_8[cse_var_25] * ph_26[0]
+        pad_temp_9 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_26: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_9[cse_var_26] = T.max(conv2d_nchw_9[cse_var_26], T.float32(0))
+        conv2d_nchw_10 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_27: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_10[cse_var_27] = pad_temp_9[cse_var_27]
+        conv2d_nchw_11 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_11[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_29: T.int32 = xx_outer * 16
+                    cse_var_28: T.int32 = yy * 120 + cse_var_29 + xx_inner
+                    ph_26 = T.Buffer((576,), data=ph_7.data)
+                    conv2d_nchw_11[cse_var_28] = conv2d_nchw_11[cse_var_28] + conv2d_nchw_10[yy * 122 + ry * 122 + cse_var_29 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_12 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_30: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_12[cse_var_30] = T.max(conv2d_nchw_11[cse_var_30], T.float32(0))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_32: T.int32 = ax2 * 122
+                    cse_var_31: T.int32 = ax3_outer * 16
+                    conv2d_nchw_13 = T.Buffer((29768,), data=conv2d_nchw)
+                    conv2d_nchw_13[ax0_ax1_fused * 14884 + cse_var_32 + cse_var_31 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_12[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_31 + ax3_inner - 14400], pad_temp_9[cse_var_32 + cse_var_31 + ax3_inner])
+        pad_temp_10 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_10[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_35: T.int32 = yy * 122
+                    cse_var_34: T.int32 = xx_outer * 16
+                    cse_var_33: T.int32 = cse_var_35 + cse_var_34 + xx_inner
+                    conv2d_nchw_13 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((32,), data=ph_8.data)
+                    pad_temp_10[cse_var_33] = pad_temp_10[cse_var_33] + conv2d_nchw_13[rc * 14884 + cse_var_35 + cse_var_34 + xx_inner] * ph_26[rc]
+        conv2d_nchw_13 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_36: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_13[cse_var_36] = T.max(pad_temp_10[cse_var_36], T.float32(0))
+        pad_temp_11 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_37: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_11[cse_var_37] = conv2d_nchw_13[cse_var_37]
+        conv2d_nchw_14 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_14[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((128,), data=ph_9.data)
+                cse_var_38: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_14[cse_var_38] = conv2d_nchw_14[cse_var_38] + pad_temp_11[cse_var_38] * ph_26[0]
+        pad_temp_12 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_39: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_12[cse_var_39] = T.max(conv2d_nchw_14[cse_var_39], T.float32(0))
+        conv2d_nchw_15 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_40: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_15[cse_var_40] = pad_temp_12[cse_var_40]
+        conv2d_nchw_16 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_16[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_42: T.int32 = xx_outer * 16
+                    cse_var_41: T.int32 = yy * 120 + cse_var_42 + xx_inner
+                    ph_26 = T.Buffer((1152,), data=ph_10.data)
+                    conv2d_nchw_16[cse_var_41] = conv2d_nchw_16[cse_var_41] + conv2d_nchw_15[yy * 122 + ry * 122 + cse_var_42 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_17 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_43: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_17[cse_var_43] = T.max(conv2d_nchw_16[cse_var_43], T.float32(0))
+        conv2d_nchw_18 = T.Buffer((29768,), data=conv2d_nchw)
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_45: T.int32 = ax2 * 122
+                    cse_var_44: T.int32 = ax3_outer * 16
+                    conv2d_nchw_18[ax0_ax1_fused * 14884 + cse_var_45 + cse_var_44 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_17[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_44 + ax3_inner - 14400], pad_temp_12[cse_var_45 + cse_var_44 + ax3_inner])
+        pad_temp_13 = T.Buffer((30752,), data=pad_temp)
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(124, 8, 16):
+                if T.likely(ax3_outer * 4 + ax3_inner // 4 < 31):
+                    cse_var_47: T.int32 = ax3_outer * 16
+                    cse_var_46: T.int32 = cse_var_47 + ax3_inner
+                    pad_temp_13[ax0_ax1_fused * 15376 + ax2 * 124 + cse_var_47 + ax3_inner] = T.if_then_else(1 <= ax2 and ax2 < 123 and 1 <= cse_var_46 and cse_var_46 < 123, conv2d_nchw_18[ax0_ax1_fused * 14884 + ax2 * 122 + cse_var_47 + ax3_inner - 123], T.float32(-3.4028234663852886e+38))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                conv2d_nchw_19 = T.Buffer((29768,), data=conv2d_nchw)
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    conv2d_nchw_19[ax0_ax1_fused * 14884 + ax2 * 122 + ax3_outer * 16 + ax3_inner] = T.float32(-3.4028234663852886e+38)
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    for rv0, rv1 in T.grid(3, 3):
+                        cse_var_49: T.int32 = ax3_outer * 16
+                        cse_var_48: T.int32 = ax0_ax1_fused * 14884 + ax2 * 122 + cse_var_49 + ax3_inner
+                        conv2d_nchw_19[cse_var_48] = T.max(conv2d_nchw_19[cse_var_48], pad_temp_13[ax0_ax1_fused * 15376 + ax2 * 124 + rv0 * 124 + cse_var_49 + ax3_inner + rv1])
+        pad_temp_14 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_14[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_52: T.int32 = yy * 122
+                    cse_var_51: T.int32 = xx_outer * 16
+                    cse_var_50: T.int32 = cse_var_52 + cse_var_51 + xx_inner
+                    conv2d_nchw_19 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((32,), data=ph_11.data)
+                    pad_temp_14[cse_var_50] = pad_temp_14[cse_var_50] + conv2d_nchw_19[rc * 14884 + cse_var_52 + cse_var_51 + xx_inner] * ph_26[rc]
+        conv2d_nchw_19 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_53: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_19[cse_var_53] = T.max(pad_temp_14[cse_var_53], T.float32(0))
+        pad_temp_15 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_54: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_15[cse_var_54] = conv2d_nchw_19[cse_var_54]
+        conv2d_nchw_20 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_20[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((128,), data=ph_12.data)
+                cse_var_55: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_20[cse_var_55] = conv2d_nchw_20[cse_var_55] + pad_temp_15[cse_var_55] * ph_26[0]
+        pad_temp_16 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_56: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_16[cse_var_56] = T.max(conv2d_nchw_20[cse_var_56], T.float32(0))
+        conv2d_nchw_21 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_57: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_21[cse_var_57] = pad_temp_16[cse_var_57]
+        conv2d_nchw_22 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_22[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_59: T.int32 = xx_outer * 16
+                    cse_var_58: T.int32 = yy * 120 + cse_var_59 + xx_inner
+                    ph_26 = T.Buffer((1152,), data=ph_13.data)
+                    conv2d_nchw_22[cse_var_58] = conv2d_nchw_22[cse_var_58] + conv2d_nchw_21[yy * 122 + ry * 122 + cse_var_59 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_23 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_60: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_23[cse_var_60] = T.max(conv2d_nchw_22[cse_var_60], T.float32(0))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_62: T.int32 = ax2 * 122
+                    cse_var_61: T.int32 = ax3_outer * 16
+                    conv2d_nchw_24 = T.Buffer((29768,), data=conv2d_nchw)
+                    conv2d_nchw_24[ax0_ax1_fused * 14884 + cse_var_62 + cse_var_61 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_23[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_61 + ax3_inner - 14400], pad_temp_16[cse_var_62 + cse_var_61 + ax3_inner])
+        pad_temp_17 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_17[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_65: T.int32 = yy * 122
+                    cse_var_64: T.int32 = xx_outer * 16
+                    cse_var_63: T.int32 = cse_var_65 + cse_var_64 + xx_inner
+                    conv2d_nchw_24 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((48,), data=ph_14.data)
+                    pad_temp_17[cse_var_63] = pad_temp_17[cse_var_63] + conv2d_nchw_24[rc * 14884 + cse_var_65 + cse_var_64 + xx_inner] * ph_26[rc]
+        conv2d_nchw_24 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_66: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_24[cse_var_66] = T.max(pad_temp_17[cse_var_66], T.float32(0))
+        pad_temp_18 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_67: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_18[cse_var_67] = conv2d_nchw_24[cse_var_67]
+        conv2d_nchw_25 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_25[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((192,), data=ph_15.data)
+                cse_var_68: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_25[cse_var_68] = conv2d_nchw_25[cse_var_68] + pad_temp_18[cse_var_68] * ph_26[0]
+        pad_temp_19 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_69: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_19[cse_var_69] = T.max(conv2d_nchw_25[cse_var_69], T.float32(0))
+        conv2d_nchw_26 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_70: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_26[cse_var_70] = pad_temp_19[cse_var_70]
+        conv2d_nchw_27 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_27[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_72: T.int32 = xx_outer * 16
+                    cse_var_71: T.int32 = yy * 120 + cse_var_72 + xx_inner
+                    ph_26 = T.Buffer((1728,), data=ph_16.data)
+                    conv2d_nchw_27[cse_var_71] = conv2d_nchw_27[cse_var_71] + conv2d_nchw_26[yy * 122 + ry * 122 + cse_var_72 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_28 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_73: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_28[cse_var_73] = T.max(conv2d_nchw_27[cse_var_73], T.float32(0))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_75: T.int32 = ax2 * 122
+                    cse_var_74: T.int32 = ax3_outer * 16
+                    conv2d_nchw_29 = T.Buffer((29768,), data=conv2d_nchw)
+                    conv2d_nchw_29[ax0_ax1_fused * 14884 + cse_var_75 + cse_var_74 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_28[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_74 + ax3_inner - 14400], pad_temp_19[cse_var_75 + cse_var_74 + ax3_inner])
+        pad_temp_20 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_20[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_78: T.int32 = yy * 122
+                    cse_var_77: T.int32 = xx_outer * 16
+                    cse_var_76: T.int32 = cse_var_78 + cse_var_77 + xx_inner
+                    conv2d_nchw_29 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((48,), data=ph_17.data)
+                    pad_temp_20[cse_var_76] = pad_temp_20[cse_var_76] + conv2d_nchw_29[rc * 14884 + cse_var_78 + cse_var_77 + xx_inner] * ph_26[rc]
+        conv2d_nchw_29 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_79: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_29[cse_var_79] = T.max(pad_temp_20[cse_var_79], T.float32(0))
+        pad_temp_21 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_80: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_21[cse_var_80] = conv2d_nchw_29[cse_var_80]
+        conv2d_nchw_30 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_30[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((192,), data=ph_18.data)
+                cse_var_81: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_30[cse_var_81] = conv2d_nchw_30[cse_var_81] + pad_temp_21[cse_var_81] * ph_26[0]
+        pad_temp_22 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_82: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_22[cse_var_82] = T.max(conv2d_nchw_30[cse_var_82], T.float32(0))
+        conv2d_nchw_31 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_83: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_31[cse_var_83] = pad_temp_22[cse_var_83]
+        conv2d_nchw_32 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_32[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_85: T.int32 = xx_outer * 16
+                    cse_var_84: T.int32 = yy * 120 + cse_var_85 + xx_inner
+                    ph_26 = T.Buffer((1728,), data=ph_19.data)
+                    conv2d_nchw_32[cse_var_84] = conv2d_nchw_32[cse_var_84] + conv2d_nchw_31[yy * 122 + ry * 122 + cse_var_85 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_33 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_86: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_33[cse_var_86] = T.max(conv2d_nchw_32[cse_var_86], T.float32(0))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_88: T.int32 = ax2 * 122
+                    cse_var_87: T.int32 = ax3_outer * 16
+                    conv2d_nchw_34 = T.Buffer((29768,), data=conv2d_nchw)
+                    conv2d_nchw_34[ax0_ax1_fused * 14884 + cse_var_88 + cse_var_87 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_33[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_87 + ax3_inner - 14400], pad_temp_22[cse_var_88 + cse_var_87 + ax3_inner])
+        pad_temp_23 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_23[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_91: T.int32 = yy * 122
+                    cse_var_90: T.int32 = xx_outer * 16
+                    cse_var_89: T.int32 = cse_var_91 + cse_var_90 + xx_inner
+                    conv2d_nchw_34 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((64,), data=ph_20.data)
+                    pad_temp_23[cse_var_89] = pad_temp_23[cse_var_89] + conv2d_nchw_34[rc * 14884 + cse_var_91 + cse_var_90 + xx_inner] * ph_26[rc]
+        conv2d_nchw_34 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_92: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_34[cse_var_92] = T.max(pad_temp_23[cse_var_92], T.float32(0))
+        pad_temp_24 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_93: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_24[cse_var_93] = conv2d_nchw_34[cse_var_93]
+        conv2d_nchw_35 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_35[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((256,), data=ph_21.data)
+                cse_var_94: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_35[cse_var_94] = conv2d_nchw_35[cse_var_94] + pad_temp_24[cse_var_94] * ph_26[0]
+        pad_temp_25 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_95: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_25[cse_var_95] = T.max(conv2d_nchw_35[cse_var_95], T.float32(0))
+        conv2d_nchw_36 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_96: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_36[cse_var_96] = pad_temp_25[cse_var_96]
+        conv2d_nchw_37 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_37[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_98: T.int32 = xx_outer * 16
+                    cse_var_97: T.int32 = yy * 120 + cse_var_98 + xx_inner
+                    ph_26 = T.Buffer((2304,), data=ph_22.data)
+                    conv2d_nchw_37[cse_var_97] = conv2d_nchw_37[cse_var_97] + conv2d_nchw_36[yy * 122 + ry * 122 + cse_var_98 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_38 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_99: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_38[cse_var_99] = T.max(conv2d_nchw_37[cse_var_99], T.float32(0))
+        conv2d_nchw_39 = T.Buffer((29768,), data=conv2d_nchw)
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_101: T.int32 = ax2 * 122
+                    cse_var_100: T.int32 = ax3_outer * 16
+                    conv2d_nchw_39[ax0_ax1_fused * 14884 + cse_var_101 + cse_var_100 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_38[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_100 + ax3_inner - 14400], pad_temp_25[cse_var_101 + cse_var_100 + ax3_inner])
+        pad_temp_26 = T.Buffer((30752,), data=pad_temp)
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(124, 8, 16):
+                if T.likely(ax3_outer * 4 + ax3_inner // 4 < 31):
+                    cse_var_103: T.int32 = ax3_outer * 16
+                    cse_var_102: T.int32 = cse_var_103 + ax3_inner
+                    pad_temp_26[ax0_ax1_fused * 15376 + ax2 * 124 + cse_var_103 + ax3_inner] = T.if_then_else(1 <= ax2 and ax2 < 123 and 1 <= cse_var_102 and cse_var_102 < 123, conv2d_nchw_39[ax0_ax1_fused * 14884 + ax2 * 122 + cse_var_103 + ax3_inner - 123], T.float32(-3.4028234663852886e+38))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                conv2d_nchw_40 = T.Buffer((29768,), data=conv2d_nchw)
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    conv2d_nchw_40[ax0_ax1_fused * 14884 + ax2 * 122 + ax3_outer * 16 + ax3_inner] = T.float32(-3.4028234663852886e+38)
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    for rv0, rv1 in T.grid(3, 3):
+                        cse_var_105: T.int32 = ax3_outer * 16
+                        cse_var_104: T.int32 = ax0_ax1_fused * 14884 + ax2 * 122 + cse_var_105 + ax3_inner
+                        conv2d_nchw_40[cse_var_104] = T.max(conv2d_nchw_40[cse_var_104], pad_temp_26[ax0_ax1_fused * 15376 + ax2 * 124 + rv0 * 124 + cse_var_105 + ax3_inner + rv1])
+        pad_temp_27 = T.Buffer((14884,), data=pad_temp)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                pad_temp_27[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                for rc in range(2):
+                    cse_var_108: T.int32 = yy * 122
+                    cse_var_107: T.int32 = xx_outer * 16
+                    cse_var_106: T.int32 = cse_var_108 + cse_var_107 + xx_inner
+                    conv2d_nchw_40 = T.Buffer((29768,), data=conv2d_nchw)
+                    ph_26 = T.Buffer((64,), data=ph_23.data)
+                    pad_temp_27[cse_var_106] = pad_temp_27[cse_var_106] + conv2d_nchw_40[rc * 14884 + cse_var_108 + cse_var_107 + xx_inner] * ph_26[rc]
+        conv2d_nchw_40 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_109: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_40[cse_var_109] = T.max(pad_temp_27[cse_var_109], T.float32(0))
+        pad_temp_28 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_110: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_28[cse_var_110] = conv2d_nchw_40[cse_var_110]
+        conv2d_nchw_41 = T.Buffer((14884,), data=conv2d_nchw)
+        for yy, xx_outer, xx_inner in T.grid(122, 8, 16):
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                conv2d_nchw_41[yy * 122 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 8 + xx_inner // 2 < 61):
+                ph_26 = T.Buffer((256,), data=ph_24.data)
+                cse_var_111: T.int32 = yy * 122 + xx_outer * 16 + xx_inner
+                conv2d_nchw_41[cse_var_111] = conv2d_nchw_41[cse_var_111] + pad_temp_28[cse_var_111] * ph_26[0]
+        pad_temp_29 = T.Buffer((14884,), data=pad_temp)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_112: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                pad_temp_29[cse_var_112] = T.max(conv2d_nchw_41[cse_var_112], T.float32(0))
+        conv2d_nchw_42 = T.Buffer((14884,), data=conv2d_nchw)
+        for i2, i3_outer, i3_inner in T.grid(122, 8, 16):
+            if T.likely(i3_outer * 8 + i3_inner // 2 < 61):
+                cse_var_113: T.int32 = i2 * 122 + i3_outer * 16 + i3_inner
+                conv2d_nchw_42[cse_var_113] = pad_temp_29[cse_var_113]
+        conv2d_nchw_43 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for yy, xx_outer, xx_inner in T.grid(120, 8, 16):
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                conv2d_nchw_43[yy * 120 + xx_outer * 16 + xx_inner] = T.float32(0)
+            if T.likely(xx_outer * 2 + xx_inner // 8 < 15):
+                for ry, rx in T.grid(3, 3):
+                    cse_var_115: T.int32 = xx_outer * 16
+                    cse_var_114: T.int32 = yy * 120 + cse_var_115 + xx_inner
+                    ph_26 = T.Buffer((2304,), data=ph_25.data)
+                    conv2d_nchw_43[cse_var_114] = conv2d_nchw_43[cse_var_114] + conv2d_nchw_42[yy * 122 + ry * 122 + cse_var_115 + xx_inner + rx] * ph_26[ry * 3 + rx]
+        conv2d_nchw_44 = T.Buffer((14400,), data=conv2d_nchw_1)
+        for i2, i3_outer, i3_inner in T.grid(120, 8, 16):
+            if T.likely(i3_outer * 2 + i3_inner // 8 < 15):
+                cse_var_116: T.int32 = i2 * 120 + i3_outer * 16 + i3_inner
+                conv2d_nchw_44[cse_var_116] = T.max(conv2d_nchw_43[cse_var_116], T.float32(0))
+        for ax0_ax1_fused in T.parallel(2):
+            for ax2, ax3_outer, ax3_inner in T.grid(122, 8, 16):
+                if T.likely(ax3_outer * 8 + ax3_inner // 2 < 61):
+                    cse_var_118: T.int32 = ax2 * 122
+                    cse_var_117: T.int32 = ax3_outer * 16
+                    T_concat_1 = T.Buffer((29768,), data=T_concat.data)
+                    T_concat_1[ax0_ax1_fused * 14884 + cse_var_118 + cse_var_117 + ax3_inner] = T.if_then_else(ax0_ax1_fused == 1, conv2d_nchw_44[(ax0_ax1_fused + 1) // 2 * 14400 + ax2 * 120 + cse_var_117 + ax3_inner - 14400], pad_temp_29[cse_var_118 + cse_var_117 + ax3_inner])

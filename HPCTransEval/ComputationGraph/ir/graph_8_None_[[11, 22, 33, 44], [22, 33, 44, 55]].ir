@@ -1,0 +1,31 @@
+# from tvm.script import ir as I
+# from tvm.script import tir as T
+
+@I.ir_module
+class Module:
+    @T.prim_func
+    def main(ph: T.Buffer((11, 22, 33, 44), "float32"), ph_1: T.Buffer((22, 33, 44, 55), "float32"), compute: T.Buffer((10, 10, 10, 10), "float32")):
+        T.func_attr({"from_legacy_te_schedule": T.bool(True), "tir.noalias": T.bool(True)})
+        T_softmax_maxelem = T.allocate([1000], "float32", "global")
+        compute_1 = T.allocate([1000], "float32", "global")
+        T_softmax_maxelem_1 = T.Buffer((1000,), data=T_softmax_maxelem)
+        ph_2 = T.Buffer((351384,), data=ph.data)
+        ph_3 = T.Buffer((1756920,), data=ph_1.data)
+        for i0, i1, i2 in T.grid(10, 10, 10):
+            T_softmax_maxelem_1[i0 * 100 + i1 * 10 + i2] = T.float32(-3.4028234663852886e+38)
+            for k in range(10):
+                cse_var_1: T.int32 = i0 * 100 + i1 * 10 + i2
+                T_softmax_maxelem_1[cse_var_1] = T.max(T_softmax_maxelem_1[cse_var_1], ph_2[i0 * 31944 + i1 * 1452 + k * 44 + i2 + 16973] + ph_3[i0 * 79860 + i1 * 2420 + k * 55 + i2 + 933559])
+        compute_2 = T.Buffer((1000,), data=compute_1)
+        for i0, i1, i2 in T.grid(10, 10, 10):
+            compute_2[i0 * 100 + i1 * 10 + i2] = T.float32(0)
+            for k in range(10):
+                cse_var_2: T.int32 = i0 * 100 + i1 * 10 + i2
+                compute_2[cse_var_2] = compute_2[cse_var_2] + T.exp(ph_2[i0 * 31944 + i1 * 1452 + k * 44 + i2 + 16973] + ph_3[i0 * 79860 + i1 * 2420 + k * 55 + i2 + 933559] - T_softmax_maxelem_1[cse_var_2])
+        for i0_i1_fused in T.parallel(100):
+            for i2, i3_inner in T.grid(10, 10):
+                cse_var_5: T.int32 = i0_i1_fused % 10
+                cse_var_4: T.int32 = i0_i1_fused // 10
+                cse_var_3: T.int32 = i0_i1_fused * 10 + i3_inner
+                compute_3 = T.Buffer((10000,), data=compute.data)
+                compute_3[i0_i1_fused * 100 + i2 * 10 + i3_inner] = ph_2[cse_var_4 * 31944 + cse_var_5 * 1452 + i2 * 44 + i3_inner + 16973] + ph_3[cse_var_4 * 79860 + cse_var_5 * 2420 + i2 * 55 + i3_inner + 933559] - T_softmax_maxelem_1[cse_var_3] - T.log(compute_2[cse_var_3])
