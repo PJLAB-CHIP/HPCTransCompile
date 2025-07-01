@@ -16,7 +16,7 @@ We provide two benchmarks, `HPCTransEval` and `KernelBench_c`. You can find them
 
 ```
 HPCTransCompile/
-|
+|-CodeGenEngine # use tvm to generate cuda and cpu high-performance operators
 |-EvalEngine # handles the benchmarking and performance analysis of compiled kernels
 |-HPCTransEval # HPCTransEval benchmark
 |-InferenceEngine # responsible for model inference, translating input code and generating optimized kernels
@@ -43,6 +43,24 @@ pip install EvalEngine.txt # for performance analysis
 ```
 
 ## Usage
+
+### CodeGenEngine
+
+We classify operator types into `single operators`, `combined operators` and `model building blocks`. You can generate them through the following scripts (the model building blocks are manually constructed by humans). You can generate different types of code by changing the operator types.
+
+<img src=".\pictures\ops.png" style="zoom:60%;" />
+
+For single operators, run:
+
+```
+bash CodeGenEngine/scripts/auto_code_gen.sh
+```
+
+For combined operators, run:
+
+```
+bash CodeGenEngine/scripts/complex_code_gen.sh
+```
 
 ### TrainEngine
 
