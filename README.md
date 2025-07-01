@@ -33,7 +33,7 @@ HPCTransCompile/
 git clone https://github.com/PJLAB-CHIP/HPCTransCompile.git
 ```
 
-2. Install dependencies: In order to do the assessment correctly, you need to download a modified library `tvm` from https://github.com/hehesnail/tvm/tree/modify_style. (We recommend creating separate virtual environments for the three engines.)
+2. Install dependencies: In order to do the assessment correctly, you need to download a modified library `tvm` from https://github.com/PJLAB-CHIP/modified_tvm#. (We recommend creating separate virtual environments for the three engines.)
 
 ```
 cd HPCTransCompile
